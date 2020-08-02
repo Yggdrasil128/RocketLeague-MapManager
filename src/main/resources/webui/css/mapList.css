@@ -1,0 +1,108 @@
+table.maps {
+    width: 100%;
+    border-spacing: 0;
+}
+
+table.maps > tbody > tr:nth-child(odd) {
+    background-color: #0002;
+}
+
+table.maps > tbody > tr.loaded {
+    background-color: #0802;
+}
+
+/*table.maps tr:hover {*/
+/*    background-color: #555555;*/
+/*}*/
+
+table.maps > tbody > tr > td {
+    height: 180px;
+    padding: 5px 12px;
+}
+
+table.maps > tbody > tr > td:nth-child(1) {
+    width: 320px;
+    text-align: center;
+    padding: 5px;
+}
+
+table.maps > tbody > tr > td:nth-child(1) img {
+    vertical-align: middle;
+    max-width: 320px;
+    max-height: 180px;
+}
+
+table.maps > tbody > tr > td:nth-child(2) {
+    width: 550px;
+    vertical-align: top;
+}
+
+table.maps > tbody > tr > td:nth-child(3) {
+    vertical-align: top;
+}
+
+table.maps .title {
+    padding-top: 3px;
+    font-size: 28px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 550px;
+}
+
+table.floatLeftRight {
+    width: 100%;
+    border-spacing: 0;
+}
+
+table.floatLeftRight > tbody > tr > td:last-child {
+    text-align: right;
+}
+
+table.maps table.udkAndAuthor span {
+    color: #888;
+    font-size: 16px;
+}
+
+table.udkAndAuthor div {
+    padding-top: 5px;
+    font-size: 22px;
+}
+
+table.maps .description {
+    padding-top: 5px;
+    font-size: 16px;
+    max-height: 100px;
+    overflow-y: auto;
+}
+
+table.maps button.loadMapButton {
+    font-size: 20px;
+}
+
+table.maps .actions table:first-child {
+    padding-top: 3px;
+}
+
+img.favorite {
+    height: 32px;
+    filter: grayscale(1);
+    transition-duration: 1s;
+    transition-property: filter, transform;
+    cursor: pointer;
+}
+
+img.favorite.isFavorite {
+    filter: grayscale(0);
+    transform: rotate(360deg);
+}
+
+table.maps .actions button.refreshMapMetadataButton {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+table.maps .actions div.additionalData {
+    font-size: 14px;
+    margin-top: 48px;
+}

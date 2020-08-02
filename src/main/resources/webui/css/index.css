@@ -1,0 +1,170 @@
+html {
+    overflow-y: scroll;
+    background-color: #373737;
+}
+
+body {
+    background-color: #424242;
+    width: 1200px;
+    margin: 0 auto;
+    color: #dddddd;
+    font-family: Arial, Helvetica, sans-serif;
+    min-height: 100vh;
+}
+
+a {
+    color: #c0d8ff;
+    text-decoration: none;
+}
+
+a:hover {
+    color: white;
+}
+
+div {
+    /*border: 1px solid red;*/
+}
+
+button {
+    background-color: #323437;
+    color: #dddddd;
+    border-color: grey;
+    cursor: pointer;
+}
+
+button[disabled] {
+    color: #888;
+    cursor: default;
+}
+
+h1 {
+    margin-top: 0;
+}
+
+#header {
+    height: 128px;
+    width: 100%;
+}
+
+#header .headerLeft {
+    float: left;
+    width: 578px;
+}
+
+#header .headerLeft img {
+    padding: 5px;
+    height: 118px;
+}
+
+#header .headerRight {
+    float: right;
+    width: calc(100% - 578px);
+    text-align: center;
+    padding-top: 22px;
+}
+
+#navBar {
+    border-top: 2px solid black;
+    border-bottom: 2px solid black;
+    height: 48px;
+    width: 100%;
+}
+
+#navBar .navList {
+    padding-top: 5px;
+    float: left;
+    width: 70%;
+}
+
+#navBar .navList div.anchor {
+    float: left;
+    font-size: 25px;
+    margin: 0 12px;
+}
+
+#navBar .navList div.anchor.current {
+    border: 1px solid white;
+    cursor: default;
+    color: white;
+    padding: 2px 8px;
+}
+
+#navBar .navList div.anchor:not(.current) {
+    cursor: pointer;
+    color: #c0d8ff;
+    padding: 3px 9px;
+}
+
+#navBar .navList div.anchor:not(.current):hover {
+    color: white;
+}
+
+#navBar .navExtra {
+    float: right;
+    width: 30%;
+    text-align: right;
+}
+
+#navBar .navExtra table {
+    float: right;
+    padding: 11px;
+}
+
+#localTime {
+    font-size: 15px;
+    font-family: monospace;
+}
+
+div.content {
+    display: none;
+    padding: 20px;
+}
+
+div.content.current {
+    display: block;
+}
+
+div.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #000000c0;
+    z-index: 9999;
+}
+
+div.modal:not(.shown) {
+    display: none;
+}
+
+div.modal > div {
+    font-size: 30px;
+    text-align: center;
+    width: 1000px;
+    left: calc(50vw - 500px);
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+#mapDiscoveryModal button {
+    font-size: 28px;
+    margin-top: 42px;
+}
+
+.setupHint:after {
+    font-size: 16px;
+}
+
+.setupHint:not(.setupHintShown):before, .setupHint:not(.setupHintShown):after {
+    display: none;
+}
+
+.showOnlyWhenSetupIsNeeded {
+    display: none;
+}
+
+.monospace {
+    font-family: monospace;
+}
