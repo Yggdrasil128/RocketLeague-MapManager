@@ -113,6 +113,7 @@ public class RLMapManager {
 		
 		FileUtils.copyFile(map.getUdkFile(), config.getUpkFile());
 		config.setLoadedMapID(map.getID());
+		config.getMapMetadata(map.getID()).setLastLoadedTimestamp(System.currentTimeMillis());
 		config.save();
 		
 		if(config.getRenameOriginalUnderpassUPK()) {

@@ -33,6 +33,8 @@ public class RLMapMetadata {
 	private boolean isFavorite = false;
 	private transient File imageFile;
 	
+	private long lastLoadedTimestamp = 0;
+	
 	public RLMapMetadata(long id) {
 		this.id = id;
 	}
@@ -89,6 +91,14 @@ public class RLMapMetadata {
 	
 	public void setFavorite(boolean favorite) {
 		isFavorite = favorite;
+	}
+	
+	public long getLastLoadedTimestamp() {
+		return lastLoadedTimestamp;
+	}
+	
+	public void setLastLoadedTimestamp(long lastLoadedTimestamp) {
+		this.lastLoadedTimestamp = lastLoadedTimestamp;
 	}
 	
 	public void fetchFromWorkshop() throws IOException {

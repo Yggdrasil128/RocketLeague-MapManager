@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+@SuppressWarnings("SameReturnValue")
 public class ApiHttpHandler implements HttpHandler {
 	private static final Gson GSON = Config.GSON;
 	
@@ -139,6 +140,7 @@ public class ApiHttpHandler implements HttpHandler {
 			json.addProperty("hasImage", rlMapMetadata.getImageFile() != null);
 			json.addProperty("isFavorite", rlMapMetadata.isFavorite());
 			json.addProperty("mapSize", String.valueOf(rlMap.getMapSize()));
+			json.addProperty("lastLoadedTimestamp", rlMapMetadata.getLastLoadedTimestamp());
 			
 			array.add(json);
 		}

@@ -28,7 +28,7 @@ public class Config {
 	static final int CURRENT_CONFIG_VERSION = 1;
 	private static final transient Logger logger = LoggerFactory.getLogger(Config.class);
 	private final HashMap<Long, RLMapMetadata> mapMetadata = new HashMap<>();
-	@SuppressWarnings("FieldMayBeFinal")
+	@SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
 	private int configVersion = CURRENT_CONFIG_VERSION;
 	private File steamappsFolder = SteamLibraryDiscovery.DEFAULT_STEAMAPPS_FOLDER;
 	private File exeFile;

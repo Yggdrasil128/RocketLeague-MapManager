@@ -11,34 +11,31 @@ table.maps > tbody > tr.loaded {
     background-color: #0802;
 }
 
-/*table.maps tr:hover {*/
-/*    background-color: #555555;*/
-/*}*/
-
 table.maps > tbody > tr > td {
     height: 180px;
     padding: 5px 12px;
 }
 
-table.maps > tbody > tr > td:nth-child(1) {
+table.maps td.one {
     width: 320px;
     text-align: center;
     padding: 5px;
 }
 
-table.maps > tbody > tr > td:nth-child(1) img {
+table.maps td.one img {
     vertical-align: middle;
     max-width: 320px;
     max-height: 180px;
 }
 
-table.maps > tbody > tr > td:nth-child(2) {
+table.maps td.two {
     width: 550px;
     vertical-align: top;
 }
 
-table.maps > tbody > tr > td:nth-child(3) {
+table.maps td.three {
     vertical-align: top;
+    position: relative;
 }
 
 table.maps .title {
@@ -97,12 +94,18 @@ img.favorite.isFavorite {
     transform: rotate(360deg);
 }
 
-table.maps .actions button.refreshMapMetadataButton {
-    margin-top: 8px;
+table.maps td.three button.refreshMapMetadataButton {
+    margin-top: 12px;
     margin-bottom: 8px;
 }
 
-table.maps .actions div.additionalData {
+table.maps td.three span.lastLoaded {
+    white-space: nowrap;
     font-size: 14px;
-    margin-top: 48px;
+}
+
+table.maps td.three div.mapIDAndSize {
+    font-size: 14px;
+    position: absolute;
+    bottom: 5px;
 }

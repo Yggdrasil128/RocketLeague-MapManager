@@ -44,13 +44,6 @@ public class MapDiscovery {
 		return !thread.isAlive();
 	}
 	
-	public float getProgressFloat() {
-		if(progressTarget == 0) {
-			return 0;
-		}
-		return (float) progress / progressTarget;
-	}
-	
 	public int getProgress() {
 		return progress;
 	}

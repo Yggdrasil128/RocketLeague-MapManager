@@ -1,5 +1,6 @@
 let maps = [];
 let loadedMapID = '0';
+let lastPlayedFormatter = new Intl.DateTimeFormat(undefined, {year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'});
 
 function getMapDataById(mapID) {
     for(let map of maps) {
@@ -36,7 +37,7 @@ function refreshMapView() {
             html += '<tr id="map' + mapID + '">';
         }
 
-        html += '<td>';
+        html += '<td class="one">';
         if(map['hasImage']) {
             html += '<img src="/api/getMapImage?mapID=' + mapID + '" alt="' + map['imageName'] + '" />';
         } else {
@@ -44,7 +45,7 @@ function refreshMapView() {
         }
         html += '</td>';
 
-        html += '<td>';
+        html += '<td class="two">';
         html += '<div class="title">' + map['title'] + '</div>';
         html += '<table class="udkAndAuthor floatLeftRight"><tr><td><div class="udkFilename">';
         html += map['name'].substr(0, map['name'].length - 4);
@@ -58,7 +59,7 @@ function refreshMapView() {
         html += '<div class="description">' + coalesce(map['description'], "No description").replace(/\n/g, "<br />") + '</div>';
         html += '</td>';
 
-        html += '<td class="actions">';
+        html += '<td class="three">';
         html += '<table class="floatLeftRight"><tr><td>';
         html += '<button class="loadMapButton" type="button" onclick="loadMapButtonClick(' + mapIDStr + ')">';
         html += thisMapIsLoaded ? 'Unload Map' : 'Load Map';
@@ -68,11 +69,17 @@ function refreshMapView() {
         html += '<img class="favorite' + (map['isFavorite'] ? ' isFavorite' : '') + '" alt="Mark as favorite" src="/img/star.png" onclick="favoriteClick(' + mapIDStr + ')" />';
         html += '</td></tr></table>';
 
+        html += '<span class="lastLoaded">Last loaded: <wbr />';
+        html += map['lastLoadedTimestamp'] <= 0 ? 'never' : lastPlayedFormatter.format(new Date(map['lastLoadedTimestamp']));
+        html += '</span>';
+
+        html += '<br />';
+
         html += '<button class="refreshMapMetadataButton" type="button" onclick="refreshMapMetadata(' + mapIDStr + ')">Refresh metadata</button>';
         html += '<br />';
         html += '<a href="https://steamcommunity.com/sharedfiles/filedetails/?id=' + mapID + '" target="_blank" rel="noreferrer">Visit workshop page</a>';
 
-        html += '<div class="additionalData">';
+        html += '<div class="mapIDAndSize" style="font-size: 14px; margin-top: 48px;">';
         html += 'Map ID: ' + mapID;
         html += '<br />';
         html += 'Map Size: ' + (parseFloat(map['mapSize']) / 1048576).toFixed(1) + ' MiB';
@@ -119,14 +126,11 @@ function loadMap(mapID) {
     $newMapButton.attr('disabled', '').html('Loading...');
 
     makeRequest('api/loadMap?mapID=' + mapID, null, function() {
-        let oldLoadedMapID = loadedMapID;
         loadedMapID = mapID;
+        map['lastLoadedTimestamp'] = Date.now();
 
-        $('#map' + oldLoadedMapID).removeClass('loaded');
-        $('#map' + loadedMapID).addClass('loaded');
-
-        $('#map' + oldLoadedMapID + ' .loadMapButton').html('Load Map');
-        $newMapButton.attr('disabled', null).html('Unload Map');
+        refreshMapView();
+        scrollMapIntoView(mapID, 'ifScrolled');
     });
 }
 
@@ -171,4 +175,41 @@ function refreshMapMetadata(mapID) {
             $button.attr('disabled', null).html('Refresh metadata');
         }, 2000);
     }, 5000);
+}
+
+function scrollMapIntoView(mapID, highlight) {
+    let $tr = $('#map' + mapID);
+    if($tr.length === 0) {
+        return;
+    }
+
+    let tr = $tr.get(0);
+
+    const windowHeight = $(window).height();
+    const currentScrollPos = $(document).scrollTop();
+    const trStart = $tr.offset().top;
+    const trHeight = $tr.height();
+    const trEnd = trStart + trHeight;
+
+    const visibleAreaStart = currentScrollPos + 100;
+    const visibleAreaEnd = currentScrollPos + windowHeight - 100;
+
+    const needsScrolling = trStart < visibleAreaStart || visibleAreaEnd < trEnd;
+
+    if(needsScrolling) {
+        tr.scrollIntoView({behavior: "smooth", block: "center"});
+    }
+
+    if(highlight === 'always' || highlight === 'ifScrolled' && needsScrolling) {
+        setTimeout(function() {
+            $tr.css('background-color', '#888');
+            setTimeout(function() {
+                $tr.css('transition', '1s ease-in background-color');
+                $tr.css('background-color', '');
+            }, 50);
+            setTimeout(function() {
+                $tr.css('transition', '');
+            }, 1050);
+        }, needsScrolling ? 600 : 50);
+    }
 }
