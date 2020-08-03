@@ -128,7 +128,12 @@ public class ApiHttpHandler implements HttpHandler {
 			JsonObject json = new JsonObject();
 			json.addProperty("id", String.valueOf(rlMap.getID()));
 			json.addProperty("name", rlMap.getUDKFilename());
-			json.addProperty("title", rlMapMetadata.getTitle());
+			String title = rlMapMetadata.getTitle();
+			if(title == null) {
+				title = rlMap.getUDKFilename();
+				title = title.substring(0, title.length() - 4);
+			}
+			json.addProperty("title", title);
 			json.addProperty("description", rlMapMetadata.getDescription());
 			json.addProperty("authorName", rlMapMetadata.getAuthorName());
 			json.addProperty("hasImage", rlMapMetadata.getImageFile() != null);

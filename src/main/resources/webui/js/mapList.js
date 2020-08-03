@@ -55,7 +55,7 @@ function refreshMapView() {
         html += '<span>Created by </span>';
         html += map['authorName'];
         html += '</div></td></tr></table>';
-        html += '<div class="description">' + map['description'].replace(/\n/g, "<br />") + '</div>';
+        html += '<div class="description">' + coalesce(map['description'], "No description").replace(/\n/g, "<br />") + '</div>';
         html += '</td>';
 
         html += '<td class="actions">';

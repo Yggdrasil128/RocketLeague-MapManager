@@ -109,7 +109,8 @@ public class RLMapMetadata {
 			description = elements.get(0).text();
 		} else {
 			logger.warn("Couldn't find description for workshop item " + id);
-			description = null;
+			description = "Error: Couldn't fetch information about this map from the Steam workshop " +
+						  "because the associated workshop page no longer exists.";
 		}
 		
 		elements = doc.getElementsByClass("friendBlockContent");
@@ -117,7 +118,7 @@ public class RLMapMetadata {
 			authorName = elements.get(0).ownText();
 		} else {
 			logger.warn("Couldn't find authorName for workshop item " + id);
-			authorName = null;
+			authorName = "Unknown";
 		}
 		
 		elements = doc.getElementsByClass("workshopItemPreviewImageEnlargeable");
