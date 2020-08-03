@@ -66,7 +66,7 @@ function storeConfig() {
 }
 
 function chooseSteamappsFolder() {
-    const path = prompt("Please enter the path to the steamapps folder where Rocket League is installed. For example: C:\\Program Files (x86)\\Steam\\steamapps", "G:\\Steam\\steamapps");
+    const path = prompt("Please enter the path to the steamapps folder where Rocket League is installed. For example: C:\\Program Files (x86)\\Steam\\steamapps");
     if(!path || path === '') {
         return;
     }

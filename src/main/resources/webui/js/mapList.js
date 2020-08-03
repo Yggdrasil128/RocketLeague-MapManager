@@ -23,6 +23,8 @@ function loadMaps() {
 
 function loadMapsCallback(data) {
     maps = JSON.parse(data);
+    $('.mapListHeader h1').html('Map List (' + maps.length + ')');
+
     makeRequest('api/getLoadedMapID', null, function(data) {
         loadedMapID = data;
         sortMaps();
