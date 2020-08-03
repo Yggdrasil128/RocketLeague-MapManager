@@ -1,3 +1,42 @@
+table.mapListHeader {
+    width: 100%;
+    margin-top: -20px;
+    border-spacing: 0;
+}
+
+table.mapListHeader h1 {
+    margin-top: 20px;
+}
+
+table.mapListHeader .mapSorting {
+    width: 400px;
+    position: relative;
+}
+
+table.mapListHeader .mapSorting select {
+    position: absolute;
+    top: 19px;
+    right: 20px;
+}
+
+table.mapListHeader .mapSorting input {
+    margin: 3px 0;
+}
+
+table.mapListHeader .mapSorting .checkboxContainer {
+    margin-top: 4px;
+}
+
+table.mapListHeader .actions {
+    width: 250px;
+    text-align: right;
+}
+
+table.mapListHeader .actions button {
+    font-size: 20px;
+    margin-bottom: 3px;
+}
+
 table.maps {
     width: 100%;
     border-spacing: 0;
@@ -67,10 +106,13 @@ table.udkAndAuthor div {
 }
 
 table.maps .description {
-    padding-top: 5px;
+    margin-top: 5px;
     font-size: 16px;
     max-height: 100px;
+    max-width: 550px;
     overflow-y: auto;
+    overflow-x: hidden;
+    word-wrap: break-word;
 }
 
 table.maps button.loadMapButton {

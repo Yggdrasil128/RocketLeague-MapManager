@@ -98,6 +98,10 @@ public class ApiHttpHandler implements HttpHandler {
 		json.addProperty("upkFilename", config.getUpkFilename());
 		json.addProperty("webInterfacePort", config.getWebInterfacePort());
 		
+		json.addProperty("mapSorting", config.getMapSorting());
+		json.addProperty("showLoadedMapAtTop", config.getShowLoadedMapAtTop());
+		json.addProperty("showFavoritesAtTop", config.getShowFavoritesAtTop());
+		
 		return GSON.toJson(json);
 	}
 	
@@ -280,6 +284,19 @@ public class ApiHttpHandler implements HttpHandler {
 		if(json.has("webInterfacePort")) {
 			int value = json.get("webInterfacePort").getAsInt();
 			config.setWebInterfacePort(value);
+		}
+		
+		if(json.has("mapSorting")) {
+			int value = json.get("mapSorting").getAsInt();
+			config.setMapSorting(value);
+		}
+		if(json.has("showLoadedMapAtTop")) {
+			boolean value = json.get("showLoadedMapAtTop").getAsBoolean();
+			config.setShowLoadedMapAtTop(value);
+		}
+		if(json.has("showFavoritesAtTop")) {
+			boolean value = json.get("showFavoritesAtTop").getAsBoolean();
+			config.setShowFavoritesAtTop(value);
 		}
 		
 		config.save();

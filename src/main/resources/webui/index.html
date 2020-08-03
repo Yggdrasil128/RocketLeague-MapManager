@@ -61,14 +61,18 @@
         Welcome to the web interface of the <b>Rocket League Map Manager</b> made by Yggdrasil128.
     </p>
     <p>
-        This app allows you to easily switch between Rocket League Workshop maps from within the comfort of your browser!<br />
+        This app allows you to easily switch between Rocket League Workshop maps from within the comfort of your
+        browser!<br/>
         The app can also automatically start/stop Rocket League, if so desired.
     </p>
     <p>
-        In order to function, the app must be aware of the location of the <span class="monospace">steamapps</span> folder on your computer, where Rocket League is installed.<br />
-        Once that is configured, the app will automatically scan your Steam workshop folder for any custom maps you have downloaded,
-        and fetch the latest information about those maps from their respective workshop pages.<br />
-        This is called Map Discovery and can take a few minutes if it runs for the first time, depending on the number of maps you have downloaded.
+        In order to function, the app must be aware of the location of the <span class="monospace">steamapps</span>
+        folder on your computer, where Rocket League is installed.<br/>
+        Once that is configured, the app will automatically scan your Steam workshop folder for any custom maps you have
+        downloaded,
+        and fetch the latest information about those maps from their respective workshop pages.<br/>
+        This is called Map Discovery and can take a few minutes if it runs for the first time, depending on the number
+        of maps you have downloaded.
     </p>
     <p>
         From that point on, everything should be fairly self-explanatory.
@@ -77,12 +81,58 @@
         Enjoy! (and GLHF)
     </p>
     <p style="font-size: small; margin-top: 30px;">
-        Icons made by <a href="https://smashicons.com/" title="Smashicons">Smashicons</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a>
+        Icons made by <a href="https://smashicons.com/" title="Smashicons">Smashicons</a> from <a
+            href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a>
     </p>
 </div>
 
 <div id="contentMapList" class="content">
-    <h1>Map List</h1>
+    <table class="mapListHeader">
+        <tbody>
+        <tr>
+            <td class="mapListH1Container">
+                <h1>Map List</h1>
+            </td>
+            <td class="mapSorting">
+                <label for="mapSortingSelect" style="font-size: 22px; font-weight: bold;">
+                    Sort maps by:
+                </label>
+                <select id="mapSortingSelect" onchange="onUpdateSortOptions()">
+                    <optgroup label="Title">
+                        <option value="1">Title (A -> Z)</option>
+                        <option value="-1">Title (Z -> A)</option>
+                    </optgroup>
+                    <optgroup label="Last loaded">
+                        <option value="2">Last loaded (most recent first)</option>
+                        <option value="-2">Last loaded (most recent last)</option>
+                    </optgroup>
+                    <optgroup label="Map Size">
+                        <option value="3">Map Size (largest first)</option>
+                        <option value="-3">Map Size (smallest first)</option>
+                    </optgroup>
+                    <optgroup label="Map ID">
+                        <option value="4">Map ID (ascending)</option>
+                        <option value="-4">Map ID (descending)</option>
+                    </optgroup>
+                </select>
+                <div class="checkboxContainer">
+                    <input id="mapSorting_loadedMapAtTop" type="checkbox" onchange="onUpdateSortOptions()"/>
+                    <label for="mapSorting_loadedMapAtTop">Show loaded map at top</label>
+                    &emsp;
+                    <input id="mapSorting_favoritesAtTop" type="checkbox" onchange="onUpdateSortOptions()"/>
+                    <label for="mapSorting_favoritesAtTop">Show favorites at top</label>
+                </div>
+            </td>
+            <td class="actions">
+                <button onclick="startMapDiscovery()">Refresh list</button>
+                <br/>
+                <a href="https://steamcommunity.com/app/252950/workshop/" target="_blank" rel="noreferrer">
+                    Visit Rocket League workshop
+                </a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
     <div id="mapTableContainer">
         Map list is empty.
     </div>
@@ -94,7 +144,8 @@
     <div id="steamLibrarySetupDiv">
         <h2>Steam Library Setup</h2>
         <p>
-            In order for the Map Manager to work, it needs to know the location of the 'steamapps' folder where Rocket League is installed.<br />
+            In order for the Map Manager to work, it needs to know the location of the 'steamapps' folder where Rocket
+            League is installed.<br/>
             You only need to configure this once, the app will remember these settings afterwards.
         </p>
         <table>
@@ -137,7 +188,7 @@
         </div>
 
         <p class="showOnlyWhenSetupIsNeeded">
-            Couldn't find your 'steamapps' folder.<br />
+            Couldn't find your 'steamapps' folder.<br/>
             Please click this button and enter the path to the 'steamapps' folder where Rocket League is installed.
         </p>
     </div>
@@ -161,12 +212,14 @@
                         </select>
                     </td>
                     <td>
-                        If enabled, the App will rename the original <span class="monospace">Labs_Underpass_P.upk</span> to <span class="monospace">Labs_Underpass_P.upk.UNUSED</span>
+                        If enabled, the App will rename the original <span class="monospace">Labs_Underpass_P.upk</span>
+                        to <span class="monospace">Labs_Underpass_P.upk.UNUSED</span>
                         when a workshop map is loaded, to prevent the "Ambiguous package name" warning from showing up.
                     </td>
                 </tr>
                 <tr>
-                    <td><label for="input_behaviorWhenRLIsStopped">When a map is loaded and Rocket League<br /><b>is not running</b>:</label></td>
+                    <td><label for="input_behaviorWhenRLIsStopped">When a map is loaded and Rocket League<br/><b>is not
+                        running</b>:</label></td>
                     <td>
                         <select id="input_behaviorWhenRLIsStopped" size="1">
                             <option value="0" selected>Don't start Rocket League</option>
@@ -174,11 +227,13 @@
                         </select>
                     </td>
                     <td>
-                        Choose whether or not you'd like the Map Manager to automatically start Rocket League when a map is loaded and Rocket League is not already running.
+                        Choose whether or not you'd like the Map Manager to automatically start Rocket League when a map
+                        is loaded and Rocket League is not already running.
                     </td>
                 </tr>
                 <tr>
-                    <td><label for="input_behaviorWhenRLIsRunning">When a map is loaded and Rocket League<br /><b>is running</b>:</label></td>
+                    <td><label for="input_behaviorWhenRLIsRunning">When a map is loaded and Rocket League<br/><b>is
+                        running</b>:</label></td>
                     <td>
                         <select id="input_behaviorWhenRLIsRunning" size="1">
                             <option value="0">Just load the map</option>
@@ -187,7 +242,8 @@
                         </select>
                     </td>
                     <td>
-                        Choose whether or not you'd like the Map Manager to automatically stop/start Rocket League when a map is loaded and Rocket League is already running.
+                        Choose whether or not you'd like the Map Manager to automatically stop/start Rocket League when
+                        a map is loaded and Rocket League is already running.
                     </td>
                 </tr>
             </table>
@@ -205,12 +261,14 @@
                     <td><label for="input_upkFilename">UPK Filename</label></td>
                     <td><input id="input_upkFilename" style="width: 300px" type="text" required></td>
                     <td>
-                        The filename of the target UPK file. Default: <span class="monospace">Labs_Underpass_P.upk</span>
+                        The filename of the target UPK file. Default: <span
+                            class="monospace">Labs_Underpass_P.upk</span>
                     </td>
                 </tr>
                 <tr>
                     <td><label for="input_webInterfacePort">Web interface port</label></td>
-                    <td><input id="input_webInterfacePort" style="width: 80px" type="number" min="0" max="65536" required></td>
+                    <td><input id="input_webInterfacePort" style="width: 80px" type="number" min="0" max="65536"
+                               required></td>
                     <td>
                         The port for the built-in web server. The default port is 16016.<br>
                         You must restart the app for this change to take effect.
@@ -242,16 +300,16 @@
         <h1>Map Discovery</h1>
         <p>
             During Map Discovery, the app scans your Steam workshop folder for any newly downloaded maps
-            and fetches the latest information about those maps from their respective Steam workshop page.<br />
+            and fetches the latest information about those maps from their respective Steam workshop page.<br/>
             Depending on the number of maps it has to refresh, this can take up to a few minutes.
         </p>
         <div class="status">
             <span class="message">
                 Discovering maps, please wait...
             </span>
-            <br />
+            <br/>
             <progress value="0" max="0"></progress>
-            <br />
+            <br/>
             <span class="progressText">
                 0 %
             </span>

@@ -64,5 +64,4 @@ function updateMapDiscoveryModalCallback(data) {
         (100 * json['progress'] / Math.max(json['progressTarget'], 1)).toFixed(0) +
         ' %)';
     $('#mapDiscoveryModal .progressText').html(s);
-
 }

@@ -1,7 +1,15 @@
 let config = null;
 
 $(function() {
-    initConfig(loadMaps);
+    initConfig(function() {
+        // load sorting options from config
+        $('#mapSortingSelect').get(0).value = config['mapSorting'];
+        $('#mapSorting_loadedMapAtTop').get(0).checked = config['showLoadedMapAtTop'];
+        $('#mapSorting_favoritesAtTop').get(0).checked = config['showFavoritesAtTop'];
+        updateMapComparator();
+
+        loadMaps();
+    });
 });
 
 function initConfig(callback) {

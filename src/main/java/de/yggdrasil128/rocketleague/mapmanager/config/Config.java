@@ -41,6 +41,10 @@ public class Config {
 	private BehaviorWhenRLIsStopped behaviorWhenRLIsStopped = BehaviorWhenRLIsStopped.DO_NOTHING;
 	private BehaviorWhenRLIsRunning behaviorWhenRLIsRunning = BehaviorWhenRLIsRunning.RESTART_RL;
 	
+	private int mapSorting = 1;
+	private boolean showLoadedMapAtTop = false;
+	private boolean showFavoritesAtTop = false;
+	
 	public static Config load() {
 		try {
 			String data = FileUtils.readFileToString(RLMapManager.FILE_CONFIG, StandardCharsets.UTF_8);
@@ -65,7 +69,7 @@ public class Config {
 		}
 	}
 	
-	public void save() {
+	public synchronized void save() {
 		try {
 			File directory = RLMapManager.FILE_CONFIG.getParentFile();
 			if(!directory.exists() && !RLMapManager.FILE_CONFIG.getParentFile().mkdirs()) {
@@ -180,6 +184,33 @@ public class Config {
 		this.behaviorWhenRLIsRunning = behaviorWhenRLIsRunning;
 	}
 	
+	public int getMapSorting() {
+		return mapSorting;
+	}
+	
+	public void setMapSorting(int mapSorting) {
+		if(mapSorting < -4 || mapSorting == 0 || mapSorting > 4) {
+			throw new IllegalArgumentException();
+		}
+		this.mapSorting = mapSorting;
+	}
+	
+	public boolean getShowLoadedMapAtTop() {
+		return showLoadedMapAtTop;
+	}
+	
+	public void setShowLoadedMapAtTop(boolean showLoadedMapAtTop) {
+		this.showLoadedMapAtTop = showLoadedMapAtTop;
+	}
+	
+	public boolean getShowFavoritesAtTop() {
+		return showFavoritesAtTop;
+	}
+	
+	public void setShowFavoritesAtTop(boolean showFavoritesAtTop) {
+		this.showFavoritesAtTop = showFavoritesAtTop;
+	}
+	
 	public RLMapMetadata getMapMetadata(long mapID) {
 		return mapMetadata.computeIfAbsent(mapID, mapID_ -> {
 			RLMapMetadata rlMapMetadata = new RLMapMetadata(mapID_);
@@ -190,6 +221,39 @@ public class Config {
 			}
 			return rlMapMetadata;
 		});
+	}
+	
+	public enum BehaviorWhenRLIsStopped {
+		DO_NOTHING,
+		START_RL;
+		
+		public static BehaviorWhenRLIsStopped fromInt(int i) {
+			return i == 0 ? DO_NOTHING : START_RL;
+		}
+		
+		public int toInt() {
+			return this == DO_NOTHING ? 0 : 1;
+		}
+	}
+	
+	public enum BehaviorWhenRLIsRunning {
+		DO_NOTHING,
+		STOP_RL,
+		RESTART_RL;
+		
+		public static BehaviorWhenRLIsRunning fromInt(int i) {
+			if(i == 0) {
+				return DO_NOTHING;
+			}
+			return i == 1 ? STOP_RL : RESTART_RL;
+		}
+		
+		public int toInt() {
+			if(this == DO_NOTHING) {
+				return 0;
+			}
+			return this == STOP_RL ? 1 : 2;
+		}
 	}
 	
 	private static class FileTypeAdapter extends TypeAdapter<File> {
@@ -209,39 +273,6 @@ public class Config {
 			} else {
 				out.value(value.getAbsolutePath());
 			}
-		}
-	}
-	
-	public enum BehaviorWhenRLIsStopped {
-		DO_NOTHING,
-		START_RL;
-		
-		public int toInt() {
-			return this == DO_NOTHING ? 0 : 1;
-		}
-		
-		public static BehaviorWhenRLIsStopped fromInt(int i) {
-			return i == 0 ? DO_NOTHING : START_RL;
-		}
-	}
-	
-	public enum BehaviorWhenRLIsRunning {
-		DO_NOTHING,
-		STOP_RL,
-		RESTART_RL;
-		
-		public int toInt() {
-			if(this == DO_NOTHING) {
-				return 0;
-			}
-			return this == STOP_RL ? 1 : 2;
-		}
-		
-		public static BehaviorWhenRLIsRunning fromInt(int i) {
-			if(i == 0) {
-				return DO_NOTHING;
-			}
-			return i == 1 ? STOP_RL : RESTART_RL;
 		}
 	}
 }

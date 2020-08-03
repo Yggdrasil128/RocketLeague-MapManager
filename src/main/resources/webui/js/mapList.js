@@ -1,6 +1,12 @@
 let maps = [];
 let loadedMapID = '0';
 let lastPlayedFormatter = new Intl.DateTimeFormat(undefined, {year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'});
+let mapComparator = null;
+let mapComparatorOptions = null;
+
+$(function() {
+    updateMapComparator();
+});
 
 function getMapDataById(mapID) {
     for(let map of maps) {
@@ -19,8 +25,13 @@ function loadMapsCallback(data) {
     maps = JSON.parse(data);
     makeRequest('api/getLoadedMapID', null, function(data) {
         loadedMapID = data;
+        sortMaps();
         refreshMapView();
     });
+}
+
+function sortMaps() {
+    maps.sort(mapComparator);
 }
 
 function refreshMapView() {
@@ -111,6 +122,14 @@ function favoriteClick(mapID) {
     }
 
     makeRequest('api/setFavorite?mapID=' + mapID + '&isFavorite=' + (isFavorite ? '1' : '0'));
+
+    if($('#mapSorting_favoritesAtTop').get(0).checked) {
+        setTimeout(function() {
+            sortMaps();
+            refreshMapView();
+            scrollMapIntoView(mapID, 'ifScrolled');
+        }, 1000);
+    }
 }
 
 function loadMap(mapID) {
@@ -129,6 +148,7 @@ function loadMap(mapID) {
         loadedMapID = mapID;
         map['lastLoadedTimestamp'] = Date.now();
 
+        sortMaps();
         refreshMapView();
         scrollMapIntoView(mapID, 'ifScrolled');
     });
@@ -146,7 +166,12 @@ function unloadMap(callback) {
         $('#map' + loadedMapID).removeClass('loaded');
         $('#map' + loadedMapID + ' .loadMapButton').html('Load Map');
 
+        let oldLoadedMapID = loadedMapID;
         loadedMapID = '0';
+
+        sortMaps();
+        refreshMapView();
+        scrollMapIntoView(oldLoadedMapID, 'ifScrolled');
 
         if(callback) {
             callback();
@@ -212,4 +237,70 @@ function scrollMapIntoView(mapID, highlight) {
             }, 1050);
         }, needsScrolling ? 600 : 50);
     }
+}
+
+function mapComparator_title(mapA, mapB) {
+    return mapA['title'].localeCompare(mapB['title']);
+}
+
+function mapComparator_lastLoaded(mapA, mapB) {
+    return mapB['lastLoadedTimestamp'] - mapA['lastLoadedTimestamp'];
+}
+
+function mapComparator_mapSize(mapA, mapB) {
+    return parseFloat(mapB['mapSize']) - parseFloat(mapA['mapSize']);
+}
+
+function mapComparator_mapID(mapA, mapB) {
+    return parseFloat(mapA['id']) - parseFloat(mapB['id']);
+}
+
+const mapComparators = [
+    null,
+    mapComparator_title,
+    mapComparator_lastLoaded,
+    mapComparator_mapSize,
+    mapComparator_mapID
+];
+
+function updateMapComparator() {
+    mapComparatorOptions = {
+        mapSorting: parseInt($('#mapSortingSelect').get(0).value),
+        showLoadedMapAtTop: $('#mapSorting_loadedMapAtTop').get(0).checked,
+        showFavoritesAtTop: $('#mapSorting_favoritesAtTop').get(0).checked,
+    };
+
+    const reversed = mapComparatorOptions.mapSorting < 0;
+
+    let comparator1 = mapComparators[Math.abs( mapComparatorOptions.mapSorting)];
+
+    let comparator2 = !reversed ? comparator1 : function(mapA, mapB) {
+        return -comparator1(mapA, mapB);
+    };
+
+    let comparator3 = !mapComparatorOptions.showFavoritesAtTop ? comparator2 : function(mapA, mapB) {
+        if(mapA['isFavorite'] ^ mapB['isFavorite']) {
+            return mapA['isFavorite'] ? -1 : 1;
+        }
+        return comparator2(mapA, mapB);
+    };
+
+    mapComparator = !mapComparatorOptions.showLoadedMapAtTop ? comparator3 : function(mapA, mapB) {
+        if(loadedMapID === mapA['id']) {
+            return -1;
+        }
+        if(loadedMapID === mapB['id']) {
+            return 1;
+        }
+        return comparator3(mapA, mapB);
+    };
+}
+
+function onUpdateSortOptions() {
+    updateMapComparator();
+    sortMaps();
+    refreshMapView();
+
+    // the mapComparatorOptions object has already been updated by updateMapComparator
+    makeRequest('api/patchConfig', JSON.stringify(mapComparatorOptions));
 }
