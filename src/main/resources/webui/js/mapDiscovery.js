@@ -1,4 +1,5 @@
 let mapDiscoveryIntervalHandle = null;
+let mapDiscoveryModalStatusContentsInitial = null;
 
 function startMapDiscovery() {
     showMapDiscoveryModal();
@@ -11,6 +12,8 @@ function startMapDiscovery() {
 }
 
 $(function() {
+    mapDiscoveryModalStatusContentsInitial = $('#mapDiscoveryModal .status').html();
+
     // check if map discovery is running
     makeRequest('api/getMapDiscoveryStatus', '', function(data) {
         let json = JSON.parse(data);
@@ -27,7 +30,7 @@ $(function() {
 });
 
 function showMapDiscoveryModal() {
-    $('#mapDiscoveryModal .message').html('Discovering maps, please wait...<br />0 %');
+    $('#mapDiscoveryModal .status').html(mapDiscoveryModalStatusContentsInitial);
     $('#mapDiscoveryModal button').css('display', 'none');
     $('#mapDiscoveryModal').addClass('shown');
 }
@@ -43,13 +46,11 @@ function updateMapDiscoveryModal() {
 function updateMapDiscoveryModalCallback(data) {
     let json = JSON.parse(data);
 
-    const $messageDiv = $('#mapDiscoveryModal .message');
-
     if(json['isDone']) {
         clearInterval(mapDiscoveryIntervalHandle);
         mapDiscoveryIntervalHandle = null;
 
-        $messageDiv.html(json['message']);
+        $('#mapDiscoveryModal .status').html(json['message']);
         $('#mapDiscoveryModal button').css('display', '');
 
         loadMaps();
@@ -57,10 +58,11 @@ function updateMapDiscoveryModalCallback(data) {
         return;
     }
 
-    let s = json['message'];
-    s += '<br />';
-    s += (100 * json['progress']).toFixed(0);
-    s += ' %';
-    $messageDiv.html(s);
+    $('#mapDiscoveryModal .message').html(json['message']);
+    $('#mapDiscoveryModal progress').attr({'value': json['progress'], 'max': json['progressTarget']});
+    let s = json['progress'] + ' / ' + json['progressTarget'] + ' (' +
+        (100 * json['progress'] / Math.max(json['progressTarget'], 1)).toFixed(0) +
+        ' %)';
+    $('#mapDiscoveryModal .progressText').html(s);
 
 }

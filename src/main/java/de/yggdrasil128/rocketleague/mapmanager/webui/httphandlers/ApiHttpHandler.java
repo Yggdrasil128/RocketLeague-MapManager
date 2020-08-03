@@ -154,7 +154,7 @@ public class ApiHttpHandler implements HttpHandler {
 		MapDiscovery mapDiscovery = MapDiscovery.get();
 		JsonObject json = new JsonObject();
 		if(mapDiscovery == null) {
-			json.addProperty("progress", 0);
+			json.addProperty("progressFloat", 0);
 			json.addProperty("isDone", true);
 			json.addProperty("message", "Not started");
 			return GSON.toJson(json);
@@ -166,20 +166,19 @@ public class ApiHttpHandler implements HttpHandler {
 		if(isDone) {
 			Throwable throwable = mapDiscovery.getThrowable();
 			if(throwable == null) {
-				json.addProperty("progress", 1);
 				int mapCount = rlMapManager.getMaps().size();
 				String s = "Successfully discovered " + mapCount + (mapCount == 1 ? " map." : " maps.");
 				json.addProperty("message", s);
 				return GSON.toJson(json);
 			}
 			
-			json.addProperty("progress", -1);
 			json.addProperty("message", "Error:<br />" + throwable.toString());
 			return GSON.toJson(json);
 		}
 		
-		json.addProperty("progress", mapDiscovery.getProgress());
 		json.addProperty("message", "Discovering maps, please wait...");
+		json.addProperty("progress", mapDiscovery.getProgress());
+		json.addProperty("progressTarget", mapDiscovery.getProgressTarget());
 		return GSON.toJson(json);
 	}
 	

@@ -240,7 +240,22 @@
 <div id="mapDiscoveryModal" class="modal">
     <div>
         <h1>Map Discovery</h1>
-        <div class="message">Discovering maps, please wait...<br />0 %</div>
+        <p>
+            During Map Discovery, the app scans your Steam workshop folder for any newly downloaded maps
+            and fetches the latest information about those maps from their respective Steam workshop page.<br />
+            Depending on the number of maps it has to refresh, this can take up to a few minutes.
+        </p>
+        <div class="status">
+            <span class="message">
+                Discovering maps, please wait...
+            </span>
+            <br />
+            <progress value="0" max="0"></progress>
+            <br />
+            <span class="progressText">
+                0 %
+            </span>
+        </div>
         <button onclick="hideMapDiscoveryModal(); return false;">Close</button>
     </div>
 </div>

@@ -148,6 +148,15 @@ div.modal > div {
     transform: translateY(-50%);
 }
 
+#mapDiscoveryModal h1 {
+    margin-bottom: 20px;
+}
+
+#mapDiscoveryModal p {
+    font-size: 18px;
+    color: #aaa;
+}
+
 #mapDiscoveryModal button {
     font-size: 28px;
     margin-top: 42px;
