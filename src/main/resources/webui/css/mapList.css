@@ -215,3 +215,71 @@ table.maps.detailedList td.three div.mapIDAndSize {
     position: absolute;
     bottom: 5px;
 }
+
+/*
+Grid View
+ */
+
+div.maps.gridView {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    width: 100%;
+}
+
+div.maps.gridView > div {
+    width: 368px;
+    padding: 9px;
+}
+
+div.maps.gridView > div.loaded {
+    background-color: #0803 !important;
+}
+
+div.maps.gridView > div:nth-child(odd):not(.filler) {
+    background-color: #0003;
+}
+
+div.maps.gridView .one {
+    width: 100%;
+    height: 207px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+div.maps.gridView .one > * {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+div.maps.gridView .title {
+    max-width: 320px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+div.maps.gridView img.favorite {
+    height: 32px;
+    margin-top: 2px;
+}
+
+div.maps.gridView .three {
+    margin-top: -5px;
+    margin-bottom: -1px;
+}
+
+div.maps.gridView .lastLoaded {
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+div.maps.gridView .three td:nth-child(2) {
+    vertical-align: bottom;
+}
+
+div.maps.gridView .loadMapButton {
+    font-size: 16px;
+}

@@ -149,37 +149,37 @@ function refreshMapMetadata(mapID) {
 }
 
 function scrollMapIntoView(mapID, highlight) {
-    let $tr = $('#map' + mapID);
-    if($tr.length === 0) {
+    let $map = $('#map' + mapID);
+    if($map.length === 0) {
         return;
     }
 
-    let tr = $tr.get(0);
+    let element = $map.get(0);
 
     const windowHeight = $(window).height();
     const currentScrollPos = $(document).scrollTop();
-    const trStart = $tr.offset().top;
-    const trHeight = $tr.height();
-    const trEnd = trStart + trHeight;
+    const elementStart = $map.offset().top;
+    const elementHeight = $map.height();
+    const elementEnd = elementStart + elementHeight;
 
     const visibleAreaStart = currentScrollPos + 100;
     const visibleAreaEnd = currentScrollPos + windowHeight - 100;
 
-    const needsScrolling = trStart < visibleAreaStart || visibleAreaEnd < trEnd;
+    const needsScrolling = elementStart < visibleAreaStart || visibleAreaEnd < elementEnd;
 
     if(needsScrolling) {
-        tr.scrollIntoView({behavior: "smooth", block: "center"});
+        element.scrollIntoView({behavior: "smooth", block: "center"});
     }
 
     if(highlight === 'always' || highlight === 'ifScrolled' && needsScrolling) {
         setTimeout(function() {
-            $tr.css('background-color', '#888');
+            $map.css('background-color', '#888');
             setTimeout(function() {
-                $tr.css('transition', '1s ease-in background-color');
-                $tr.css('background-color', '');
+                $map.css('transition', '1s ease-in background-color');
+                $map.css('background-color', '');
             }, 50);
             setTimeout(function() {
-                $tr.css('transition', '');
+                $map.css('transition', '');
             }, 1050);
         }, needsScrolling ? 600 : 50);
     }
@@ -273,7 +273,7 @@ function refreshMapView_compactList() {
 
         html += '<td class="one">';
         if(map['hasImage']) {
-            html += '<img src="/api/getMapImage?mapID=' + mapID + '" alt="' + map['imageName'] + '" />';
+            html += '<img src="/api/getMapImage?mapID=' + mapID + '" alt="' + map['title'] + '" />';
         } else {
             html += 'No image';
         }
@@ -331,7 +331,7 @@ function refreshMapView_detailedList() {
 
         html += '<td class="one">';
         if(map['hasImage']) {
-            html += '<img src="/api/getMapImage?mapID=' + mapID + '" alt="' + map['imageName'] + '" />';
+            html += '<img src="/api/getMapImage?mapID=' + mapID + '" alt="' + map['title'] + '" />';
         } else {
             html += 'No image';
         }
@@ -388,5 +388,55 @@ function refreshMapView_detailedList() {
 }
 
 function refreshMapView_gridView() {
-    $('#mapTableContainer').html('Grid View is not implemented yet.');
+    let html = '<div class="maps gridView">';
+
+    let count = 0;
+    for(const map of maps) {
+        let mapID = map['id'];
+        let mapIDStr = "'" + mapID + "'";
+        let thisMapIsLoaded = loadedMapID === mapID;
+
+        if(thisMapIsLoaded) {
+            html += '<div id="map' + mapID + '" class="loaded">';
+        } else {
+            html += '<div id="map' + mapID + '">';
+        }
+
+        html += '<div class="one">';
+        if(map['hasImage']) {
+            html += '<img src="/api/getMapImage?mapID=' + mapID + '" alt="' + map['title'] + '" />';
+        } else {
+            html += '<div>No image</div>';
+        }
+        html += '</div>';
+
+        html += '<table class="floatLeftRight two"><tr><td class="title">';
+        html += map['title'];
+        html += '</td><td>';
+        html += '<img class="favorite' + (map['isFavorite'] ? ' isFavorite' : '') + '" alt="Mark as favorite" src="/img/star.png" onclick="favoriteClick(' + mapIDStr + ')" />';
+        html += '</td></tr></table>';
+
+        html += '<table class="floatLeftRight three"><tr><td>';
+        html += '<div class="lastLoaded">Last loaded: ';
+        html += map['lastLoadedTimestamp'] <= 0 ? 'never' : lastPlayedFormatter.format(new Date(map['lastLoadedTimestamp']));
+        html += '</div>';
+        html += '<a href="https://steamcommunity.com/sharedfiles/filedetails/?id=' + mapID + '" target="_blank" rel="noreferrer">Visit workshop page</a>';
+        html += '</td><td>';
+        html += '<button class="loadMapButton" type="button" onclick="loadMapButtonClick(' + mapIDStr + ')">';
+        html += thisMapIsLoaded ? 'Unload Map' : 'Load Map';
+        html += '</button>';
+        html += '</td></tr></table>';
+
+        html += '</div>';
+        count++;
+    }
+
+    while(count % 3 !== 0) {
+        html += '<div class="filler"></div>';
+        count++;
+    }
+
+    html += '</div>';
+
+    $('#mapTableContainer').html(html);
 }
