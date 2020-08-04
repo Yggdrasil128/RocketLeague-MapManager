@@ -1,6 +1,8 @@
 let rlmmVersion = null;
 let currentContentDiv = 'contentHome';
 let status = null;
+let statusUpdateIntervalHandle = null;
+let disconnectedModalShown = false;
 
 $(function () {
     // onclick handler for navbar
@@ -39,7 +41,7 @@ $(function () {
         $('#versionDiv').html('Version: ' + version);
     });
 
-    setInterval(updateStatus, 5000);
+    statusUpdateIntervalHandle = setInterval(updateStatus, 5000);
     updateStatus();
 });
 
@@ -68,12 +70,17 @@ function makeRequest(url, body, successCallback, errorCallback, timeoutMillis) {
 }
 
 function updateStatus() {
-    makeRequest('api/getStatus', null, updateStatusCallback);
+    makeRequest('api/getStatus', null, updateStatusCallback, updateStatusCallbackError);
 }
 
 function updateStatusCallback(data) {
     const oldStatus = status;
     status = JSON.parse(data);
+
+    if(disconnectedModalShown) {
+        disconnectedModalShown = false;
+        $('#disconnectModal').removeClass('shown');
+    }
 
     if(!oldStatus || oldStatus['isRLRunning'] ^ status['isRLRunning']) {
         if(status['isRLRunning']) {
@@ -84,6 +91,15 @@ function updateStatusCallback(data) {
             $('#rlStatus button').html('Start RL').attr('disabled', null);
         }
     }
+}
+
+function updateStatusCallbackError() {
+    if(disconnectedModalShown) {
+        return;
+    }
+
+    disconnectedModalShown = true;
+    $('#disconnectModal').addClass('shown');
 }
 
 function startStopRocketLeague() {
