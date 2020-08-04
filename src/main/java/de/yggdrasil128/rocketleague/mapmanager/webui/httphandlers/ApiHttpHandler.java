@@ -52,6 +52,7 @@ public class ApiHttpHandler implements HttpHandler {
 		functions.put("patchConfig", ApiFunctionRaw.of(this::patchConfig));
 		functions.put("exitApp", ApiFunctionRaw.of(this::exitApp));
 		functions.put("getStatus", ApiFunctionRaw.of(this::getStatus));
+		functions.put("registerBrowserTab", ApiFunctionRaw.of(this::registerBrowserTab));
 	}
 	
 	private RLMap getMapFromParameters(Map<String, String> parameters, @SuppressWarnings("SameParameterValue") boolean throwIfNotFound) {
@@ -318,9 +319,16 @@ public class ApiHttpHandler implements HttpHandler {
 	private String getStatus(Map<String, String> parameters) {
 		JsonObject json = new JsonObject();
 		
+		json.addProperty("currentBrowserTabID", rlMapManager.getWebInterface().getBrowserTabID());
 		json.addProperty("isRLRunning", rlMapManager.isRocketLeagueRunning());
 		
 		return GSON.toJson(json);
+	}
+	
+	private String registerBrowserTab(Map<String, String> parameters) {
+		String browserTabID = parameters.get("postBody");
+		rlMapManager.getWebInterface().setBrowserTabID(browserTabID);
+		return "";
 	}
 	
 	@Override

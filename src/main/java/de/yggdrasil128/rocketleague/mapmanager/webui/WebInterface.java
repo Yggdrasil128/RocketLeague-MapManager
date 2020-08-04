@@ -19,6 +19,7 @@ public class WebInterface {
 	private final Logger logger;
 	private final RLMapManager rlMapManager;
 	private final int port;
+	private String browserTabID = null;
 	
 	public WebInterface(RLMapManager rlMapManager, int port) {
 		logger = LoggerFactory.getLogger(WebInterface.class);
@@ -45,6 +46,14 @@ public class WebInterface {
 		} catch(Exception e) {
 			logger.warn("Couldn't start web UI", e);
 		}
+	}
+	
+	public String getBrowserTabID() {
+		return browserTabID;
+	}
+	
+	public void setBrowserTabID(String browserTabID) {
+		this.browserTabID = browserTabID;
 	}
 	
 	public void openInBrowser() {

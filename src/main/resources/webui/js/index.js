@@ -3,12 +3,13 @@ let currentContentDiv = 'contentHome';
 let status = null;
 let statusUpdateIntervalHandle = null;
 let disconnectedModalShown = false;
+const browserTabID = getRandomString(8);
 
-$(function () {
+$(function() {
     // onclick handler for navbar
-    $('#navBar .navList div.anchor').on('click', function () {
+    $('#navBar .navList div.anchor').on('click', function() {
         const $this = $(this);
-        if ($this.hasClass('current')) {
+        if($this.hasClass('current')) {
             return;
         }
         currentContentDiv = $this.attr('data-divID');
@@ -22,7 +23,7 @@ $(function () {
     });
 
     // clock
-    setInterval(function () {
+    setInterval(function() {
         const now = new Date();
 
         let i = now.getHours();
@@ -41,8 +42,10 @@ $(function () {
         $('#versionDiv').html('Version: ' + version);
     });
 
-    statusUpdateIntervalHandle = setInterval(updateStatus, 5000);
-    updateStatus();
+    makeRequest('/api/registerBrowserTab', browserTabID, function() {
+        statusUpdateIntervalHandle = setInterval(updateStatus, 5000);
+        updateStatus();
+    });
 });
 
 function makeRequest(url, body, successCallback, errorCallback, timeoutMillis) {
@@ -78,8 +81,15 @@ function updateStatusCallback(data) {
     status = JSON.parse(data);
 
     if(disconnectedModalShown) {
-        disconnectedModalShown = false;
-        $('#disconnectModal').removeClass('shown');
+        location.reload();
+        return;
+    }
+
+    if(status['currentBrowserTabID'] !== browserTabID) {
+        $('#activeInAnotherTabModal').addClass('shown');
+        clearInterval(statusUpdateIntervalHandle);
+        statusUpdateIntervalHandle = null;
+        return;
     }
 
     if(!oldStatus || oldStatus['isRLRunning'] ^ status['isRLRunning']) {
@@ -119,4 +129,15 @@ function startStopRocketLeague() {
  */
 function coalesce(a, b) {
     return a ? a : b;
+}
+
+function getRandomString(length) {
+    let result = '';
+// noinspection SpellCheckingInspection
+    let characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let charactersLength = characters.length;
+    for(let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
 }
