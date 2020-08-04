@@ -198,7 +198,7 @@ public class Config {
 	}
 	
 	public void setMapSorting(int mapSorting) {
-		if(mapSorting < -4 || mapSorting == 0 || mapSorting > 4) {
+		if(mapSorting < -5 || mapSorting == 0 || mapSorting > 5) {
 			throw new IllegalArgumentException();
 		}
 		this.mapSorting = mapSorting;

@@ -201,12 +201,17 @@ function mapComparator_mapID(mapA, mapB) {
     return parseFloat(mapA['id']) - parseFloat(mapB['id']);
 }
 
+function mapComparator_authorName(mapA, mapB) {
+    return mapA['authorName'].localeCompare(mapB['authorName']);
+}
+
 const mapComparators = [
     null,
     mapComparator_title,
     mapComparator_lastLoaded,
     mapComparator_mapSize,
-    mapComparator_mapID
+    mapComparator_mapID,
+    mapComparator_authorName
 ];
 
 function updateMapComparator() {
