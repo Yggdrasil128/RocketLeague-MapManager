@@ -93,6 +93,18 @@
             <td class="mapListH1Container">
                 <h1>Map List</h1>
             </td>
+            <td class="mapLayout" data-children-count="1">
+                <div style="margin-bottom: 3px">
+                    <label for="mapLayoutSelect" style="font-size: 22px; font-weight: bold;">
+                        Layout:
+                    </label>
+                </div>
+                <select id="mapLayoutSelect" style="font-size: 16px" onchange="onUpdateLayoutOption()">
+                    <option value="0">Compact List</option>
+                    <option value="1" selected>Detailed List</option>
+                    <option value="2" disabled>Grid View</option>
+                </select>
+            </td>
             <td class="mapSorting">
                 <label for="mapSortingSelect" style="font-size: 22px; font-weight: bold;">
                     Sort maps by:

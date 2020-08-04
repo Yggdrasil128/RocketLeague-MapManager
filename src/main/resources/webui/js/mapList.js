@@ -37,75 +37,19 @@ function sortMaps() {
 }
 
 function refreshMapView() {
-    let html = '<table class="maps">';
-
-    for(const map of maps) {
-        let mapID = map['id'];
-        let mapIDStr = "'" + mapID + "'";
-        let thisMapIsLoaded = loadedMapID === mapID;
-
-        if(thisMapIsLoaded) {
-            html += '<tr id="map' + mapID + '" class="loaded">';
-        } else {
-            html += '<tr id="map' + mapID + '">';
-        }
-
-        html += '<td class="one">';
-        if(map['hasImage']) {
-            html += '<img src="/api/getMapImage?mapID=' + mapID + '" alt="' + map['imageName'] + '" />';
-        } else {
-            html += 'No image';
-        }
-        html += '</td>';
-
-        html += '<td class="two">';
-        html += '<div class="title">' + map['title'] + '</div>';
-        html += '<table class="udkAndAuthor floatLeftRight"><tr><td><div class="udkFilename">';
-        html += map['name'].substr(0, map['name'].length - 4);
-        html += '<span>';
-        html += map['name'].substr(map['name'].length - 4, 4);
-        html += '</span>';
-        html += '</div></td><td><div class="authorName">';
-        html += '<span>Created by </span>';
-        html += map['authorName'];
-        html += '</div></td></tr></table>';
-        html += '<div class="description">' + coalesce(map['description'], "No description").replace(/\n/g, "<br />") + '</div>';
-        html += '</td>';
-
-        html += '<td class="three">';
-        html += '<table class="floatLeftRight"><tr><td>';
-        html += '<button class="loadMapButton" type="button" onclick="loadMapButtonClick(' + mapIDStr + ')">';
-        html += thisMapIsLoaded ? 'Unload Map' : 'Load Map';
-        html += '</button>';
-        html += '</td><td>';
-        // noinspection HtmlUnknownTarget
-        html += '<img class="favorite' + (map['isFavorite'] ? ' isFavorite' : '') + '" alt="Mark as favorite" src="/img/star.png" onclick="favoriteClick(' + mapIDStr + ')" />';
-        html += '</td></tr></table>';
-
-        html += '<span class="lastLoaded">Last loaded: <wbr />';
-        html += map['lastLoadedTimestamp'] <= 0 ? 'never' : lastPlayedFormatter.format(new Date(map['lastLoadedTimestamp']));
-        html += '</span>';
-
-        html += '<br />';
-
-        html += '<button class="refreshMapMetadataButton" type="button" onclick="refreshMapMetadata(' + mapIDStr + ')">Refresh metadata</button>';
-        html += '<br />';
-        html += '<a href="https://steamcommunity.com/sharedfiles/filedetails/?id=' + mapID + '" target="_blank" rel="noreferrer">Visit workshop page</a>';
-
-        html += '<div class="mapIDAndSize" style="font-size: 14px; margin-top: 48px;">';
-        html += 'Map ID: ' + mapID;
-        html += '<br />';
-        html += 'Map Size: ' + (parseFloat(map['mapSize']) / 1048576).toFixed(1) + ' MiB';
-        html += '</div>';
-
-        html += '</td>';
-
-        html += '</tr>';
+    let i = parseInt($('#mapLayoutSelect').get(0).value);
+    switch(i) {
+        case 0:
+            refreshMapView_compactList();
+            break;
+        case 1:
+            refreshMapView_detailedList();
+            break;
+        case 2:
+            refreshMapView_gridView();
+            break;
     }
-
-    html += '</table>';
-
-    $('#mapTableContainer').html(html);
+    return i;
 }
 
 function favoriteClick(mapID) {
@@ -305,4 +249,144 @@ function onUpdateSortOptions() {
 
     // the mapComparatorOptions object has already been updated by updateMapComparator
     makeRequest('api/patchConfig', JSON.stringify(mapComparatorOptions));
+}
+
+function onUpdateLayoutOption() {
+    let i = refreshMapView();
+
+    makeRequest('api/patchConfig', JSON.stringify({mapLayout: i}));
+}
+
+function refreshMapView_compactList() {
+    let html = '<table class="maps compactList">';
+
+    for(const map of maps) {
+        let mapID = map['id'];
+        let mapIDStr = "'" + mapID + "'";
+        let thisMapIsLoaded = loadedMapID === mapID;
+
+        if(thisMapIsLoaded) {
+            html += '<tr id="map' + mapID + '" class="loaded">';
+        } else {
+            html += '<tr id="map' + mapID + '">';
+        }
+
+        html += '<td class="one">';
+        if(map['hasImage']) {
+            html += '<img src="/api/getMapImage?mapID=' + mapID + '" alt="' + map['imageName'] + '" />';
+        } else {
+            html += 'No image';
+        }
+        html += '</td>';
+
+        html += '<td class="two">';
+        html += '<div class="title">' + map['title'] + '</div>';
+        html += '</td>';
+
+        html += '<td class="three">';
+        html += '<div class="authorName">';
+        // html += '<span>Created by </span>';
+        html += map['authorName'];
+        html += '</div>';
+        html += '</td>';
+
+        html += '<td class="four">';
+        html += '<div class="lastLoaded">Last loaded: ';
+        html += map['lastLoadedTimestamp'] <= 0 ? 'never' : lastPlayedFormatter.format(new Date(map['lastLoadedTimestamp']));
+        html += '</div>';
+        html += '<a href="https://steamcommunity.com/sharedfiles/filedetails/?id=' + mapID + '" target="_blank" rel="noreferrer">Visit workshop page</a>';
+        html += '</td>';
+
+        html += '<td class="five">';
+        html += '<button class="loadMapButton" type="button" onclick="loadMapButtonClick(' + mapIDStr + ')">';
+        html += thisMapIsLoaded ? 'Unload Map' : 'Load Map';
+        html += '</button>';
+        html += '</td>';
+
+        html += '<td class="six">';
+        html += '<img class="favorite' + (map['isFavorite'] ? ' isFavorite' : '') + '" alt="Mark as favorite" src="/img/star.png" onclick="favoriteClick(' + mapIDStr + ')" />';
+        html += '</td>';
+
+        html += '</tr>';
+    }
+
+    html += '</table>';
+
+    $('#mapTableContainer').html(html);
+}
+
+function refreshMapView_detailedList() {
+    let html = '<table class="maps detailedList">';
+
+    for(const map of maps) {
+        let mapID = map['id'];
+        let mapIDStr = "'" + mapID + "'";
+        let thisMapIsLoaded = loadedMapID === mapID;
+
+        if(thisMapIsLoaded) {
+            html += '<tr id="map' + mapID + '" class="loaded">';
+        } else {
+            html += '<tr id="map' + mapID + '">';
+        }
+
+        html += '<td class="one">';
+        if(map['hasImage']) {
+            html += '<img src="/api/getMapImage?mapID=' + mapID + '" alt="' + map['imageName'] + '" />';
+        } else {
+            html += 'No image';
+        }
+        html += '</td>';
+
+        html += '<td class="two">';
+        html += '<div class="title">' + map['title'] + '</div>';
+        html += '<table class="udkAndAuthor floatLeftRight"><tr><td><div class="udkFilename">';
+        html += map['name'].substr(0, map['name'].length - 4);
+        html += '<span>';
+        html += map['name'].substr(map['name'].length - 4, 4);
+        html += '</span>';
+        html += '</div></td><td><div class="authorName">';
+        html += '<span>Created by </span>';
+        html += map['authorName'];
+        html += '</div></td></tr></table>';
+        html += '<div class="description">' + coalesce(map['description'], "No description").replace(/\n/g, "<br />") + '</div>';
+        html += '</td>';
+
+        html += '<td class="three">';
+        html += '<table class="floatLeftRight"><tr><td>';
+        html += '<button class="loadMapButton" type="button" onclick="loadMapButtonClick(' + mapIDStr + ')">';
+        html += thisMapIsLoaded ? 'Unload Map' : 'Load Map';
+        html += '</button>';
+        html += '</td><td>';
+        // noinspection HtmlUnknownTarget
+        html += '<img class="favorite' + (map['isFavorite'] ? ' isFavorite' : '') + '" alt="Mark as favorite" src="/img/star.png" onclick="favoriteClick(' + mapIDStr + ')" />';
+        html += '</td></tr></table>';
+
+        html += '<span class="lastLoaded">Last loaded: <wbr />';
+        html += map['lastLoadedTimestamp'] <= 0 ? 'never' : lastPlayedFormatter.format(new Date(map['lastLoadedTimestamp']));
+        html += '</span>';
+
+        html += '<br />';
+
+        html += '<button class="refreshMapMetadataButton" type="button" onclick="refreshMapMetadata(' + mapIDStr + ')">Refresh metadata</button>';
+        html += '<br />';
+        html += '<a href="https://steamcommunity.com/sharedfiles/filedetails/?id=' + mapID + '" target="_blank" rel="noreferrer">Visit workshop page</a>';
+
+        html += '<div class="mapIDAndSize" style="font-size: 14px; margin-top: 48px;">';
+        html += 'Map ID: ' + mapID;
+        html += '<br />';
+        html += 'Map Size: ' + (parseFloat(map['mapSize']) / 1048576).toFixed(1) + ' MiB';
+        html += '</div>';
+
+        html += '</td>';
+
+        html += '</tr>';
+    }
+
+    html += '</table>';
+
+    $('#mapTableContainer').html(html);
+}
+
+function refreshMapView_gridView() {
+    $('#mapTableContainer').html('Grid View is not implemented yet.');
 }

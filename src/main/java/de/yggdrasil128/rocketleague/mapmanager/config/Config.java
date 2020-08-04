@@ -41,6 +41,7 @@ public class Config {
 	private BehaviorWhenRLIsStopped behaviorWhenRLIsStopped = BehaviorWhenRLIsStopped.DO_NOTHING;
 	private BehaviorWhenRLIsRunning behaviorWhenRLIsRunning = BehaviorWhenRLIsRunning.RESTART_RL;
 	
+	private MapLayout mapLayout = MapLayout.DETAILED_LIST;
 	private int mapSorting = 1;
 	private boolean showLoadedMapAtTop = false;
 	private boolean showFavoritesAtTop = false;
@@ -184,6 +185,14 @@ public class Config {
 		this.behaviorWhenRLIsRunning = behaviorWhenRLIsRunning;
 	}
 	
+	public MapLayout getMapLayout() {
+		return mapLayout;
+	}
+	
+	public void setMapLayout(MapLayout mapLayout) {
+		this.mapLayout = mapLayout;
+	}
+	
 	public int getMapSorting() {
 		return mapSorting;
 	}
@@ -253,6 +262,26 @@ public class Config {
 				return 0;
 			}
 			return this == STOP_RL ? 1 : 2;
+		}
+	}
+	
+	public enum MapLayout {
+		COMPACT_LIST,
+		DETAILED_LIST,
+		GRID_VIEW;
+		
+		public static MapLayout fromInt(int i) {
+			if(i == 0) {
+				return COMPACT_LIST;
+			}
+			return i == 1 ? DETAILED_LIST : GRID_VIEW;
+		}
+		
+		public int toInt() {
+			if(this == COMPACT_LIST) {
+				return 0;
+			}
+			return this == DETAILED_LIST ? 1 : 2;
 		}
 	}
 	

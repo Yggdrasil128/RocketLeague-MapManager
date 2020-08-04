@@ -177,3 +177,12 @@ div.modal > div {
 .monospace {
     font-family: monospace;
 }
+
+table.floatLeftRight {
+    width: 100%;
+    border-spacing: 0;
+}
+
+table.floatLeftRight > tbody > tr > td:last-child {
+    text-align: right;
+}
