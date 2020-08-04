@@ -107,7 +107,7 @@ h1 {
 
 #navBar .navExtra table {
     float: right;
-    padding: 11px;
+    padding: 0 11px;
 }
 
 #localTime {
@@ -185,4 +185,17 @@ table.floatLeftRight {
 
 table.floatLeftRight > tbody > tr > td:last-child {
     text-align: right;
+}
+
+#rlStatus {
+    padding-right: 20px;
+    text-align: center;
+}
+
+#rlStatus span {
+    color: #ffafaf;
+}
+
+#rlStatus span.isRunning {
+    color: #afffaf;
 }

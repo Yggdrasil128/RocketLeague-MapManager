@@ -51,6 +51,7 @@ public class ApiHttpHandler implements HttpHandler {
 		functions.put("stopRocketLeague", ApiFunctionRaw.of(this::stopRocketLeague));
 		functions.put("patchConfig", ApiFunctionRaw.of(this::patchConfig));
 		functions.put("exitApp", ApiFunctionRaw.of(this::exitApp));
+		functions.put("getStatus", ApiFunctionRaw.of(this::getStatus));
 	}
 	
 	private RLMap getMapFromParameters(Map<String, String> parameters, @SuppressWarnings("SameParameterValue") boolean throwIfNotFound) {
@@ -312,6 +313,14 @@ public class ApiHttpHandler implements HttpHandler {
 	private String exitApp(Map<String, String> parameters) {
 		System.exit(0);
 		return "";
+	}
+	
+	private String getStatus(Map<String, String> parameters) {
+		JsonObject json = new JsonObject();
+		
+		json.addProperty("isRLRunning", rlMapManager.isRocketLeagueRunning());
+		
+		return GSON.toJson(json);
 	}
 	
 	@Override

@@ -1,5 +1,6 @@
 let rlmmVersion = null;
 let currentContentDiv = 'contentHome';
+let status = null;
 
 $(function () {
     // onclick handler for navbar
@@ -37,6 +38,9 @@ $(function () {
         rlmmVersion = version;
         $('#versionDiv').html('Version: ' + version);
     });
+
+    setInterval(updateStatus, 5000);
+    updateStatus();
 });
 
 function makeRequest(url, body, successCallback, errorCallback, timeoutMillis) {
@@ -60,6 +64,35 @@ function makeRequest(url, body, successCallback, errorCallback, timeoutMillis) {
         request.send(body);
     } else {
         request.send();
+    }
+}
+
+function updateStatus() {
+    makeRequest('api/getStatus', null, updateStatusCallback);
+}
+
+function updateStatusCallback(data) {
+    const oldStatus = status;
+    status = JSON.parse(data);
+
+    if(!oldStatus || oldStatus['isRLRunning'] ^ status['isRLRunning']) {
+        if(status['isRLRunning']) {
+            $('#rlStatus span').html('running').addClass('isRunning');
+            $('#rlStatus button').html('Stop RL').attr('disabled', null);
+        } else {
+            $('#rlStatus span').html('not running').removeClass('isRunning');
+            $('#rlStatus button').html('Start RL').attr('disabled', null);
+        }
+    }
+}
+
+function startStopRocketLeague() {
+    if(status['isRLRunning']) {
+        $('#rlStatus button').html('Stopping...').attr('disabled', '');
+        makeRequest('api/stopRocketLeague', null, updateStatus);
+    } else {
+        $('#rlStatus button').html('Starting...').attr('disabled', '');
+        makeRequest('api/startRocketLeague', null, updateStatus);
     }
 }
 
