@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>RL-MM Setup</title>
+    <link href="img/favicon.ico" rel="shortcut icon" type="image/x-icon">
+
+    <link href="css/hint.min.css" rel="stylesheet" type="text/css"/>
+    <link href="css/index.css" rel="stylesheet" type="text/css"/>
+    <link href="css/setup.css" rel="stylesheet" type="text/css"/>
+    <link href="css/configuration.css" rel="stylesheet" type="text/css"/>
+
+    <script src="js/jquery-3.5.1.min.js" type="application/javascript"></script>
+
+    <script src="js/utils.js" type="application/javascript"></script>
+    <script src="js/setup.js" type="application/javascript"></script>
+</head>
+<body>
+<div id="header">
+    <div class="headerLeft">
+        <img alt="Logo" src="img/logo.png"/>
+    </div>
+    <div class="headerRight">
+        <div style="font-size: 30px">
+            Rocket League - Map Manager
+        </div>
+        <div style="font-size: 20px">
+            Made by Yggdrasil128
+        </div>
+        <div id="versionDiv" style="font-size: 16px; margin-top: 10px">
+            Version:
+        </div>
+    </div>
+</div>
+<div id="navBar">
+    <div class="navList">
+        <div class="anchor current">Setup</div>
+    </div>
+    <div class="navExtra">
+        <table>
+            <tr>
+                <td>Local time:</td>
+                <td id="localTime"></td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="content current" id="contentSetup0">
+    <h1>Setup</h1>
+    <p>
+        Hello, and welcome to the installer of the Rocket League Map Manager.<br/>
+        This installer will guide you through the process of installing the Rocket League Map Manager on your computer.
+    </p>
+    <p>
+        Installation directory (cannot be changed):&emsp;<span class="monospace" id="installationDirSpan"></span>
+    </p>
+    <p>
+        <button onclick="setupPhase1()">Next</button>
+    </p>
+</div>
+
+<div class="content" id="contentSetup1">
+    <h1>Configure your steamapps folder</h1>
+    <p>
+        In order for the Map Manager to work, it needs to know the location of the 'steamapps' folder where Rocket
+        League is installed.<br/>
+        You only need to configure this once, the app will remember these settings afterwards.
+    </p>
+    <table>
+        <tr>
+            <td>
+                'steamapps' folder:
+            </td>
+            <td class="monospace" id="steamappsFolder">
+                &mdash;
+            </td>
+        </tr>
+        <tr>
+            <td>
+                RocketLeague.exe file:
+            </td>
+            <td class="monospace" id="exeFile">
+                &mdash;
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Target UPK file:
+            </td>
+            <td class="monospace" id="upkFile">
+                &mdash;
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Workshop folder:
+            </td>
+            <td class="monospace" id="workshopFolder">
+                &mdash;
+            </td>
+        </tr>
+    </table>
+
+    <div class="buttonContainer">
+        <button onclick="chooseSteamappsFolder(); return false;">Choose steamapps folder</button>
+    </div>
+
+    <p id="couldNotFindSteamappsFolder">
+        Couldn't find your 'steamapps' folder.<br/>
+        Please click the above button and enter the path to the 'steamapps' folder where Rocket League is installed.
+    </p>
+    <p id="steamappsFolderIsConfigured">
+        Your 'steamapps' folder is configured and ready to go.
+    </p>
+    <p>
+        <button onclick="setupPhase0()">Previous</button>
+        <button disabled id="toPhase2" onclick="setupPhase2()">Next</button>
+    </p>
+</div>
+
+<div class="content" id="contentSetup2">
+    <h1>Settings</h1>
+    <table class="configurationTable">
+        <tr>
+            <th>Setting</th>
+            <th>Value</th>
+            <th>Description</th>
+        </tr>
+        <tr>
+            <td><label for="input_renameOriginalUPK">Rename original Labs_Underpass_P.upk</label></td>
+            <td>
+                <select id="input_renameOriginalUPK" size="1">
+                    <option value="0">Disabled</option>
+                    <option selected value="1">Enabled</option>
+                </select>
+            </td>
+            <td>
+                If enabled, the App will rename the original <span class="monospace">Labs_Underpass_P.upk</span>
+                to <span class="monospace">Labs_Underpass_P.upk.UNUSED</span>
+                when a workshop map is loaded, to prevent the "Ambiguous package name" warning from showing up.
+            </td>
+        </tr>
+        <tr>
+            <td><label for="input_behaviorWhenRLIsStopped">When a map is loaded and Rocket League<br/><b>is not
+                running</b>:</label></td>
+            <td>
+                <select id="input_behaviorWhenRLIsStopped" size="1">
+                    <option selected value="0">Don't start Rocket League</option>
+                    <option value="1">Start Rocket League</option>
+                </select>
+            </td>
+            <td>
+                Choose whether or not you'd like the Map Manager to automatically start Rocket League when a map
+                is loaded and Rocket League is not already running.
+            </td>
+        </tr>
+        <tr>
+            <td><label for="input_behaviorWhenRLIsRunning">When a map is loaded and Rocket League<br/><b>is
+                running</b>:</label></td>
+            <td>
+                <select id="input_behaviorWhenRLIsRunning" size="1">
+                    <option value="0">Just load the map</option>
+                    <option value="1">Stop Rocket League</option>
+                    <option selected value="2">Stop and restart Rocket League</option>
+                </select>
+            </td>
+            <td>
+                Choose whether or not you'd like the Map Manager to automatically stop/start Rocket League when
+                a map is loaded and Rocket League is already running.
+            </td>
+        </tr>
+    </table>
+    <p>
+        <button onclick="setupPhase1()">Previous</button>
+        <button onclick="setupPhase3()">Install</button>
+    </p>
+</div>
+
+<div class="content current" id="contentSetup3">
+    <h1>Installing...</h1>
+    <p>
+        Please wait while RL Map Manager is being installed.
+    </p>
+    <div id="installationProgress">
+        <div id="installationStatus">Initializing...</div>
+        <progress max="0" value="0"></progress>
+        <br/>
+        <span class="progressText">0 %</span>
+    </div>
+</div>
+
+<div class="content current" id="contentSetup4">
+    <h1>Installation successful</h1>
+    <p>
+        RL Map Manager has been successfully installed on your computer.
+    </p>
+    <p>
+        <input checked id="startRLMapManagerCheckbox" type="checkbox"/>
+        <label for="startRLMapManagerCheckbox">Start RL Map Manager</label>
+        <br/>
+        <button onclick="setupPhase5()">Finish installation</button>
+    </p>
+</div>
+
+</body>
+</html>

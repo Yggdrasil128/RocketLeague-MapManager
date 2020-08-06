@@ -29,7 +29,7 @@ function fillFromConfig() {
     $('#upkFile').html(coalesce(config['paths']['upkFile'], '&mdash;'));
     $('#workshopFolder').html(coalesce(config['paths']['workshopFolder'], '&mdash;'));
 
-    $('#input_renameOriginalUPK').get(0).value = config['renameOriginalUnderpassUPK'] ? '1' : '0';
+    $('#input_renameOriginalUnderpassUPK').get(0).value = config['renameOriginalUnderpassUPK'] ? '1' : '0';
     $('#input_behaviorWhenRLIsStopped').get(0).value = config['behaviorWhenRLIsStopped'];
     $('#input_behaviorWhenRLIsRunning').get(0).value = config['behaviorWhenRLIsRunning'];
 
@@ -46,7 +46,7 @@ function storeConfig() {
     let json = {};
 
     // noinspection EqualityComparisonWithCoercionJS
-    json['renameOriginalUPK'] = $('#input_renameOriginalUPK').get(0).value == '1';
+    json['renameOriginalUnderpassUPK'] = $('#input_renameOriginalUnderpassUPK').get(0).value == '1';
     json['behaviorWhenRLIsStopped'] = parseInt($('#input_behaviorWhenRLIsStopped').get(0).value);
     json['behaviorWhenRLIsRunning'] = parseInt($('#input_behaviorWhenRLIsRunning').get(0).value);
 

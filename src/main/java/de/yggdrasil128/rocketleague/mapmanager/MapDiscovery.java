@@ -1,5 +1,6 @@
 package de.yggdrasil128.rocketleague.mapmanager;
 
+import com.google.gson.JsonObject;
 import de.yggdrasil128.rocketleague.mapmanager.config.RLMap;
 import de.yggdrasil128.rocketleague.mapmanager.config.RLMapMetadata;
 import org.slf4j.Logger;
@@ -8,12 +9,14 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.HashMap;
 
+import static de.yggdrasil128.rocketleague.mapmanager.config.Config.GSON;
+
 public class MapDiscovery {
 	private static MapDiscovery task = null;
-	
-	public synchronized static MapDiscovery get() {
-		return task;
-	}
+
+//	public synchronized static MapDiscovery get() {
+//		return task;
+//	}
 	
 	public synchronized static void start(RLMapManager rlMapManager) {
 		if(task != null && !task.isDone()) {
@@ -120,5 +123,36 @@ public class MapDiscovery {
 		File udkFile = new File(mapFolder, files[0]);
 		
 		return new RLMap(id, udkFile);
+	}
+	
+	public static String getStatusJson() {
+		JsonObject json = new JsonObject();
+		if(task == null) {
+			json.addProperty("progressFloat", 0);
+			json.addProperty("isDone", true);
+			json.addProperty("message", "Not started");
+			return GSON.toJson(json);
+		}
+		
+		boolean isDone = task.isDone();
+		json.addProperty("isDone", isDone);
+		
+		if(isDone) {
+			Throwable throwable = task.getThrowable();
+			if(throwable == null) {
+				int mapCount = task.rlMapManager.getMaps().size();
+				String s = "Successfully discovered " + mapCount + (mapCount == 1 ? " map." : " maps.");
+				json.addProperty("message", s);
+				return GSON.toJson(json);
+			}
+			
+			json.addProperty("message", "Error:<br />" + throwable.toString());
+			return GSON.toJson(json);
+		}
+		
+		json.addProperty("message", "Discovering maps, please wait...");
+		json.addProperty("progress", task.getProgress());
+		json.addProperty("progressTarget", task.getProgressTarget());
+		return GSON.toJson(json);
 	}
 }

@@ -102,7 +102,15 @@ public class RLMapMetadata {
 	}
 	
 	public void fetchFromWorkshop() throws IOException {
-		Document doc = Jsoup.connect("https://steamcommunity.com/sharedfiles/filedetails/?id=" + id).timeout(5000).get();
+		Document doc;
+		try {
+			doc = Jsoup.connect("https://steamcommunity.com/sharedfiles/filedetails/?id=" + id).timeout(5000).get();
+		} catch(IOException e) {
+			title = null;
+			description = "Error: Couldn't fetch information about this map from the Steam workshop because an error occurred.";
+			authorName = "Unknown";
+			throw e;
+		}
 		
 		Elements elements;
 		

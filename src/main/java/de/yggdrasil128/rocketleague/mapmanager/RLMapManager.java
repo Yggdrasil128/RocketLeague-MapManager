@@ -18,7 +18,7 @@ import java.util.Map;
 public class RLMapManager {
 	public static final File FILE_ROOT;
 	public static final File FILE_CONFIG;
-	public static final String VERSION = "1.1";
+	public static final String VERSION = "1.2";
 	static final File FILE_LOG;
 	
 	static {
@@ -40,34 +40,37 @@ public class RLMapManager {
 	private final Config config;
 	private final WebInterface webInterface;
 	private final SteamLibraryDiscovery steamLibraryDiscovery;
+	private final boolean isSetupMode;
 	
 	private Map<Long, RLMap> maps;
 	
-	RLMapManager() {
+	RLMapManager(boolean isSetupMode) {
+		this.isSetupMode = isSetupMode;
 		logger = LoggerFactory.getLogger(RLMapManager.class);
 		
-		config = Config.load();
+		if(isSetupMode) {
+			config = new Config(this);
+		} else {
+			config = Config.load(this);
+		}
 		assert config != null;
 		
 		webInterface = new WebInterface(this, config.getWebInterfacePort());
 		steamLibraryDiscovery = new SteamLibraryDiscovery(this);
 	}
 	
+	RLMapManager() {
+		this(false);
+	}
+	
 	public void start() {
 		config.save();
 		
-		if(config.needsSetup()) {
-			// try auto-setup
-			SteamLibraryDiscovery.Result result = steamLibraryDiscovery.discoverSteamLibrary();
-			if(result.isSuccess()) {
-				result.saveToConfig(config);
-				MapDiscovery.start(this);
-			}
-		} else {
+		if(!isSetupMode && !config.needsSetup()) {
 			MapDiscovery.start(this);
 		}
 		
-		webInterface.start();
+		webInterface.start(isSetupMode);
 	}
 	
 	public Logger getLogger() {

@@ -2,57 +2,53 @@ package de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import de.yggdrasil128.rocketleague.mapmanager.MapDiscovery;
 import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
 import de.yggdrasil128.rocketleague.mapmanager.SteamLibraryDiscovery;
 import de.yggdrasil128.rocketleague.mapmanager.config.Config;
 import de.yggdrasil128.rocketleague.mapmanager.config.RLMap;
 import de.yggdrasil128.rocketleague.mapmanager.config.RLMapMetadata;
+import de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers.api.AbstractApiHttpHandler;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
 @SuppressWarnings("SameReturnValue")
-public class ApiHttpHandler implements HttpHandler {
+public class ApiHttpHandler extends AbstractApiHttpHandler {
 	private static final Gson GSON = Config.GSON;
 	
 	private final RLMapManager rlMapManager;
-	private final HashMap<String, ApiFunctionRaw> functions;
 	
 	public ApiHttpHandler(RLMapManager rlMapManager) {
+		super(rlMapManager.getLogger());
+		
 		this.rlMapManager = rlMapManager;
 		
-		functions = new HashMap<>();
-		functions.put("getVersion", ApiFunctionRaw.of(this::getVersion));
-		functions.put("getConfig", ApiFunctionRaw.of(this::getConfig));
-		functions.put("discoverSteamLibrary", ApiFunctionRaw.of(this::discoverSteamLibrary));
-		functions.put("getMaps", ApiFunctionRaw.of(this::getMaps));
-		functions.put("startMapDiscovery", ApiFunctionRaw.of(this::startMapDiscovery));
-		functions.put("getMapDiscoveryStatus", ApiFunctionRaw.of(this::getMapDiscoveryStatus));
-		functions.put("getMapImage", this::getMapImage);
-		functions.put("setFavorite", ApiFunctionRaw.of(this::setFavorite));
-		functions.put("getLoadedMapID", ApiFunctionRaw.of(this::getLoadedMapID));
-		functions.put("loadMap", ApiFunctionRaw.of(this::loadMap));
-		functions.put("unloadMap", ApiFunctionRaw.of(this::unloadMap));
-		functions.put("refreshMapMetadata", ApiFunctionRaw.of(this::refreshMapMetadata));
-		functions.put("isRocketLeagueRunning", ApiFunctionRaw.of(this::isRocketLeagueRunning));
-		functions.put("startRocketLeague", ApiFunctionRaw.of(this::startRocketLeague));
-		functions.put("stopRocketLeague", ApiFunctionRaw.of(this::stopRocketLeague));
-		functions.put("patchConfig", ApiFunctionRaw.of(this::patchConfig));
-		functions.put("exitApp", ApiFunctionRaw.of(this::exitApp));
-		functions.put("getStatus", ApiFunctionRaw.of(this::getStatus));
-		functions.put("registerBrowserTab", ApiFunctionRaw.of(this::registerBrowserTab));
+		super.registerFunction("getVersion", this::getVersion);
+		super.registerFunction("getConfig", this::getConfig);
+		super.registerFunction("discoverSteamLibrary", this::discoverSteamLibrary);
+		super.registerFunction("getMaps", this::getMaps);
+		super.registerFunction("startMapDiscovery", this::startMapDiscovery);
+		super.registerFunction("getMapDiscoveryStatus", this::getMapDiscoveryStatus);
+		super.registerFunction("getMapImage", this::getMapImage);
+		super.registerFunction("setFavorite", this::setFavorite);
+		super.registerFunction("getLoadedMapID", this::getLoadedMapID);
+		super.registerFunction("loadMap", this::loadMap);
+		super.registerFunction("unloadMap", this::unloadMap);
+		super.registerFunction("refreshMapMetadata", this::refreshMapMetadata);
+		super.registerFunction("isRocketLeagueRunning", this::isRocketLeagueRunning);
+		super.registerFunction("startRocketLeague", this::startRocketLeague);
+		super.registerFunction("stopRocketLeague", this::stopRocketLeague);
+		super.registerFunction("patchConfig", this::patchConfig);
+		super.registerFunction("exitApp", this::exitApp);
+		super.registerFunction("getStatus", this::getStatus);
+		super.registerFunction("registerBrowserTab", this::registerBrowserTab);
 	}
 	
 	private RLMap getMapFromParameters(Map<String, String> parameters, @SuppressWarnings("SameParameterValue") boolean throwIfNotFound) {
@@ -74,38 +70,7 @@ public class ApiHttpHandler implements HttpHandler {
 	}
 	
 	private String getConfig(Map<String, String> parameters) {
-		JsonObject json = new JsonObject();
-		Config config = rlMapManager.getConfig();
-		
-		json.addProperty("needsSetup", config.needsSetup());
-		
-		JsonObject jsonPaths = new JsonObject();
-		json.add("paths", jsonPaths);
-		TriConsumer<JsonObject, String, File> addPathProperty = (jsonObject, propertyName, file) -> {
-			if(file == null) {
-				jsonObject.add(propertyName, JsonNull.INSTANCE);
-			} else {
-				jsonObject.addProperty(propertyName, file.getAbsolutePath());
-			}
-		};
-		addPathProperty.accept(jsonPaths, "steamappsFolder", config.getSteamappsFolder());
-		addPathProperty.accept(jsonPaths, "exeFile", config.getExeFile());
-		addPathProperty.accept(jsonPaths, "upkFile", config.getUpkFile());
-		addPathProperty.accept(jsonPaths, "workshopFolder", config.getWorkshopFolder());
-		
-		json.addProperty("renameOriginalUnderpassUPK", config.getRenameOriginalUnderpassUPK());
-		json.addProperty("behaviorWhenRLIsStopped", config.getBehaviorWhenRLIsStopped().toInt());
-		json.addProperty("behaviorWhenRLIsRunning", config.getBehaviorWhenRLIsRunning().toInt());
-		
-		json.addProperty("upkFilename", config.getUpkFilename());
-		json.addProperty("webInterfacePort", config.getWebInterfacePort());
-		
-		json.addProperty("mayLayout", config.getMapLayout().toInt());
-		json.addProperty("mapSorting", config.getMapSorting());
-		json.addProperty("showLoadedMapAtTop", config.getShowLoadedMapAtTop());
-		json.addProperty("showFavoritesAtTop", config.getShowFavoritesAtTop());
-		
-		return GSON.toJson(json);
+		return rlMapManager.getConfig().toJson();
 	}
 	
 	private String discoverSteamLibrary(Map<String, String> parameters) {
@@ -160,35 +125,7 @@ public class ApiHttpHandler implements HttpHandler {
 	}
 	
 	private String getMapDiscoveryStatus(Map<String, String> parameters) {
-		MapDiscovery mapDiscovery = MapDiscovery.get();
-		JsonObject json = new JsonObject();
-		if(mapDiscovery == null) {
-			json.addProperty("progressFloat", 0);
-			json.addProperty("isDone", true);
-			json.addProperty("message", "Not started");
-			return GSON.toJson(json);
-		}
-		
-		boolean isDone = mapDiscovery.isDone();
-		json.addProperty("isDone", isDone);
-		
-		if(isDone) {
-			Throwable throwable = mapDiscovery.getThrowable();
-			if(throwable == null) {
-				int mapCount = rlMapManager.getMaps().size();
-				String s = "Successfully discovered " + mapCount + (mapCount == 1 ? " map." : " maps.");
-				json.addProperty("message", s);
-				return GSON.toJson(json);
-			}
-			
-			json.addProperty("message", "Error:<br />" + throwable.toString());
-			return GSON.toJson(json);
-		}
-		
-		json.addProperty("message", "Discovering maps, please wait...");
-		json.addProperty("progress", mapDiscovery.getProgress());
-		json.addProperty("progressTarget", mapDiscovery.getProgressTarget());
-		return GSON.toJson(json);
+		return MapDiscovery.getStatusJson();
 	}
 	
 	private byte[] getMapImage(Map<String, String> parameters, HttpExchange httpExchange, OutputStream outputStream) throws IOException {
@@ -252,62 +189,7 @@ public class ApiHttpHandler implements HttpHandler {
 	}
 	
 	private String patchConfig(Map<String, String> parameters) {
-		JsonObject json = GSON.fromJson(parameters.get("postBody"), JsonObject.class);
-		Config config = rlMapManager.getConfig();
-		
-		if(json.has("renameOriginalUPK")) {
-			boolean oldValue = config.getRenameOriginalUnderpassUPK();
-			boolean value = json.get("renameOriginalUPK").getAsBoolean();
-			config.setRenameOriginalUnderpassUPK(value);
-			
-			if(oldValue ^ value) {
-				// this setting has changed
-				if(!value) {
-					// has been disabled
-					rlMapManager.renameOriginalUnderpassUPK(true);
-				} else if(config.getLoadedMapID() != 0) {
-					// has been enabled and a map currently loaded
-					rlMapManager.renameOriginalUnderpassUPK(false);
-				}
-			}
-		}
-		if(json.has("behaviorWhenRLIsStopped")) {
-			Config.BehaviorWhenRLIsStopped value = Config.BehaviorWhenRLIsStopped.fromInt(json.get("behaviorWhenRLIsStopped").getAsInt());
-			config.setBehaviorWhenRLIsStopped(value);
-		}
-		if(json.has("behaviorWhenRLIsRunning")) {
-			Config.BehaviorWhenRLIsRunning value = Config.BehaviorWhenRLIsRunning.fromInt(json.get("behaviorWhenRLIsRunning").getAsInt());
-			config.setBehaviorWhenRLIsRunning(value);
-		}
-		
-		if(json.has("upkFilename")) {
-			String value = json.get("upkFilename").getAsString();
-			config.setUpkFilename(value);
-		}
-		if(json.has("webInterfacePort")) {
-			int value = json.get("webInterfacePort").getAsInt();
-			config.setWebInterfacePort(value);
-		}
-		
-		if(json.has("mapLayout")) {
-			Config.MapLayout value = Config.MapLayout.fromInt(json.get("mapLayout").getAsInt());
-			config.setMapLayout(value);
-		}
-		if(json.has("mapSorting")) {
-			int value = json.get("mapSorting").getAsInt();
-			config.setMapSorting(value);
-		}
-		if(json.has("showLoadedMapAtTop")) {
-			boolean value = json.get("showLoadedMapAtTop").getAsBoolean();
-			config.setShowLoadedMapAtTop(value);
-		}
-		if(json.has("showFavoritesAtTop")) {
-			boolean value = json.get("showFavoritesAtTop").getAsBoolean();
-			config.setShowFavoritesAtTop(value);
-		}
-		
-		config.save();
-		
+		rlMapManager.getConfig().patchFromJson(parameters.get("postBody"));
 		return "";
 	}
 	
@@ -329,105 +211,6 @@ public class ApiHttpHandler implements HttpHandler {
 		String browserTabID = parameters.get("postBody");
 		rlMapManager.getWebInterface().setBrowserTabID(browserTabID);
 		return "";
-	}
-	
-	@Override
-	public void handle(HttpExchange httpExchange) throws IOException {
-		OutputStream outputStream = httpExchange.getResponseBody();
-		
-		String functionName = httpExchange.getRequestURI().toString().substring(5);
-		HashMap<String, String> parameters = new HashMap<>();
-		int index = functionName.indexOf('?');
-		if(index != -1) {
-			String s = functionName.substring(index + 1);
-			functionName = functionName.substring(0, index);
-			String[] parts = s.split("&");
-			for(String part : parts) {
-				part = part.trim();
-				if(part.isEmpty()) {
-					continue;
-				}
-				index = part.indexOf('=');
-				if(index == -1) {
-					parameters.put(part, null);
-				} else {
-					parameters.put(part.substring(0, index), part.substring(index + 1));
-				}
-			}
-		}
-		if(functionName.endsWith("/")) {
-			functionName = functionName.substring(0, functionName.length() - 1);
-		}
-		// POST body
-		if(httpExchange.getRequestMethod().equalsIgnoreCase("POST")) {
-			String postBody = IOUtils.toString(httpExchange.getRequestBody(), StandardCharsets.UTF_8);
-			parameters.put("postBody", postBody);
-		}
-		
-		ApiFunctionRaw function = functions.get(functionName);
-		if(function == null) {
-			httpExchange.sendResponseHeaders(404, -1);
-			outputStream.flush();
-			outputStream.close();
-			return;
-		}
-		
-		byte[] output;
-		
-		try {
-			output = function.apply(parameters, httpExchange, outputStream);
-		} catch(AssertionError | IllegalArgumentException e) {
-			httpExchange.sendResponseHeaders(400, -1);
-			outputStream.flush();
-			outputStream.close();
-			return;
-		} catch(NoSuchElementException e) {
-			httpExchange.sendResponseHeaders(404, -1);
-			outputStream.flush();
-			outputStream.close();
-			return;
-		} catch(Exception e) {
-			rlMapManager.getLogger().error("Uncaught exception on ApiHttpHandler command '" + function + "'", e);
-			
-			httpExchange.sendResponseHeaders(500, -1);
-			outputStream.flush();
-			outputStream.close();
-			return;
-		}
-		
-		if(output.length == 0) {
-			httpExchange.sendResponseHeaders(204, -1);
-		} else {
-			httpExchange.sendResponseHeaders(200, output.length);
-			outputStream.write(output);
-		}
-		outputStream.flush();
-		outputStream.close();
-	}
-	
-	@FunctionalInterface
-	private interface ApiFunction {
-		String apply(Map<String, String> parameters) throws Exception;
-	}
-	
-	@FunctionalInterface
-	private interface ApiFunctionRaw {
-		static ApiFunctionRaw of(ApiFunction apiFunction) {
-			return (parameters, httpExchange, outputStream) -> {
-				String result = apiFunction.apply(parameters);
-				if(result == null || result.isEmpty()) {
-					return new byte[0];
-				}
-				return result.getBytes(StandardCharsets.UTF_8);
-			};
-		}
-		
-		byte[] apply(Map<String, String> parameters, HttpExchange httpExchange, OutputStream outputStream) throws Exception;
-	}
-	
-	@FunctionalInterface
-	private interface TriConsumer<A, B, C> {
-		void accept(A a, B b, C c);
 	}
 	
 }

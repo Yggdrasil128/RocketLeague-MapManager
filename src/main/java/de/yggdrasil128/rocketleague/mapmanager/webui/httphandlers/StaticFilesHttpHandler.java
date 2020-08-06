@@ -22,8 +22,10 @@ public class StaticFilesHttpHandler implements HttpHandler {
 	private static final String DIRSEP = System.getProperty("file.separator");
 	private final Logger logger;
 	private HashMap<String, byte[]> fileData;
+	private final boolean isSetupMode;
 	
-	public StaticFilesHttpHandler() {
+	public StaticFilesHttpHandler(boolean isSetupMode) {
+		this.isSetupMode = isSetupMode;
 		logger = LoggerFactory.getLogger(StaticFilesHttpHandler.class);
 		
 		readStaticFiles();
@@ -81,7 +83,16 @@ public class StaticFilesHttpHandler implements HttpHandler {
 				byte[] data = IOUtils.toByteArray(inputStream);
 				inputStream.close();
 				
-				fileData.put(entry.getName().substring(6).replace('\\', '/'), data);
+				String name = entry.getName().substring(6).replace('\\', '/');
+				if(!name.endsWith(".html")) {
+					fileData.put(name, data);
+					continue;
+				}
+				
+				if(name.equals(isSetupMode ? "index.html" : "setup.html")) {
+					continue;
+				}
+				fileData.put("index.html", data);
 			}
 		} catch(IOException | URISyntaxException e) {
 			logger.error("Couldn't read webui files from jar.", e);

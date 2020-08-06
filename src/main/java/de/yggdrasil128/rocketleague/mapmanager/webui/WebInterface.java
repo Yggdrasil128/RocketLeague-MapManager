@@ -3,6 +3,7 @@ package de.yggdrasil128.rocketleague.mapmanager.webui;
 import com.sun.net.httpserver.HttpServer;
 import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
 import de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers.ApiHttpHandler;
+import de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers.SetupApiHttpHandler;
 import de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers.StaticFilesHttpHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,7 @@ public class WebInterface {
 	private final RLMapManager rlMapManager;
 	private final int port;
 	private String browserTabID = null;
+	private HttpServer httpServer;
 	
 	public WebInterface(RLMapManager rlMapManager, int port) {
 		logger = LoggerFactory.getLogger(WebInterface.class);
@@ -35,17 +37,25 @@ public class WebInterface {
 		}
 	}
 	
-	public void start() {
+	public void start(boolean isSetupMode) {
 		logger.info("Starting web server on port " + port);
 		try {
-			HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
-			server.setExecutor(Executors.newFixedThreadPool(2));
-			server.createContext("/", new StaticFilesHttpHandler());
-			server.createContext("/api/", new ApiHttpHandler(rlMapManager));
-			server.start();
+			httpServer = HttpServer.create(new InetSocketAddress(port), 0);
+			httpServer.setExecutor(Executors.newFixedThreadPool(2));
+			httpServer.createContext("/", new StaticFilesHttpHandler(isSetupMode));
+			if(isSetupMode) {
+				httpServer.createContext("/api/", new SetupApiHttpHandler(rlMapManager));
+			} else {
+				httpServer.createContext("/api/", new ApiHttpHandler(rlMapManager));
+			}
+			httpServer.start();
 		} catch(Exception e) {
 			logger.warn("Couldn't start web UI", e);
 		}
+	}
+	
+	public void stop() {
+		httpServer.stop(0);
 	}
 	
 	public String getBrowserTabID() {

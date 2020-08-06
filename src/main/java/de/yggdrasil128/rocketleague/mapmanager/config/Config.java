@@ -1,8 +1,6 @@
 package de.yggdrasil128.rocketleague.mapmanager.config;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapter;
+import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
@@ -46,10 +44,17 @@ public class Config {
 	private boolean showLoadedMapAtTop = false;
 	private boolean showFavoritesAtTop = false;
 	
-	public static Config load() {
+	private transient RLMapManager rlMapManager;
+	
+	public Config(RLMapManager rlMapManager) {
+		this.rlMapManager = rlMapManager;
+	}
+	
+	public static Config load(RLMapManager rlMapManager) {
 		try {
 			String data = FileUtils.readFileToString(RLMapManager.FILE_CONFIG, StandardCharsets.UTF_8);
 			Config config = GSON.fromJson(data, Config.class);
+			config.rlMapManager = rlMapManager;
 			
 			if(config.configVersion == CURRENT_CONFIG_VERSION) {
 				return config;
@@ -58,12 +63,13 @@ public class Config {
 			if(ConfigUpgrader.upgrade()) {
 				data = FileUtils.readFileToString(RLMapManager.FILE_CONFIG, StandardCharsets.UTF_8);
 				config = GSON.fromJson(data, Config.class);
+				config.rlMapManager = rlMapManager;
 				return config;
 			}
 			
-			return new Config();
+			return new Config(rlMapManager);
 		} catch(FileNotFoundException e) {
-			return new Config();
+			return new Config(rlMapManager);
 		} catch(Exception e) {
 			logger.error("Couldn't load config", e);
 			return null;
@@ -232,6 +238,97 @@ public class Config {
 		});
 	}
 	
+	public String toJson() {
+		JsonObject json = new JsonObject();
+		
+		json.addProperty("needsSetup", needsSetup());
+		
+		JsonObject jsonPaths = new JsonObject();
+		json.add("paths", jsonPaths);
+		TriConsumer<JsonObject, String, File> addPathProperty = (jsonObject, propertyName, file) -> {
+			if(file == null) {
+				jsonObject.add(propertyName, JsonNull.INSTANCE);
+			} else {
+				jsonObject.addProperty(propertyName, file.getAbsolutePath());
+			}
+		};
+		addPathProperty.accept(jsonPaths, "steamappsFolder", getSteamappsFolder());
+		addPathProperty.accept(jsonPaths, "exeFile", getExeFile());
+		addPathProperty.accept(jsonPaths, "upkFile", getUpkFile());
+		addPathProperty.accept(jsonPaths, "workshopFolder", getWorkshopFolder());
+		
+		json.addProperty("renameOriginalUnderpassUPK", getRenameOriginalUnderpassUPK());
+		json.addProperty("behaviorWhenRLIsStopped", getBehaviorWhenRLIsStopped().toInt());
+		json.addProperty("behaviorWhenRLIsRunning", getBehaviorWhenRLIsRunning().toInt());
+		
+		json.addProperty("upkFilename", getUpkFilename());
+		json.addProperty("webInterfacePort", getWebInterfacePort());
+		
+		json.addProperty("mayLayout", getMapLayout().toInt());
+		json.addProperty("mapSorting", getMapSorting());
+		json.addProperty("showLoadedMapAtTop", getShowLoadedMapAtTop());
+		json.addProperty("showFavoritesAtTop", getShowFavoritesAtTop());
+		
+		return GSON.toJson(json);
+	}
+	
+	public void patchFromJson(String jsonString) {
+		JsonObject json = GSON.fromJson(jsonString, JsonObject.class);
+		
+		if(json.has("renameOriginalUnderpassUPK")) {
+			boolean oldValue = getRenameOriginalUnderpassUPK();
+			boolean value = json.get("renameOriginalUnderpassUPK").getAsBoolean();
+			setRenameOriginalUnderpassUPK(value);
+			
+			if(oldValue ^ value) {
+				// this setting has changed
+				if(!value) {
+					// has been disabled
+					rlMapManager.renameOriginalUnderpassUPK(true);
+				} else if(getLoadedMapID() != 0) {
+					// has been enabled and a map currently loaded
+					rlMapManager.renameOriginalUnderpassUPK(false);
+				}
+			}
+		}
+		if(json.has("behaviorWhenRLIsStopped")) {
+			Config.BehaviorWhenRLIsStopped value = Config.BehaviorWhenRLIsStopped.fromInt(json.get("behaviorWhenRLIsStopped").getAsInt());
+			setBehaviorWhenRLIsStopped(value);
+		}
+		if(json.has("behaviorWhenRLIsRunning")) {
+			Config.BehaviorWhenRLIsRunning value = Config.BehaviorWhenRLIsRunning.fromInt(json.get("behaviorWhenRLIsRunning").getAsInt());
+			setBehaviorWhenRLIsRunning(value);
+		}
+		
+		if(json.has("upkFilename")) {
+			String value = json.get("upkFilename").getAsString();
+			setUpkFilename(value);
+		}
+		if(json.has("webInterfacePort")) {
+			int value = json.get("webInterfacePort").getAsInt();
+			setWebInterfacePort(value);
+		}
+		
+		if(json.has("mapLayout")) {
+			Config.MapLayout value = Config.MapLayout.fromInt(json.get("mapLayout").getAsInt());
+			setMapLayout(value);
+		}
+		if(json.has("mapSorting")) {
+			int value = json.get("mapSorting").getAsInt();
+			setMapSorting(value);
+		}
+		if(json.has("showLoadedMapAtTop")) {
+			boolean value = json.get("showLoadedMapAtTop").getAsBoolean();
+			setShowLoadedMapAtTop(value);
+		}
+		if(json.has("showFavoritesAtTop")) {
+			boolean value = json.get("showFavoritesAtTop").getAsBoolean();
+			setShowFavoritesAtTop(value);
+		}
+		
+		save();
+	}
+	
 	public enum BehaviorWhenRLIsStopped {
 		DO_NOTHING,
 		START_RL;
@@ -303,5 +400,10 @@ public class Config {
 				out.value(value.getAbsolutePath());
 			}
 		}
+	}
+	
+	@FunctionalInterface
+	private interface TriConsumer<A, B, C> {
+		void accept(A a, B b, C c);
 	}
 }
