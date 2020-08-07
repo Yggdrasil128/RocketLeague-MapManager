@@ -26,7 +26,7 @@ public class StaticFilesHttpHandler implements HttpHandler {
 	
 	public StaticFilesHttpHandler(boolean isSetupMode) {
 		this.isSetupMode = isSetupMode;
-		logger = LoggerFactory.getLogger(StaticFilesHttpHandler.class);
+		logger = LoggerFactory.getLogger(StaticFilesHttpHandler.class.getName());
 		
 		readStaticFiles();
 	}

@@ -26,7 +26,7 @@ public class RLMapMetadata {
 		}
 	}
 	
-	private static final transient Logger logger = LoggerFactory.getLogger(RLMapMetadata.class);
+	private static final transient Logger logger = LoggerFactory.getLogger(RLMapMetadata.class.getName());
 	
 	private final long id;
 	private String title, description, authorName, imageFileMIMEType;

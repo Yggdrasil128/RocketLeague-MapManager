@@ -24,7 +24,7 @@ public class WebInterface {
 	private HttpServer httpServer;
 	
 	public WebInterface(RLMapManager rlMapManager, int port) {
-		logger = LoggerFactory.getLogger(WebInterface.class);
+		logger = LoggerFactory.getLogger(WebInterface.class.getName());
 		this.rlMapManager = rlMapManager;
 		this.port = port;
 	}

@@ -19,6 +19,8 @@ public class RLMapManager {
 	public static final File FILE_ROOT;
 	public static final File FILE_CONFIG;
 	public static final String VERSION = "1.2";
+	private static final String REGISTRY_AUTOSTART_KEY = "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
+	private static final String REGISTRY_AUTOSTART_VALUE = "RL Map Manager";
 	static final File FILE_LOG;
 	
 	static {
@@ -46,7 +48,7 @@ public class RLMapManager {
 	
 	RLMapManager(boolean isSetupMode) {
 		this.isSetupMode = isSetupMode;
-		logger = LoggerFactory.getLogger(RLMapManager.class);
+		logger = LoggerFactory.getLogger(RLMapManager.class.getName());
 		
 		if(isSetupMode) {
 			config = new Config(this);
@@ -176,6 +178,21 @@ public class RLMapManager {
 		} catch(IOException e) {
 			logger.warn("startRocketLeague_noCheck", e);
 		}
+	}
+	
+	public boolean isAutostartEnabled() {
+		return RegistryHelper.query(REGISTRY_AUTOSTART_KEY, REGISTRY_AUTOSTART_VALUE) != null;
+	}
+	
+	public void setAutostartEnabled(boolean enabled) {
+		if(!enabled) {
+			RegistryHelper.delete(REGISTRY_AUTOSTART_KEY, REGISTRY_AUTOSTART_VALUE);
+			return;
+		}
+		File installedJarFile = Main.findInstalledJarFile();
+		assert installedJarFile != null;
+		String command = "\"" + System.getProperty("java.home") + "\\bin\\javaw.exe\" -jar \"" + installedJarFile.getAbsolutePath() + "\" --autostart";
+		RegistryHelper.add(REGISTRY_AUTOSTART_KEY, REGISTRY_AUTOSTART_VALUE, command);
 	}
 	
 	@SuppressWarnings("ResultOfMethodCallIgnored")

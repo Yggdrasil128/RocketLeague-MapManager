@@ -24,7 +24,7 @@ public class Config {
 			.create();
 	public static final String DEFAULT_UPK_FILENAME = "Labs_Underpass_P.upk";
 	static final int CURRENT_CONFIG_VERSION = 1;
-	private static final transient Logger logger = LoggerFactory.getLogger(Config.class);
+	private static final transient Logger logger = LoggerFactory.getLogger(Config.class.getName());
 	private final HashMap<Long, RLMapMetadata> mapMetadata = new HashMap<>();
 	@SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
 	private int configVersion = CURRENT_CONFIG_VERSION;
@@ -35,6 +35,7 @@ public class Config {
 	private int webInterfacePort = 16016;
 	private long loadedMapID = 0;
 	
+	private boolean autostartOpenBrowser = false;
 	private boolean renameOriginalUnderpassUPK = false;
 	private BehaviorWhenRLIsStopped behaviorWhenRLIsStopped = BehaviorWhenRLIsStopped.DO_NOTHING;
 	private BehaviorWhenRLIsRunning behaviorWhenRLIsRunning = BehaviorWhenRLIsRunning.RESTART_RL;
@@ -167,6 +168,14 @@ public class Config {
 		this.loadedMapID = loadedMapID;
 	}
 	
+	public boolean getAutostartOpenBrowser() {
+		return autostartOpenBrowser;
+	}
+	
+	public void setAutostartOpenBrowser(boolean autostartOpenBrowser) {
+		this.autostartOpenBrowser = autostartOpenBrowser;
+	}
+	
 	public boolean getRenameOriginalUnderpassUPK() {
 		return renameOriginalUnderpassUPK;
 	}
@@ -260,6 +269,11 @@ public class Config {
 		json.addProperty("renameOriginalUnderpassUPK", getRenameOriginalUnderpassUPK());
 		json.addProperty("behaviorWhenRLIsStopped", getBehaviorWhenRLIsStopped().toInt());
 		json.addProperty("behaviorWhenRLIsRunning", getBehaviorWhenRLIsRunning().toInt());
+		if(rlMapManager.isAutostartEnabled()) {
+			json.addProperty("autostart", getAutostartOpenBrowser() ? 2 : 1);
+		} else {
+			json.addProperty("autostart", 0);
+		}
 		
 		json.addProperty("upkFilename", getUpkFilename());
 		json.addProperty("webInterfacePort", getWebInterfacePort());
@@ -298,6 +312,22 @@ public class Config {
 		if(json.has("behaviorWhenRLIsRunning")) {
 			Config.BehaviorWhenRLIsRunning value = Config.BehaviorWhenRLIsRunning.fromInt(json.get("behaviorWhenRLIsRunning").getAsInt());
 			setBehaviorWhenRLIsRunning(value);
+		}
+		if(json.has("autostart")) {
+			int value = json.get("autostart").getAsInt();
+			switch(value) {
+				case 0:
+					rlMapManager.setAutostartEnabled(false);
+					break;
+				case 1:
+					rlMapManager.setAutostartEnabled(true);
+					setAutostartOpenBrowser(false);
+					break;
+				case 2:
+					rlMapManager.setAutostartEnabled(true);
+					setAutostartOpenBrowser(true);
+					break;
+			}
 		}
 		
 		if(json.has("upkFilename")) {

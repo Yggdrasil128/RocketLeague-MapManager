@@ -37,21 +37,22 @@ function setupPhase3() {
     $('div.content.current:not(#contentSetup3)').removeClass('current');
     $('#contentSetup3').addClass('current');
 
+    $('#installationStatus').html('Installing...');
+
+    makeRequest('api/install', null, setupPhase3_callback1);
+}
+
+function setupPhase3_callback1() {
     $('#installationStatus').html('Configuring...');
 
     let config = {
+        autostart: $('#input_autostart').get(0).value,
         renameOriginalUnderpassUPK: $('#input_renameOriginalUPK').get(0).value === '1',
         behaviorWhenRLIsStopped: $('#input_behaviorWhenRLIsStopped').get(0).value,
         behaviorWhenRLIsRunning: $('#input_behaviorWhenRLIsRunning').get(0).value,
     };
 
-    makeRequest('api/patchConfig', JSON.stringify(config), setupPhase3_callback1);
-}
-
-function setupPhase3_callback1() {
-    $('#installationStatus').html('Installing...');
-
-    makeRequest('api/install', null, setupPhase3_callback2)
+    makeRequest('api/patchConfig', JSON.stringify(config), setupPhase3_callback2);
 }
 
 function setupPhase3_callback2() {

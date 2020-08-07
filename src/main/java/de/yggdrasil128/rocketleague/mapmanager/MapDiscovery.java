@@ -34,7 +34,7 @@ public class MapDiscovery {
 	
 	private MapDiscovery(RLMapManager rlMapManager) {
 		if(logger == null) {
-			logger = LoggerFactory.getLogger(MapDiscovery.class);
+			logger = LoggerFactory.getLogger(MapDiscovery.class.getName());
 		}
 		this.rlMapManager = rlMapManager;
 		thread = new Thread(this::run);

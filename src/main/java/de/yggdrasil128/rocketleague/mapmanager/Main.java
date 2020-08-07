@@ -8,9 +8,12 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Arrays;
 
 public class Main {
 	public static void main(String[] args) throws IOException, InterruptedException {
+		boolean autostart = Arrays.stream(args).anyMatch(s -> s.equalsIgnoreCase("--autostart"));
+		
 		File thisJarFile = getThisJarFile();
 		if(thisJarFile == null || thisJarFile.getParentFile().equals(RLMapManager.FILE_ROOT)) {
 			// is launching from IDE or within app folder
@@ -31,7 +34,9 @@ public class Main {
 			}
 			
 			rlMapManager.start();
-			rlMapManager.getWebInterface().openInBrowser();
+			if(!autostart || rlMapManager.getConfig().getAutostartOpenBrowser()) {
+				rlMapManager.getWebInterface().openInBrowser();
+			}
 			return;
 		}
 		
