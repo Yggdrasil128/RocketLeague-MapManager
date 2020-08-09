@@ -293,7 +293,7 @@ function refreshMapView_compactList() {
 
         html += '<td class="one">';
         if(map['hasImage']) {
-            html += '<img src="/api/getMapImage?mapID=' + mapID + '" alt="' + map['title'] + '" />';
+            html += '<img src="/api/getMapImage?mapID=' + mapID + '&mtime=' + map['imageMTime'] + '" alt="' + map['title'] + '" />';
         } else {
             html += 'No image';
         }
@@ -351,7 +351,8 @@ function refreshMapView_detailedList() {
 
         html += '<td class="one">';
         if(map['hasImage']) {
-            html += '<img src="/api/getMapImage?mapID=' + mapID + '" alt="' + map['title'] + '" />';
+            let imgSrc = '/api/getMapImage?mapID=' + mapID + '&mtime=' + map['imageMTime'];
+            html += '<img src="' + imgSrc + '" alt="' + map['title'] + '" />';
         } else {
             html += 'No image';
         }
@@ -424,7 +425,7 @@ function refreshMapView_gridView() {
 
         html += '<div class="one">';
         if(map['hasImage']) {
-            html += '<img src="/api/getMapImage?mapID=' + mapID + '" alt="' + map['title'] + '" />';
+            html += '<img src="/api/getMapImage?mapID=' + mapID + '&mtime=' + map['imageMTime'] + '" alt="' + map['title'] + '" />';
         } else {
             html += '<div>No image</div>';
         }

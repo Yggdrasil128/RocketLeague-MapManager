@@ -43,7 +43,6 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		super.registerFunction("getMaps", this::getMaps);
 		super.registerFunction("startMapDiscovery", this::startMapDiscovery);
 		super.registerFunction("getMapDiscoveryStatus", this::getMapDiscoveryStatus);
-//		super.registerFunctionRaw("getMapImage", this::getMapImage);
 		super.registerFunction("setFavorite", this::setFavorite);
 		super.registerFunction("getLoadedMapID", this::getLoadedMapID);
 		super.registerFunction("loadMap", this::loadMap);
@@ -116,7 +115,14 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 			json.addProperty("title", title);
 			json.addProperty("description", rlMapMetadata.getDescription());
 			json.addProperty("authorName", rlMapMetadata.getAuthorName());
-			json.addProperty("hasImage", rlMapMetadata.getImageFile() != null);
+			final File imageFile = rlMapMetadata.getImageFile();
+			if(imageFile == null) {
+				json.addProperty("hasImage", false);
+				json.addProperty("imageMTime", 0);
+			} else {
+				json.addProperty("hasImage", true);
+				json.addProperty("imageMTime", imageFile.lastModified());
+			}
 			json.addProperty("isFavorite", rlMapMetadata.isFavorite());
 			json.addProperty("mapSize", String.valueOf(rlMap.getMapSize()));
 			json.addProperty("lastLoadedTimestamp", rlMapMetadata.getLastLoadedTimestamp());
@@ -227,6 +233,7 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 				if(mimeType != null) {
 					httpExchange.getResponseHeaders().set("Content-Type", mimeType);
 				}
+				httpExchange.getResponseHeaders().set("Cache-Control", "public, max-age=3600");
 				
 				byte[] data = FileUtils.readFileToByteArray(mapImageFile);
 				httpExchange.sendResponseHeaders(200, data.length);
