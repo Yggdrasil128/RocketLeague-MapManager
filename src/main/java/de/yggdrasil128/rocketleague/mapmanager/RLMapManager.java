@@ -19,9 +19,10 @@ public class RLMapManager {
 	public static final File FILE_ROOT;
 	public static final File FILE_CONFIG;
 	public static final String VERSION = "1.2";
+	static final File FILE_LOG;
 	private static final String REGISTRY_AUTOSTART_KEY = "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
 	private static final String REGISTRY_AUTOSTART_VALUE = "RL Map Manager";
-	static final File FILE_LOG;
+	private static final long IS_RL_RUNNING_CACHE_TTL = 4800;
 	
 	static {
 		String home = System.getProperty("user.home");
@@ -44,7 +45,10 @@ public class RLMapManager {
 	private final SteamLibraryDiscovery steamLibraryDiscovery;
 	private final boolean isSetupMode;
 	
+	private SysTray sysTray;
 	private Map<Long, RLMap> maps;
+	private boolean isRLRunningCache = false;
+	private long isRLRunningCacheExpiry = 0;
 	
 	RLMapManager(boolean isSetupMode) {
 		this.isSetupMode = isSetupMode;
@@ -73,6 +77,12 @@ public class RLMapManager {
 		}
 		
 		webInterface.start(isSetupMode);
+		
+		try {
+			sysTray = new SysTray(this);
+		} catch(Exception e) {
+			logger.error("Couldn't create SysTray icon", e);
+		}
 	}
 	
 	public Logger getLogger() {
@@ -89,6 +99,10 @@ public class RLMapManager {
 	
 	public SteamLibraryDiscovery getSteamLibraryDiscovery() {
 		return steamLibraryDiscovery;
+	}
+	
+	public SysTray getSysTray() {
+		return sysTray;
 	}
 	
 	public Map<Long, RLMap> getMaps() {
@@ -145,7 +159,12 @@ public class RLMapManager {
 	}
 	
 	public boolean isRocketLeagueRunning() {
-		return getRocketLeaguePID() != null;
+		long now = System.currentTimeMillis();
+		if(now > isRLRunningCacheExpiry) {
+			isRLRunningCache = getRocketLeaguePID() != null;
+			isRLRunningCacheExpiry = now + IS_RL_RUNNING_CACHE_TTL;
+		}
+		return isRLRunningCache;
 	}
 	
 	public void stopRocketLeague() {
@@ -222,7 +241,7 @@ public class RLMapManager {
 			Process process = Runtime.getRuntime().exec("tasklist");
 			try(BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
 				String line;
-				while ((line = input.readLine()) != null) {
+				while((line = input.readLine()) != null) {
 					if(!line.startsWith("RocketLeague.exe")) {
 						continue;
 					}

@@ -23,6 +23,8 @@ public class WebInterface {
 	private final int port;
 	private HttpServer httpServer;
 	private final IPWhitelist ipWhitelist;
+	private StaticFilesHttpHandler staticFilesHttpHandler;
+	private ApiHttpHandler apiHttpHandler;
 	
 	public WebInterface(RLMapManager rlMapManager, int port) {
 		logger = LoggerFactory.getLogger(WebInterface.class.getName());
@@ -54,17 +56,27 @@ public class WebInterface {
 		return ipWhitelist;
 	}
 	
+	public StaticFilesHttpHandler getStaticFilesHttpHandler() {
+		return staticFilesHttpHandler;
+	}
+	
+	public ApiHttpHandler getApiHttpHandler() {
+		return apiHttpHandler;
+	}
+	
 	public void start(boolean isSetupMode) {
 		logger.info("Starting web server on port " + port);
 		try {
 			httpServer = HttpServer.create(new InetSocketAddress(port), 0);
 			httpServer.setExecutor(Executors.newFixedThreadPool(2));
 			
-			httpServer.createContext("/", ipWhitelist.forHttpHandler(new StaticFilesHttpHandler(isSetupMode)));
+			staticFilesHttpHandler = new StaticFilesHttpHandler(isSetupMode);
+			httpServer.createContext("/", ipWhitelist.forHttpHandler(staticFilesHttpHandler));
 			if(isSetupMode) {
 				httpServer.createContext("/api/", ipWhitelist.forHttpHandler(new SetupApiHttpHandler(rlMapManager)));
 			} else {
-				httpServer.createContext("/api/", ipWhitelist.forHttpHandler(new ApiHttpHandler(rlMapManager)));
+				apiHttpHandler = new ApiHttpHandler(rlMapManager);
+				httpServer.createContext("/api/", ipWhitelist.forHttpHandler(apiHttpHandler));
 			}
 			httpServer.start();
 		} catch(Exception e) {

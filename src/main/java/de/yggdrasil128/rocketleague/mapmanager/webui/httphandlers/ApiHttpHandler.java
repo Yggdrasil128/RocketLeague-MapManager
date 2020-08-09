@@ -30,6 +30,10 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 	private final Executor mapImageRequestsThreadPool = Executors.newFixedThreadPool(2);
 	private final LastUpdated lastUpdatedMaps = new LastUpdated(), lastUpdatedConfig = new LastUpdated();
 	
+	public LastUpdated getLastUpdatedMaps() {
+		return lastUpdatedMaps;
+	}
+	
 	public ApiHttpHandler(RLMapManager rlMapManager) {
 		super(rlMapManager.getLogger());
 		
@@ -153,6 +157,9 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		rlMapManager.getConfig().save();
 		
 		lastUpdatedMaps.now(parameters.get("btid"));
+		if(rlMapManager.getSysTray() != null) {
+			rlMapManager.getSysTray().updateLoadFavoriteMapMenu();
+		}
 		return "";
 	}
 	
@@ -227,7 +234,8 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 				RLMapMetadata metadata = rlMapManager.getConfig().getMapMetadata(map.getID());
 				File mapImageFile = metadata.getImageFile();
 				if(mapImageFile == null) {
-					throw new NoSuchElementException("Map has no image");
+					httpExchange.sendResponseHeaders(404, -1);
+					return;
 				}
 				String mimeType = metadata.getImageFileMIMEType();
 				if(mimeType != null) {
@@ -250,11 +258,11 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		});
 	}
 	
-	private static class LastUpdated {
+	public static class LastUpdated {
 		private String browserTabID = null;
 		private long timestamp = 0;
 		
-		private void now(String browserTabID) {
+		public void now(String browserTabID) {
 			this.browserTabID = browserTabID;
 			timestamp = System.currentTimeMillis();
 		}

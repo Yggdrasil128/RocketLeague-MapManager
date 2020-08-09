@@ -31,6 +31,10 @@ public class StaticFilesHttpHandler implements HttpHandler {
 		readStaticFiles();
 	}
 	
+	public HashMap<String, byte[]> getFileData() {
+		return fileData;
+	}
+	
 	public static String getMimeType(String filename) {
 		filename = filename.toLowerCase();
 		if(filename.endsWith(".html")) {
