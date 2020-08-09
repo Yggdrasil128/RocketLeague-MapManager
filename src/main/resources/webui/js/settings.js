@@ -2,11 +2,7 @@ let config = null;
 
 $(function() {
     loadConfig(function() {
-        // load layout and sorting options from config
-        $('#mapLayoutSelect').get(0).value = config['mayLayout'];
-        $('#mapSortingSelect').get(0).value = config['mapSorting'];
-        $('#mapSorting_loadedMapAtTop').get(0).checked = config['showLoadedMapAtTop'];
-        $('#mapSorting_favoritesAtTop').get(0).checked = config['showFavoritesAtTop'];
+        loadMapSortingSettingsFromConfig();
         updateMapComparator();
 
         loadMaps();

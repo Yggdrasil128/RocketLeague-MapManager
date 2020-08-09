@@ -12,18 +12,22 @@ import de.yggdrasil128.rocketleague.mapmanager.config.RLMap;
 import de.yggdrasil128.rocketleague.mapmanager.config.RLMapMetadata;
 import de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers.api.AbstractApiHttpHandler;
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 @SuppressWarnings("SameReturnValue")
 public class ApiHttpHandler extends AbstractApiHttpHandler {
 	private static final Gson GSON = Config.GSON;
 	
 	private final RLMapManager rlMapManager;
+	private final Executor mapImageRequestsThreadPool = Executors.newFixedThreadPool(2);
 	private final LastUpdated lastUpdatedMaps = new LastUpdated(), lastUpdatedConfig = new LastUpdated();
 	
 	public ApiHttpHandler(RLMapManager rlMapManager) {
@@ -31,13 +35,15 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		
 		this.rlMapManager = rlMapManager;
 		
+		super.registerHandler("getMapImage", this::handleMapImageRequest);
+		
 		super.registerFunction("getVersion", this::getVersion);
 		super.registerFunction("getConfig", this::getConfig);
 		super.registerFunction("discoverSteamLibrary", this::discoverSteamLibrary);
 		super.registerFunction("getMaps", this::getMaps);
 		super.registerFunction("startMapDiscovery", this::startMapDiscovery);
 		super.registerFunction("getMapDiscoveryStatus", this::getMapDiscoveryStatus);
-		super.registerFunction("getMapImage", this::getMapImage);
+//		super.registerFunctionRaw("getMapImage", this::getMapImage);
 		super.registerFunction("setFavorite", this::setFavorite);
 		super.registerFunction("getLoadedMapID", this::getLoadedMapID);
 		super.registerFunction("loadMap", this::loadMap);
@@ -132,20 +138,6 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		return MapDiscovery.getStatusJson();
 	}
 	
-	private byte[] getMapImage(Map<String, String> parameters, HttpExchange httpExchange, OutputStream outputStream) throws IOException {
-		RLMap map = getMapFromParameters(parameters, true);
-		RLMapMetadata metadata = rlMapManager.getConfig().getMapMetadata(map.getID());
-		File mapImageFile = metadata.getImageFile();
-		if(mapImageFile == null) {
-			throw new NoSuchElementException("Map has no image");
-		}
-		String mimeType = metadata.getImageFileMIMEType();
-		if(mimeType != null) {
-			httpExchange.getResponseHeaders().set("Content-Type", mimeType);
-		}
-		return FileUtils.readFileToByteArray(mapImageFile);
-	}
-	
 	private String setFavorite(Map<String, String> parameters) {
 		RLMap map = getMapFromParameters(parameters, true);
 		RLMapMetadata metadata = rlMapManager.getConfig().getMapMetadata(map.getID());
@@ -216,6 +208,39 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		json.add("lastUpdatedConfig", lastUpdatedConfig.toJson());
 		
 		return GSON.toJson(json);
+	}
+	
+	private void handleMapImageRequest(Map<String, String> parameters,
+									   HttpExchange httpExchange,
+									   OutputStream outputStream,
+									   Logger logger,
+									   String functionName) {
+		mapImageRequestsThreadPool.execute(() -> {
+			try {
+				RLMap map = getMapFromParameters(parameters, true);
+				RLMapMetadata metadata = rlMapManager.getConfig().getMapMetadata(map.getID());
+				File mapImageFile = metadata.getImageFile();
+				if(mapImageFile == null) {
+					throw new NoSuchElementException("Map has no image");
+				}
+				String mimeType = metadata.getImageFileMIMEType();
+				if(mimeType != null) {
+					httpExchange.getResponseHeaders().set("Content-Type", mimeType);
+				}
+				
+				byte[] data = FileUtils.readFileToByteArray(mapImageFile);
+				httpExchange.sendResponseHeaders(200, data.length);
+				outputStream.write(data);
+			} catch(IOException e) {
+				logger.warn("Uncaught exception", e);
+			} finally {
+				try {
+					outputStream.flush();
+					outputStream.close();
+				} catch(IOException ignored) {
+				}
+			}
+		});
 	}
 	
 	private static class LastUpdated {

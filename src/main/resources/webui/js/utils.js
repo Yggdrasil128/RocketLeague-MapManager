@@ -17,7 +17,7 @@ $(function() {
     }, 1000);
 
     // fetch version
-    makeRequest('/api/getVersion', null, function(version) {
+    makeRequest('/api/getVersion', null, null, function(version) {
         rlmmVersion = version;
         $('#versionDiv').html('Version: ' + version);
     });

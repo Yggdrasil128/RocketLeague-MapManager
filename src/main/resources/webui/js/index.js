@@ -48,7 +48,12 @@ function updateStatusCallback(data) {
     if(status['lastUpdatedConfig']['browserTabID'] !== browserTabID && status['lastUpdatedConfig']['timestamp'] > lastUpdatedConfigTimestamp) {
         lastUpdatedConfigTimestamp = status['lastUpdatedConfig']['timestamp'];
         console.log('Reloading config');
-        loadConfig();
+        loadConfig(function() {
+            loadMapSortingSettingsFromConfig();
+            updateMapComparator();
+            sortMaps();
+            refreshMapView();
+        });
     }
 
     if(!oldStatus || oldStatus['isRLRunning'] ^ status['isRLRunning']) {

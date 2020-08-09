@@ -222,6 +222,13 @@ const mapComparators = [
     mapComparator_authorName
 ];
 
+function loadMapSortingSettingsFromConfig() {
+    $('#mapLayoutSelect').get(0).value = config['mayLayout'];
+    $('#mapSortingSelect').get(0).value = config['mapSorting'];
+    $('#mapSorting_loadedMapAtTop').get(0).checked = config['showLoadedMapAtTop'];
+    $('#mapSorting_favoritesAtTop').get(0).checked = config['showFavoritesAtTop'];
+}
+
 function updateMapComparator() {
     mapComparatorOptions = {
         mapSorting: parseInt($('#mapSortingSelect').get(0).value),

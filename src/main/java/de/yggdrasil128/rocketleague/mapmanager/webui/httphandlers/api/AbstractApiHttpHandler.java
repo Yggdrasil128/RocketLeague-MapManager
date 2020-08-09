@@ -14,19 +14,23 @@ import java.util.NoSuchElementException;
 
 @SuppressWarnings("SameReturnValue")
 public abstract class AbstractApiHttpHandler implements HttpHandler {
-	private final HashMap<String, ApiFunctionRaw> functions = new HashMap<>();
+	private final HashMap<String, ApiHandler> handlers = new HashMap<>();
 	private final Logger logger;
 	
 	public AbstractApiHttpHandler(Logger logger) {
 		this.logger = logger;
 	}
 	
-	protected void registerFunction(String name, ApiFunction function) {
-		registerFunction(name, ApiFunctionRaw.of(function));
+	protected void registerHandler(String name, ApiHandler apiHandler) {
+		handlers.put(name, apiHandler);
 	}
 	
-	protected void registerFunction(String name, ApiFunctionRaw function) {
-		functions.put(name, function);
+	protected void registerFunctionRaw(String name, ApiFunctionRaw function) {
+		registerHandler(name, ApiHandler.of(function));
+	}
+	
+	protected void registerFunction(String name, ApiFunction function) {
+		registerFunctionRaw(name, ApiFunctionRaw.of(function));
 	}
 	
 	@Override
@@ -62,45 +66,55 @@ public abstract class AbstractApiHttpHandler implements HttpHandler {
 			parameters.put("postBody", postBody);
 		}
 		
-		ApiFunctionRaw function = functions.get(functionName);
-		if(function == null) {
+		ApiHandler handler = handlers.get(functionName);
+		if(handler == null) {
 			httpExchange.sendResponseHeaders(404, -1);
 			outputStream.flush();
 			outputStream.close();
 			return;
 		}
 		
-		byte[] output;
-		
-		try {
-			output = function.apply(parameters, httpExchange, outputStream);
-		} catch(AssertionError | IllegalArgumentException e) {
-			httpExchange.sendResponseHeaders(400, -1);
-			outputStream.flush();
-			outputStream.close();
-			return;
-		} catch(NoSuchElementException e) {
-			httpExchange.sendResponseHeaders(404, -1);
-			outputStream.flush();
-			outputStream.close();
-			return;
-		} catch(Exception e) {
-			logger.error("Uncaught exception on ApiHttpHandler command '" + function + "'", e);
-			
-			httpExchange.sendResponseHeaders(500, -1);
-			outputStream.flush();
-			outputStream.close();
-			return;
+		handler.handle(parameters, httpExchange, outputStream, logger, functionName);
+	}
+	
+	public interface ApiHandler {
+		static ApiHandler of(ApiFunctionRaw apiFunctionRaw) {
+			return (parameters, httpExchange, outputStream, logger, functionName) -> {
+				byte[] output;
+				
+				try {
+					output = apiFunctionRaw.apply(parameters, httpExchange, outputStream);
+				} catch(AssertionError | IllegalArgumentException e) {
+					httpExchange.sendResponseHeaders(400, -1);
+					outputStream.flush();
+					outputStream.close();
+					return;
+				} catch(NoSuchElementException e) {
+					httpExchange.sendResponseHeaders(404, -1);
+					outputStream.flush();
+					outputStream.close();
+					return;
+				} catch(Exception e) {
+					logger.error("Uncaught exception on ApiHttpHandler command '" + functionName + "'", e);
+					
+					httpExchange.sendResponseHeaders(500, -1);
+					outputStream.flush();
+					outputStream.close();
+					return;
+				}
+				
+				if(output.length == 0) {
+					httpExchange.sendResponseHeaders(204, -1);
+				} else {
+					httpExchange.sendResponseHeaders(200, output.length);
+					outputStream.write(output);
+				}
+				outputStream.flush();
+				outputStream.close();
+			};
 		}
 		
-		if(output.length == 0) {
-			httpExchange.sendResponseHeaders(204, -1);
-		} else {
-			httpExchange.sendResponseHeaders(200, output.length);
-			outputStream.write(output);
-		}
-		outputStream.flush();
-		outputStream.close();
+		void handle(Map<String, String> parameters, HttpExchange httpExchange, OutputStream outputStream, Logger logger, String functionName) throws IOException;
 	}
 	
 	@FunctionalInterface

@@ -59,6 +59,7 @@ public class WebInterface {
 		try {
 			httpServer = HttpServer.create(new InetSocketAddress(port), 0);
 			httpServer.setExecutor(Executors.newFixedThreadPool(2));
+			
 			httpServer.createContext("/", ipWhitelist.forHttpHandler(new StaticFilesHttpHandler(isSetupMode)));
 			if(isSetupMode) {
 				httpServer.createContext("/api/", ipWhitelist.forHttpHandler(new SetupApiHttpHandler(rlMapManager)));
