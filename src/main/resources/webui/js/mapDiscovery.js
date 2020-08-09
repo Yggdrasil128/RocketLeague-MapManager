@@ -4,7 +4,7 @@ let mapDiscoveryModalStatusContentsInitial = null;
 function startMapDiscovery() {
     showMapDiscoveryModal();
 
-    makeRequest('api/startMapDiscovery', '', function() {
+    makeRequest('api/startMapDiscovery', null, null, function() {
         if(mapDiscoveryIntervalHandle == null) {
             mapDiscoveryIntervalHandle = setInterval(updateMapDiscoveryModal, 1000);
         }
@@ -15,7 +15,7 @@ $(function() {
     mapDiscoveryModalStatusContentsInitial = $('#mapDiscoveryModal .status').html();
 
     // check if map discovery is running
-    makeRequest('api/getMapDiscoveryStatus', '', function(data) {
+    makeRequest('api/getMapDiscoveryStatus', null, null, function(data) {
         let json = JSON.parse(data);
         if(json['isDone']) {
             return;
@@ -40,7 +40,7 @@ function hideMapDiscoveryModal() {
 }
 
 function updateMapDiscoveryModal() {
-    makeRequest('api/getMapDiscoveryStatus', '', updateMapDiscoveryModalCallback);
+    makeRequest('api/getMapDiscoveryStatus', null, null, updateMapDiscoveryModalCallback);
 }
 
 function updateMapDiscoveryModalCallback(data) {

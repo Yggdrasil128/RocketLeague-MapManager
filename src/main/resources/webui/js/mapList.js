@@ -18,14 +18,14 @@ function getMapDataById(mapID) {
 }
 
 function loadMaps() {
-    makeRequest('api/getMaps', null, loadMapsCallback);
+    makeRequest('api/getMaps', null, null, loadMapsCallback);
 }
 
 function loadMapsCallback(data) {
     maps = JSON.parse(data);
     $('.mapListHeader h1').html('Map List (' + maps.length + ')');
 
-    makeRequest('api/getLoadedMapID', null, function(data) {
+    makeRequest('api/getLoadedMapID', null, null, function(data) {
         loadedMapID = data;
         sortMaps();
         refreshMapView();
@@ -37,6 +37,11 @@ function sortMaps() {
 }
 
 function refreshMapView() {
+    if(maps.length === 0) {
+        $('#mapTableContainer').html('Map list is empty.');
+        return;
+    }
+
     let i = parseInt($('#mapLayoutSelect').get(0).value);
     switch(i) {
         case 0:
@@ -67,7 +72,10 @@ function favoriteClick(mapID) {
         $favorite.removeClass('isFavorite');
     }
 
-    makeRequest('api/setFavorite?mapID=' + mapID + '&isFavorite=' + (isFavorite ? '1' : '0'));
+    makeRequest('api/setFavorite', {
+        mapID: mapID,
+        isFavorite: (isFavorite ? '1' : '0')
+    });
 
     if($('#mapSorting_favoritesAtTop').get(0).checked) {
         setTimeout(function() {
@@ -90,7 +98,7 @@ function loadMap(mapID) {
     let $newMapButton = $('#map' + mapID + ' .loadMapButton');
     $newMapButton.attr('disabled', '').html('Loading...');
 
-    makeRequest('api/loadMap?mapID=' + mapID, null, function() {
+    makeRequest('api/loadMap', {mapID: mapID}, null, function() {
         loadedMapID = mapID;
         map['lastLoadedTimestamp'] = Date.now();
 
@@ -108,7 +116,7 @@ function unloadMap(callback) {
         return;
     }
 
-    makeRequest('api/unloadMap', null, function() {
+    makeRequest('api/unloadMap', null, null, function() {
         $('#map' + loadedMapID).removeClass('loaded');
         $('#map' + loadedMapID + ' .loadMapButton').html('Load Map');
 
@@ -137,7 +145,7 @@ function refreshMapMetadata(mapID) {
     let $button = $('#map' + mapID + ' button.refreshMapMetadataButton');
     $button.attr('disabled', '').html('Refreshing...');
 
-    makeRequest('api/refreshMapMetadata?mapID=' + mapID, null, function() {
+    makeRequest('api/refreshMapMetadata', {mapID: mapID}, null, function() {
         $button.html('Done.');
         setTimeout(loadMaps, 2000);
     }, function() {
@@ -253,13 +261,13 @@ function onUpdateSortOptions() {
     refreshMapView();
 
     // the mapComparatorOptions object has already been updated by updateMapComparator
-    makeRequest('api/patchConfig', JSON.stringify(mapComparatorOptions));
+    makeRequest('api/patchConfig', null, JSON.stringify(mapComparatorOptions));
 }
 
 function onUpdateLayoutOption() {
     let i = refreshMapView();
 
-    makeRequest('api/patchConfig', JSON.stringify({mapLayout: i}));
+    makeRequest('api/patchConfig', null, JSON.stringify({mapLayout: i}));
 }
 
 function refreshMapView_compactList() {

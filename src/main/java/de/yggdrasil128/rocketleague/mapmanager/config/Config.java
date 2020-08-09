@@ -13,8 +13,10 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
+import java.util.*;
 
 public class Config {
 	public static final Gson GSON = new GsonBuilder()
@@ -34,16 +36,15 @@ public class Config {
 	private File workshopFolder;
 	private int webInterfacePort = 16016;
 	private long loadedMapID = 0;
-	
 	private boolean autostartOpenBrowser = false;
 	private boolean renameOriginalUnderpassUPK = false;
 	private BehaviorWhenRLIsStopped behaviorWhenRLIsStopped = BehaviorWhenRLIsStopped.DO_NOTHING;
 	private BehaviorWhenRLIsRunning behaviorWhenRLIsRunning = BehaviorWhenRLIsRunning.RESTART_RL;
-	
 	private MapLayout mapLayout = MapLayout.DETAILED_LIST;
 	private int mapSorting = 1;
 	private boolean showLoadedMapAtTop = false;
 	private boolean showFavoritesAtTop = false;
+	private List<InetAddress> ipWhitelist = Collections.emptyList();
 	
 	private transient RLMapManager rlMapManager;
 	
@@ -235,6 +236,33 @@ public class Config {
 		this.showFavoritesAtTop = showFavoritesAtTop;
 	}
 	
+	private static List<InetAddress> parseIPWhitelist(String s) {
+		String[] lines = s.split("\n");
+		ArrayList<InetAddress> list = new ArrayList<>();
+		for(String line : lines) {
+			line = line.trim();
+			if(line.isEmpty()) {
+				continue;
+			}
+			InetAddress address;
+			try {
+				address = InetAddress.getByName(line);
+			} catch(UnknownHostException e) {
+				continue;
+			}
+			list.add(address);
+		}
+		return list;
+	}
+	
+	public List<InetAddress> getIpWhitelist() {
+		return ipWhitelist;
+	}
+	
+	public void setIpWhitelist(List<InetAddress> ipWhitelist) {
+		this.ipWhitelist = ipWhitelist;
+	}
+	
 	public RLMapMetadata getMapMetadata(long mapID) {
 		return mapMetadata.computeIfAbsent(mapID, mapID_ -> {
 			RLMapMetadata rlMapMetadata = new RLMapMetadata(mapID_);
@@ -245,6 +273,18 @@ public class Config {
 			}
 			return rlMapMetadata;
 		});
+	}
+	
+	public String getIpWhitelistString() {
+		if(ipWhitelist == null || ipWhitelist.isEmpty()) {
+			return "";
+		}
+		final Iterator<InetAddress> iterator = ipWhitelist.iterator();
+		StringBuilder sb = new StringBuilder(iterator.next().getHostAddress());
+		while(iterator.hasNext()) {
+			sb.append('\n').append(iterator.next().getHostAddress());
+		}
+		return sb.toString();
 	}
 	
 	public String toJson() {
@@ -277,6 +317,7 @@ public class Config {
 		
 		json.addProperty("upkFilename", getUpkFilename());
 		json.addProperty("webInterfacePort", getWebInterfacePort());
+		json.addProperty("ipWhitelist", getIpWhitelistString());
 		
 		json.addProperty("mayLayout", getMapLayout().toInt());
 		json.addProperty("mapSorting", getMapSorting());
@@ -337,6 +378,11 @@ public class Config {
 		if(json.has("webInterfacePort")) {
 			int value = json.get("webInterfacePort").getAsInt();
 			setWebInterfacePort(value);
+		}
+		if(json.has("ipWhitelist")) {
+			List<InetAddress> value = parseIPWhitelist(json.get("ipWhitelist").getAsString());
+			setIpWhitelist(value);
+			rlMapManager.getWebInterface().getIpWhitelist().setWhitelist(value);
 		}
 		
 		if(json.has("mapLayout")) {
@@ -412,6 +458,11 @@ public class Config {
 		}
 	}
 	
+	@FunctionalInterface
+	private interface TriConsumer<A, B, C> {
+		void accept(A a, B b, C c);
+	}
+	
 	private static class FileTypeAdapter extends TypeAdapter<File> {
 		@Override
 		public File read(JsonReader in) throws IOException {
@@ -430,10 +481,5 @@ public class Config {
 				out.value(value.getAbsolutePath());
 			}
 		}
-	}
-	
-	@FunctionalInterface
-	private interface TriConsumer<A, B, C> {
-		void accept(A a, B b, C c);
 	}
 }

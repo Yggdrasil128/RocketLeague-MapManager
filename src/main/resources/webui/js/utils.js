@@ -1,4 +1,5 @@
 let rlmmVersion = null;
+const browserTabID = getRandomString(8);
 
 $(function() {
     // clock
@@ -22,7 +23,7 @@ $(function() {
     });
 });
 
-function makeRequest(url, body, successCallback, errorCallback, timeoutMillis) {
+function makeRequest(url, params, body, successCallback, errorCallback, timeoutMillis) {
     let request = new XMLHttpRequest();
     request.onload = function() {
         if(200 <= this.status && this.status <= 299) {
@@ -35,6 +36,14 @@ function makeRequest(url, body, successCallback, errorCallback, timeoutMillis) {
             }
         }
     };
+    url += '?btid=' + browserTabID;
+    if(params) {
+        for(let key in params) {
+            if(params.hasOwnProperty(key)) {
+                url += '&' + key + '=' + params[key];
+            }
+        }
+    }
     request.onerror = errorCallback;
     request.ontimeout = errorCallback;
     request.open(body ? "POST" : "GET", url, true);

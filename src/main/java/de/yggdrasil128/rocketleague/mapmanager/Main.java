@@ -37,6 +37,7 @@ public class Main {
 			if(!autostart || rlMapManager.getConfig().getAutostartOpenBrowser()) {
 				rlMapManager.getWebInterface().openInBrowser();
 			}
+//			rlMapManager.getWebInterface().getIpWhitelist().setWhitelist(Collections.singleton(InetAddress.getByName("192.168.178.22")));
 			return;
 		}
 		

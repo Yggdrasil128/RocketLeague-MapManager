@@ -1,7 +1,7 @@
 let config = null;
 
 $(function() {
-    initConfig(function() {
+    loadConfig(function() {
         // load layout and sorting options from config
         $('#mapLayoutSelect').get(0).value = config['mayLayout'];
         $('#mapSortingSelect').get(0).value = config['mapSorting'];
@@ -13,8 +13,8 @@ $(function() {
     });
 });
 
-function initConfig(callback) {
-    makeRequest('api/getConfig', null, function(data) {
+function loadConfig(callback) {
+    makeRequest('api/getConfig', null, null, function(data) {
         config = JSON.parse(data);
         fillFromConfig();
         if(callback) {
@@ -36,6 +36,7 @@ function fillFromConfig() {
 
     $('#input_upkFilename').get(0).value = config['upkFilename'];
     $('#input_webInterfacePort').get(0).value = config['webInterfacePort'];
+    $('#input_ipWhitelist').get(0).value = config['ipWhitelist'];
 
     $('#settingsDiv').css('display', config['needsSetup'] ? 'none' : '');
     $('.showOnlyWhenSetupIsNeeded').css('display', config['needsSetup'] ? 'block' : '');
@@ -46,7 +47,6 @@ function fillFromConfig() {
 function storeConfig() {
     let json = {};
 
-    // noinspection EqualityComparisonWithCoercionJS
     json['autostart'] = parseInt($('#input_autostart').get(0).value);
     json['renameOriginalUnderpassUPK'] = $('#input_renameOriginalUnderpassUPK').get(0).value === '1';
     json['behaviorWhenRLIsStopped'] = parseInt($('#input_behaviorWhenRLIsStopped').get(0).value);
@@ -54,11 +54,10 @@ function storeConfig() {
 
     json['upkFilename'] = $('#input_upkFilename').get(0).value;
     json['webInterfacePort'] = parseInt($('#input_webInterfacePort').get(0).value);
+    json['ipWhitelist'] = $('#input_ipWhitelist').get(0).value;
 
-    console.log(JSON.stringify(json));
-
-    makeRequest('api/patchConfig', JSON.stringify(json), function() {
-        initConfig(function() {
+    makeRequest('api/patchConfig', null, JSON.stringify(json), function() {
+        loadConfig(function() {
             let $button = $('#settingsSubmitButton');
             $button.html('Settings stored!');
             setTimeout(function() {
@@ -74,10 +73,10 @@ function chooseSteamappsFolder() {
         return;
     }
 
-    makeRequest('api/discoverSteamLibrary', path, function(data) {
+    makeRequest('api/discoverSteamLibrary', null, path, function(data) {
         let result = JSON.parse(data);
         if(result['success']) {
-            initConfig();
+            loadConfig();
             alert('Steam Library successfully configured.');
             startMapDiscovery();
         } else {
@@ -98,7 +97,7 @@ function updateSetupHints() {
         return;
     }
 
-    if(currentContentDiv !== 'contentConfiguration') {
+    if(currentContentDiv !== 'contentSettings') {
         $setupHint.addClass('setupHintShown');
     }
 }
@@ -107,7 +106,9 @@ function exitApp() {
     let $button = $('#exitButton');
     $button.html('Exiting...');
 
-    makeRequest('api/exitApp', null, null, function() {
+    let callback = function() {
         window.close();
-    }, 1000);
+    };
+
+    makeRequest('api/exitApp', null, null, callback, callback, 1000);
 }

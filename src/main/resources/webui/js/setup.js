@@ -5,7 +5,7 @@ $(function() {
 });
 
 function setupPhase0() {
-    makeRequest('api/getAppPath', null, function(data) {
+    makeRequest('api/getAppPath', null, null, function(data) {
         $('#installationDirSpan').html(data);
 
         $('div.content.current:not(#contentSetup0)').removeClass('current');
@@ -21,7 +21,7 @@ function setupPhase1() {
 }
 
 function setupPhase2() {
-    makeRequest('api/getConfig', null, function(data) {
+    makeRequest('api/getConfig', null, null, function(data) {
         const config = JSON.parse(data);
 
         $('#input_renameOriginalUPK').get(0).value = config['renameOriginalUnderpassUPK'] ? '1' : '0';
@@ -39,7 +39,7 @@ function setupPhase3() {
 
     $('#installationStatus').html('Installing...');
 
-    makeRequest('api/install', null, setupPhase3_callback1);
+    makeRequest('api/install', null, null, setupPhase3_callback1);
 }
 
 function setupPhase3_callback1() {
@@ -52,13 +52,13 @@ function setupPhase3_callback1() {
         behaviorWhenRLIsRunning: $('#input_behaviorWhenRLIsRunning').get(0).value,
     };
 
-    makeRequest('api/patchConfig', JSON.stringify(config), setupPhase3_callback2);
+    makeRequest('api/patchConfig', null, JSON.stringify(config), setupPhase3_callback2);
 }
 
 function setupPhase3_callback2() {
     $('#installationStatus').html('Discovering maps...');
 
-    makeRequest('api/startMapDiscovery', null, setupPhase3_callback3);
+    makeRequest('api/startMapDiscovery', null, null, setupPhase3_callback3);
 }
 
 function setupPhase3_callback3() {
@@ -66,7 +66,7 @@ function setupPhase3_callback3() {
 }
 
 function setupPhase3_updateMapDiscoveryStatus() {
-    makeRequest('api/getMapDiscoveryStatus', null, setupPhase3_updateMapDiscoveryStatus_callback);
+    makeRequest('api/getMapDiscoveryStatus', null, null, setupPhase3_updateMapDiscoveryStatus_callback);
 }
 
 function setupPhase3_updateMapDiscoveryStatus_callback(data) {
@@ -101,13 +101,13 @@ function setupPhase5() {
 
     let startApp = $('#startRLMapManagerCheckbox').get(0).checked ? '1' : '0';
 
-    makeRequest('api/exit?startApp=' + startApp, null, function() {
+    makeRequest('api/exit', {startApp: startApp}, null, function() {
         window.close();
     });
 }
 
 function steamLibraryDiscovery(path, callback, disableAlert) {
-    makeRequest('api/steamLibraryDiscovery', path, function(data) {
+    makeRequest('api/steamLibraryDiscovery', null, path, function(data) {
         const result = JSON.parse(data);
 
         $('#steamappsFolder').html(coalesce(result['steamappsFolder'], '&mdash;'));

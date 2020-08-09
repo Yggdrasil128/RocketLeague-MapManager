@@ -30,16 +30,16 @@ table.configurationTable input, table.configurationTable select {
     padding: 2px;
 }
 
-div#contentConfiguration div.buttonContainer {
+div#contentSettings div.buttonContainer {
     width: 100%;
     margin-top: 10px
 }
 
-div#contentConfiguration div.buttonContainer button {
+div#contentSettings div.buttonContainer button {
     font-size: 24px;
 }
 
-div#contentConfiguration div.buttonContainer button:not(:first-child) {
+div#contentSettings div.buttonContainer button:not(:first-child) {
     margin-left: 20px;
 }
 
@@ -55,7 +55,7 @@ table.configurationTable .monospace {
     font-weight: bold;
 }
 
-div#contentConfiguration .buttonContainer.two {
+div#contentSettings .buttonContainer.two {
     margin-top: 24px;
 }
 

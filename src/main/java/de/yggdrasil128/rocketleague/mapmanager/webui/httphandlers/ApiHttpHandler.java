@@ -24,6 +24,7 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 	private static final Gson GSON = Config.GSON;
 	
 	private final RLMapManager rlMapManager;
+	private final LastUpdated lastUpdatedMaps = new LastUpdated(), lastUpdatedConfig = new LastUpdated();
 	
 	public ApiHttpHandler(RLMapManager rlMapManager) {
 		super(rlMapManager.getLogger());
@@ -48,7 +49,6 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		super.registerFunction("patchConfig", this::patchConfig);
 		super.registerFunction("exitApp", this::exitApp);
 		super.registerFunction("getStatus", this::getStatus);
-		super.registerFunction("registerBrowserTab", this::registerBrowserTab);
 	}
 	
 	private RLMap getMapFromParameters(Map<String, String> parameters, @SuppressWarnings("SameParameterValue") boolean throwIfNotFound) {
@@ -85,6 +85,7 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		json.addProperty("success", result.isSuccess());
 		json.addProperty("message", result.getMessage());
 		
+		lastUpdatedMaps.now(parameters.get("btid"));
 		return GSON.toJson(json);
 	}
 	
@@ -125,6 +126,9 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 	}
 	
 	private String getMapDiscoveryStatus(Map<String, String> parameters) {
+		if(MapDiscovery.get().isDone()) {
+			lastUpdatedMaps.now(parameters.get("btid"));
+		}
 		return MapDiscovery.getStatusJson();
 	}
 	
@@ -150,6 +154,7 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		metadata.setFavorite(isFavorite);
 		rlMapManager.getConfig().save();
 		
+		lastUpdatedMaps.now(parameters.get("btid"));
 		return "";
 	}
 	
@@ -160,17 +165,20 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 	private String loadMap(Map<String, String> parameters) throws IOException {
 		RLMap map = getMapFromParameters(parameters, true);
 		rlMapManager.loadMap(map);
+		lastUpdatedMaps.now(parameters.get("btid"));
 		return "";
 	}
 	
 	private String unloadMap(Map<String, String> parameters) {
 		rlMapManager.unloadMap();
+		lastUpdatedMaps.now(parameters.get("btid"));
 		return "";
 	}
 	
 	private String refreshMapMetadata(Map<String, String> parameters) throws IOException {
 		RLMap map = getMapFromParameters(parameters, true);
 		rlMapManager.getConfig().getMapMetadata(map.getID()).fetchFromWorkshop();
+		lastUpdatedMaps.now(parameters.get("btid"));
 		return "";
 	}
 	
@@ -190,6 +198,7 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 	
 	private String patchConfig(Map<String, String> parameters) {
 		rlMapManager.getConfig().patchFromJson(parameters.get("postBody"));
+		lastUpdatedConfig.now(parameters.get("btid"));
 		return "";
 	}
 	
@@ -201,16 +210,28 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 	private String getStatus(Map<String, String> parameters) {
 		JsonObject json = new JsonObject();
 		
-		json.addProperty("currentBrowserTabID", rlMapManager.getWebInterface().getBrowserTabID());
 		json.addProperty("isRLRunning", rlMapManager.isRocketLeagueRunning());
+		
+		json.add("lastUpdatedMaps", lastUpdatedMaps.toJson());
+		json.add("lastUpdatedConfig", lastUpdatedConfig.toJson());
 		
 		return GSON.toJson(json);
 	}
 	
-	private String registerBrowserTab(Map<String, String> parameters) {
-		String browserTabID = parameters.get("postBody");
-		rlMapManager.getWebInterface().setBrowserTabID(browserTabID);
-		return "";
+	private static class LastUpdated {
+		private String browserTabID = null;
+		private long timestamp = 0;
+		
+		private void now(String browserTabID) {
+			this.browserTabID = browserTabID;
+			timestamp = System.currentTimeMillis();
+		}
+		
+		private JsonObject toJson() {
+			JsonObject json = new JsonObject();
+			json.addProperty("browserTabID", browserTabID);
+			json.addProperty("timestamp", timestamp);
+			return json;
+		}
 	}
-	
 }

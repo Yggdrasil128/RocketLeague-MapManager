@@ -2,7 +2,8 @@ let currentContentDiv = 'contentHome';
 let status = null;
 let statusUpdateIntervalHandle = null;
 let disconnectedModalShown = false;
-const browserTabID = getRandomString(8);
+let lastUpdatedMapsTimestamp = 0;
+let lastUpdatedConfigTimestamp = 0;
 
 $(function() {
     // onclick handler for navbar
@@ -21,31 +22,33 @@ $(function() {
         updateSetupHints();
     });
 
-    makeRequest('/api/registerBrowserTab', browserTabID, function() {
-        statusUpdateIntervalHandle = setInterval(updateStatus, 5000);
-        updateStatus();
-    });
+    statusUpdateIntervalHandle = setInterval(updateStatus, 5000);
+    updateStatus();
 });
 
 function updateStatus() {
-    makeRequest('api/getStatus', null, updateStatusCallback, updateStatusCallbackError);
+    makeRequest('api/getStatus', null, null, updateStatusCallback, updateStatusCallbackError);
 }
 
 function updateStatusCallback(data) {
     const oldStatus = status;
     status = JSON.parse(data);
 
-    if(status['currentBrowserTabID'] !== browserTabID) {
-        $('#disconnectModal').removeClass('shown');
-        $('#activeInAnotherTabModal').addClass('shown');
-        clearInterval(statusUpdateIntervalHandle);
-        statusUpdateIntervalHandle = null;
-        return;
-    }
-
     if(disconnectedModalShown) {
         location.reload();
         return;
+    }
+
+    if(status['lastUpdatedMaps']['browserTabID'] !== browserTabID && status['lastUpdatedMaps']['timestamp'] > lastUpdatedMapsTimestamp) {
+        lastUpdatedMapsTimestamp = status['lastUpdatedMaps']['timestamp'];
+        console.log('Reloading maps');
+        loadMaps();
+    }
+
+    if(status['lastUpdatedConfig']['browserTabID'] !== browserTabID && status['lastUpdatedConfig']['timestamp'] > lastUpdatedConfigTimestamp) {
+        lastUpdatedConfigTimestamp = status['lastUpdatedConfig']['timestamp'];
+        console.log('Reloading config');
+        loadConfig();
     }
 
     if(!oldStatus || oldStatus['isRLRunning'] ^ status['isRLRunning']) {
@@ -71,9 +74,9 @@ function updateStatusCallbackError() {
 function startStopRocketLeague() {
     if(status['isRLRunning']) {
         $('#rlStatus button').html('Stopping...').attr('disabled', '');
-        makeRequest('api/stopRocketLeague', null, updateStatus);
+        makeRequest('api/stopRocketLeague', null, null, updateStatus);
     } else {
         $('#rlStatus button').html('Starting...').attr('disabled', '');
-        makeRequest('api/startRocketLeague', null, updateStatus);
+        makeRequest('api/startRocketLeague', null, null, updateStatus);
     }
 }

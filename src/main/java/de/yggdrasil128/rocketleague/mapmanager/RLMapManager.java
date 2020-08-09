@@ -126,7 +126,7 @@ public class RLMapManager {
 		}
 		
 		if(startRL) {
-			startRocketLeague_noCheck();
+			startRocketLeague(false);
 		}
 	}
 	
@@ -166,13 +166,14 @@ public class RLMapManager {
 	}
 	
 	public void startRocketLeague() {
-		if(isRocketLeagueRunning()) {
-			return;
-		}
-		startRocketLeague_noCheck();
+		startRocketLeague(true);
 	}
 	
-	private void startRocketLeague_noCheck() {
+	private void startRocketLeague(boolean checkIfRunning) {
+		if(checkIfRunning && isRocketLeagueRunning()) {
+			return;
+		}
+		
 		try {
 			Runtime.getRuntime().exec(config.getExeFile().getAbsolutePath());
 		} catch(IOException e) {

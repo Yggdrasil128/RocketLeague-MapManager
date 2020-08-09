@@ -13,10 +13,10 @@ import static de.yggdrasil128.rocketleague.mapmanager.config.Config.GSON;
 
 public class MapDiscovery {
 	private static MapDiscovery task = null;
-
-//	public synchronized static MapDiscovery get() {
-//		return task;
-//	}
+	
+	public synchronized static MapDiscovery get() {
+		return task;
+	}
 	
 	public synchronized static void start(RLMapManager rlMapManager) {
 		if(task != null && !task.isDone()) {
