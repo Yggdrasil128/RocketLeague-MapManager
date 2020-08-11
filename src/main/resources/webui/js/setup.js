@@ -14,7 +14,7 @@ function setupPhase0() {
 }
 
 function setupPhase1() {
-    steamLibraryDiscovery('G:\\Steam\\steamapps', function() {
+    steamLibraryDiscovery(null, function() {
         $('div.content.current:not(#contentSetup1)').removeClass('current');
         $('#contentSetup1').addClass('current');
     }, true);

@@ -18,10 +18,10 @@ import java.util.Map;
 public class RLMapManager {
 	public static final File FILE_ROOT;
 	public static final File FILE_CONFIG;
-	public static final String VERSION = "1.2";
+	public static final UpdateChecker.Version VERSION = new UpdateChecker.Version(1, 2);
 	static final File FILE_LOG;
-	private static final String REGISTRY_AUTOSTART_KEY = "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
-	private static final String REGISTRY_AUTOSTART_VALUE = "RL Map Manager";
+	public static final String REGISTRY_AUTOSTART_KEY = "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
+	public static final String REGISTRY_AUTOSTART_VALUE = "RL Map Manager";
 	private static final long IS_RL_RUNNING_CACHE_TTL = 4800;
 	
 	static {
@@ -43,8 +43,8 @@ public class RLMapManager {
 	private final Config config;
 	private final WebInterface webInterface;
 	private final SteamLibraryDiscovery steamLibraryDiscovery;
+	private final UpdateChecker updateChecker;
 	private final boolean isSetupMode;
-	
 	private SysTray sysTray;
 	private Map<Long, RLMap> maps;
 	private boolean isRLRunningCache = false;
@@ -63,6 +63,7 @@ public class RLMapManager {
 		
 		webInterface = new WebInterface(this, config.getWebInterfacePort());
 		steamLibraryDiscovery = new SteamLibraryDiscovery(this);
+		updateChecker = new UpdateChecker();
 	}
 	
 	RLMapManager() {
@@ -78,10 +79,12 @@ public class RLMapManager {
 		
 		webInterface.start(isSetupMode);
 		
-		try {
-			sysTray = new SysTray(this);
-		} catch(Exception e) {
-			logger.error("Couldn't create SysTray icon", e);
+		if(!isSetupMode) {
+			try {
+				sysTray = new SysTray(this);
+			} catch(Exception e) {
+				logger.error("Couldn't create SysTray icon", e);
+			}
 		}
 	}
 	
@@ -99,6 +102,10 @@ public class RLMapManager {
 	
 	public SteamLibraryDiscovery getSteamLibraryDiscovery() {
 		return steamLibraryDiscovery;
+	}
+	
+	public UpdateChecker getUpdateChecker() {
+		return updateChecker;
 	}
 	
 	public SysTray getSysTray() {

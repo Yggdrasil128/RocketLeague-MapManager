@@ -35,7 +35,7 @@ public class SetupApiHttpHandler extends AbstractApiHttpHandler {
 	}
 	
 	private String getVersion(Map<String, String> parameters) {
-		return RLMapManager.VERSION;
+		return RLMapManager.VERSION.toString();
 	}
 	
 	private String getAppPath(Map<String, String> parameters) {

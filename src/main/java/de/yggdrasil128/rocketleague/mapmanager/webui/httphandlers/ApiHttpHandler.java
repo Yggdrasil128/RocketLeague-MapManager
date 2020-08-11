@@ -4,9 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
-import de.yggdrasil128.rocketleague.mapmanager.MapDiscovery;
-import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
-import de.yggdrasil128.rocketleague.mapmanager.SteamLibraryDiscovery;
+import de.yggdrasil128.rocketleague.mapmanager.*;
 import de.yggdrasil128.rocketleague.mapmanager.config.Config;
 import de.yggdrasil128.rocketleague.mapmanager.config.RLMap;
 import de.yggdrasil128.rocketleague.mapmanager.config.RLMapMetadata;
@@ -17,6 +15,8 @@ import org.slf4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URL;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Executor;
@@ -58,6 +58,8 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		super.registerFunction("patchConfig", this::patchConfig);
 		super.registerFunction("exitApp", this::exitApp);
 		super.registerFunction("getStatus", this::getStatus);
+		super.registerFunction("getUpdateInfo", this::getUpdateInfo);
+		super.registerFunction("installUpdate", this::installUpdate);
 	}
 	
 	private RLMap getMapFromParameters(Map<String, String> parameters, @SuppressWarnings("SameParameterValue") boolean throwIfNotFound) {
@@ -75,7 +77,7 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 	}
 	
 	private String getVersion(Map<String, String> parameters) {
-		return RLMapManager.VERSION;
+		return RLMapManager.VERSION.toString();
 	}
 	
 	private String getConfig(Map<String, String> parameters) {
@@ -216,6 +218,11 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		JsonObject json = new JsonObject();
 		
 		json.addProperty("isRLRunning", rlMapManager.isRocketLeagueRunning());
+		if(rlMapManager.getUpdateChecker().isUpdateAvailable()) {
+			json.addProperty("updateAvailable", rlMapManager.getUpdateChecker().getLatestVersion().toString());
+		} else {
+			json.add("updateAvailable", null);
+		}
 		
 		json.add("lastUpdatedMaps", lastUpdatedMaps.toJson());
 		json.add("lastUpdatedConfig", lastUpdatedConfig.toJson());
@@ -223,11 +230,49 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		return GSON.toJson(json);
 	}
 	
+	private String getUpdateInfo(Map<String, String> parameters) {
+		return rlMapManager.getUpdateChecker().getJson();
+	}
+	
+	private String installUpdate(Map<String, String> parameters) throws Exception {
+		final List<File> oldInstalledJarFiles = Main.findInstalledJarFiles();
+		
+		JsonObject jarAssetInfo = rlMapManager.getUpdateChecker().findJarAsset();
+		assert jarAssetInfo != null;
+		
+		URL downloadURL = new URL(jarAssetInfo.get("browser_download_url").getAsString());
+		File newJarFile = new File(RLMapManager.FILE_ROOT, jarAssetInfo.get("name").getAsString());
+		
+		oldInstalledJarFiles.remove(newJarFile);
+		
+		FileUtils.copyURLToFile(downloadURL, newJarFile);
+		
+		String launchCommand = "\"" + System.getProperty("java.home") + "\\bin\\javaw.exe\" -jar \"" + newJarFile.getAbsolutePath() + "\" --autostart";
+		
+		if(rlMapManager.isAutostartEnabled()) {
+			// update registry entry
+			RegistryHelper.add(RLMapManager.REGISTRY_AUTOSTART_KEY, RLMapManager.REGISTRY_AUTOSTART_VALUE, launchCommand);
+		}
+		
+		rlMapManager.getWebInterface().stop();
+		Thread.sleep(500);
+		
+		Runtime.getRuntime().exec(launchCommand);
+		for(File file : oldInstalledJarFiles) {
+			// delay deletion by 5 seconds
+			String command = "cmd /c ping localhost -n 6 > nul && del \"" + file.getAbsolutePath() + "\"";
+			Runtime.getRuntime().exec(command);
+		}
+		System.exit(0);
+		
+		return "";
+	}
+	
 	private void handleMapImageRequest(Map<String, String> parameters,
 									   HttpExchange httpExchange,
 									   OutputStream outputStream,
 									   Logger logger,
-									   String functionName) {
+									   @SuppressWarnings("unused") String functionName) {
 		mapImageRequestsThreadPool.execute(() -> {
 			try {
 				RLMap map = getMapFromParameters(parameters, true);

@@ -8,7 +8,9 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class Main {
 	public static void main(String[] args) throws IOException, InterruptedException {
@@ -112,9 +114,19 @@ public class Main {
 	}
 	
 	public static File findInstalledJarFile() {
+		final List<File> jarFiles = findInstalledJarFiles();
+		if(jarFiles.isEmpty()) {
+			return null;
+		}
+		return jarFiles.get(0);
+	}
+	
+	public static List<File> findInstalledJarFiles() {
+		ArrayList<File> jarFiles = new ArrayList<>();
+		
 		File[] files = RLMapManager.FILE_ROOT.listFiles();
 		if(files == null) {
-			return null;
+			return jarFiles;
 		}
 		
 		for(File file : files) {
@@ -123,27 +135,15 @@ public class Main {
 			}
 			String name = file.getName();
 			if(name.startsWith("RocketLeague-MapManager") && name.toLowerCase().endsWith(".jar")) {
-				return file;
+				jarFiles.add(file);
 			}
 		}
-		return null;
+		
+		return jarFiles;
 	}
 	
 	public static void deleteInstalledJarFiles() {
-		File[] files = RLMapManager.FILE_ROOT.listFiles();
-		if(files == null) {
-			return;
-		}
-		
-		for(File file : files) {
-			if(!file.isFile()) {
-				continue;
-			}
-			String name = file.getName();
-			if(name.startsWith("RocketLeague-MapManager") && name.toLowerCase().endsWith(".jar")) {
-				//noinspection ResultOfMethodCallIgnored
-				file.delete();
-			}
-		}
+		//noinspection ResultOfMethodCallIgnored
+		findInstalledJarFiles().forEach(File::delete);
 	}
 }

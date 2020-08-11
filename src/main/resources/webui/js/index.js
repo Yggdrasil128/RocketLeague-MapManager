@@ -65,6 +65,18 @@ function updateStatusCallback(data) {
             $('#rlStatus button').html('Start RL').attr('disabled', null);
         }
     }
+
+    if(!oldStatus || oldStatus['updateAvailable'] ^ status['updateAvailable']) {
+        if(status['updateAvailable']) {
+            $('div.anchor[data-divID=contentUpdate]').css('display', '');
+            loadUpdateInfo();
+        } else {
+            $('div.anchor[data-divID=contentUpdate]').css('display', 'none');
+            if(currentContentDiv === 'contentUpdate') {
+                $('div.anchor[data-divID=contentMapList]').trigger('click');
+            }
+        }
+    }
 }
 
 function updateStatusCallbackError() {
