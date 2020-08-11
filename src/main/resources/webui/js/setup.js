@@ -14,7 +14,7 @@ function setupPhase0() {
 }
 
 function setupPhase1() {
-    steamLibraryDiscovery(null, function() {
+    steamLibraryDiscovery(true, true, function() {
         $('div.content.current:not(#contentSetup1)').removeClass('current');
         $('#contentSetup1').addClass('current');
     }, true);
@@ -106,40 +106,42 @@ function setupPhase5() {
     });
 }
 
-function steamLibraryDiscovery(path, callback, disableAlert) {
-    makeRequest('api/steamLibraryDiscovery', null, path, function(data) {
-        const result = JSON.parse(data);
+function steamLibraryDiscovery(disableAlert, useDefaultDirectory, callback) {
+    let $button = $('#contentSetup1 div.buttonContainer button');
 
-        $('#steamappsFolder').html(coalesce(result['steamappsFolder'], '&mdash;'));
-        $('#exeFile').html(coalesce(result['exeFile'], '&mdash;'));
-        $('#upkFile').html(coalesce(result['upkFile'], '&mdash;'));
-        $('#workshopFolder').html(coalesce(result['workshopFolder'], '&mdash;'));
+    $button.attr('disabled', '');
 
-        if(result['success']) {
-            $('#couldNotFindSteamappsFolder').css('display', 'none');
-            $('#steamappsFolderIsConfigured').css('display', '');
-            $('#toPhase2').attr('disabled', null);
-        } else {
-            $('#couldNotFindSteamappsFolder').css('display', '');
-            $('#steamappsFolderIsConfigured').css('display', 'none');
-            $('#toPhase2').attr('disabled', '');
+    makeRequest(
+        'api/chooseSteamLibrary',
+        {disableAlert: disableAlert ? '1' : '0', useDefaultDirectory: useDefaultDirectory ? '1' : '0'},
+        null,
+        function(data) {
+            $button.attr('disabled', null);
 
-            if(!disableAlert) {
-                alert('Error: ' + result['message']);
+            if(!data) {
+                return;
             }
-        }
+            let result = JSON.parse(data);
 
-        if(callback) {
-            callback();
-        }
-    });
-}
+            $('#steamappsFolder').html(coalesce(result['steamappsFolder'], '&mdash;'));
+            $('#exeFile').html(coalesce(result['exeFile'], '&mdash;'));
+            $('#upkFile').html(coalesce(result['upkFile'], '&mdash;'));
+            $('#workshopFolder').html(coalesce(result['workshopFolder'], '&mdash;'));
 
-function chooseSteamappsFolder() {
-    const path = prompt("Please enter the path to the steamapps folder where Rocket League is installed. For example: C:\\Program Files (x86)\\Steam\\steamapps");
-    if(!path || path === '') {
-        return;
-    }
+            if(result['success']) {
+                $('#couldNotFindSteamappsFolder').css('display', 'none');
+                $('#steamappsFolderIsConfigured').css('display', '');
+                $('#toPhase2').attr('disabled', null);
+            } else {
+                $('#couldNotFindSteamappsFolder').css('display', '');
+                $('#steamappsFolderIsConfigured').css('display', 'none');
+                $('#toPhase2').attr('disabled', '');
+            }
 
-    steamLibraryDiscovery(path);
+            if(callback) {
+                callback();
+            }
+        }, function() {
+            $button.attr('disabled', null);
+        }, 3600000);
 }

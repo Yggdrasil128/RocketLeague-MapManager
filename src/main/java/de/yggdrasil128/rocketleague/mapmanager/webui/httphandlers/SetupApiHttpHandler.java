@@ -1,21 +1,21 @@
 package de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers;
 
-import com.google.gson.Gson;
+import com.sun.net.httpserver.HttpExchange;
 import de.yggdrasil128.rocketleague.mapmanager.Main;
 import de.yggdrasil128.rocketleague.mapmanager.MapDiscovery;
 import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
-import de.yggdrasil128.rocketleague.mapmanager.SteamLibraryDiscovery;
-import de.yggdrasil128.rocketleague.mapmanager.config.Config;
 import de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers.api.AbstractApiHttpHandler;
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Map;
 
 @SuppressWarnings("SameReturnValue")
 public class SetupApiHttpHandler extends AbstractApiHttpHandler {
-	private static final Gson GSON = Config.GSON;
+//	private static final Gson GSON = Config.GSON;
 	
 	private final RLMapManager rlMapManager;
 	
@@ -23,9 +23,10 @@ public class SetupApiHttpHandler extends AbstractApiHttpHandler {
 		super(rlMapManager.getLogger());
 		this.rlMapManager = rlMapManager;
 		
+		super.registerHandler("chooseSteamLibrary", this::handleChooseSteamLibraryRequest);
+		
 		super.registerFunction("getVersion", this::getVersion);
 		super.registerFunction("getAppPath", this::getAppPath);
-		super.registerFunction("steamLibraryDiscovery", this::steamLibraryDiscovery);
 		super.registerFunction("getConfig", this::getConfig);
 		super.registerFunction("patchConfig", this::patchConfig);
 		super.registerFunction("startMapDiscovery", this::startMapDiscovery);
@@ -34,27 +35,20 @@ public class SetupApiHttpHandler extends AbstractApiHttpHandler {
 		super.registerFunction("install", this::install);
 	}
 	
+	private void handleChooseSteamLibraryRequest(Map<String, String> parameters,
+												 HttpExchange httpExchange,
+												 OutputStream outputStream,
+												 Logger logger,
+												 @SuppressWarnings("unused") String functionName) {
+		ApiHttpHandler.handleChooseSteamLibraryRequest(parameters, httpExchange, outputStream, logger, functionName, rlMapManager, null);
+	}
+	
 	private String getVersion(Map<String, String> parameters) {
 		return RLMapManager.VERSION.toString();
 	}
 	
 	private String getAppPath(Map<String, String> parameters) {
 		return RLMapManager.FILE_ROOT.getAbsolutePath();
-	}
-	
-	private String steamLibraryDiscovery(Map<String, String> parameters) {
-		SteamLibraryDiscovery.Result result;
-		if(parameters.containsKey("postBody")) {
-			result = rlMapManager.getSteamLibraryDiscovery().discoverSteamLibrary(new File(parameters.get("postBody")));
-		} else {
-			result = rlMapManager.getSteamLibraryDiscovery().discoverSteamLibrary();
-		}
-		
-		if(result.isSuccess()) {
-			result.saveToConfig(rlMapManager.getConfig());
-		}
-		
-		return GSON.toJson(result);
 	}
 	
 	private String getConfig(Map<String, String> parameters) {

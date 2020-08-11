@@ -29,10 +29,6 @@ public class SysTray {
 		createIcon();
 	}
 	
-	public static void main(String[] args) throws Exception {
-		new SysTray(null);
-	}
-	
 	@SuppressWarnings("unused")
 	private Image getImage() throws IOException {
 		byte[] imageData = rlMapManager

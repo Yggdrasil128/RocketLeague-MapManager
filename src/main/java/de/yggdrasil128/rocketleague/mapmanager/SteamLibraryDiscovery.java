@@ -2,6 +2,7 @@ package de.yggdrasil128.rocketleague.mapmanager;
 
 import de.yggdrasil128.rocketleague.mapmanager.config.Config;
 
+import javax.swing.*;
 import java.io.File;
 
 public class SteamLibraryDiscovery {
@@ -16,6 +17,30 @@ public class SteamLibraryDiscovery {
 		this.rlMapManager = rlMapManager;
 	}
 	
+	public static File chooseFolder() {
+		// we need this JFrame in order for the JFileChooser to be always on top of other applications
+		final JFrame jFrame = new JFrame();
+		jFrame.setAlwaysOnTop(true);
+		jFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		jFrame.setLocationRelativeTo(null);
+		jFrame.requestFocus();
+		
+		final JFileChooser chooser = new JFileChooser(System.getenv("SystemDrive"));
+		
+		chooser.setDialogTitle("Choose your steamapps folder");
+		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		
+		final int result = chooser.showOpenDialog(jFrame);
+		jFrame.dispose();
+		
+		if(result == JFileChooser.APPROVE_OPTION) {
+			return chooser.getSelectedFile();
+		}
+		
+		return null;
+	}
+	
+	@SuppressWarnings("unused")
 	public Result discoverSteamLibrary() {
 		return discoverSteamLibrary(DEFAULT_STEAMAPPS_FOLDER);
 	}

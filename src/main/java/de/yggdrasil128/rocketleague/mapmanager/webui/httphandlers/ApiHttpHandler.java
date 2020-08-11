@@ -12,10 +12,12 @@ import de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers.api.AbstractAp
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -30,20 +32,16 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 	private final Executor mapImageRequestsThreadPool = Executors.newFixedThreadPool(2);
 	private final LastUpdated lastUpdatedMaps = new LastUpdated(), lastUpdatedConfig = new LastUpdated();
 	
-	public LastUpdated getLastUpdatedMaps() {
-		return lastUpdatedMaps;
-	}
-	
 	public ApiHttpHandler(RLMapManager rlMapManager) {
 		super(rlMapManager.getLogger());
 		
 		this.rlMapManager = rlMapManager;
 		
 		super.registerHandler("getMapImage", this::handleMapImageRequest);
+		super.registerHandler("chooseSteamLibrary", this::handleChooseSteamLibraryRequest);
 		
 		super.registerFunction("getVersion", this::getVersion);
 		super.registerFunction("getConfig", this::getConfig);
-		super.registerFunction("discoverSteamLibrary", this::discoverSteamLibrary);
 		super.registerFunction("getMaps", this::getMaps);
 		super.registerFunction("startMapDiscovery", this::startMapDiscovery);
 		super.registerFunction("getMapDiscoveryStatus", this::getMapDiscoveryStatus);
@@ -60,6 +58,70 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		super.registerFunction("getStatus", this::getStatus);
 		super.registerFunction("getUpdateInfo", this::getUpdateInfo);
 		super.registerFunction("installUpdate", this::installUpdate);
+	}
+	
+	public static void handleChooseSteamLibraryRequest(Map<String, String> parameters,
+													   HttpExchange httpExchange,
+													   OutputStream outputStream,
+													   Logger logger,
+													   @SuppressWarnings("unused") String functionName,
+													   RLMapManager rlMapManager,
+													   LastUpdated lastUpdatedMaps) {
+		new Thread(() -> {
+			try {
+				File file;
+				if("1".equals(parameters.get("useDefaultDirectory"))) {
+					file = SteamLibraryDiscovery.DEFAULT_STEAMAPPS_FOLDER;
+				} else {
+					file = SteamLibraryDiscovery.chooseFolder();
+					if(file == null) {
+						httpExchange.sendResponseHeaders(204, -1);
+						return;
+					}
+				}
+				
+				SteamLibraryDiscovery.Result result = rlMapManager.getSteamLibraryDiscovery().discoverSteamLibrary(file);
+				if(result.isSuccess()) {
+					result.saveToConfig(rlMapManager.getConfig());
+				}
+				
+				if(lastUpdatedMaps != null) {
+					lastUpdatedMaps.now(parameters.get("btid"));
+				}
+				
+				final String data = GSON.toJson(result);
+				httpExchange.sendResponseHeaders(200, data.length());
+				outputStream.write(data.getBytes(StandardCharsets.UTF_8));
+				
+				if(!"1".equals(parameters.get("disableAlert"))) {
+					if(result.isSuccess()) {
+						JOptionPane.showMessageDialog(null, "Steam Library successfully configured", "RL Map Manager", JOptionPane.INFORMATION_MESSAGE);
+					} else {
+						JOptionPane.showMessageDialog(null, "Error: " + result.getMessage(), "RL Map Manager", JOptionPane.ERROR_MESSAGE);
+					}
+				}
+			} catch(IOException e) {
+				logger.warn("Uncaught exception", e);
+			} finally {
+				try {
+					outputStream.flush();
+					outputStream.close();
+				} catch(IOException ignored) {
+				}
+			}
+		}).start();
+	}
+	
+	private void handleChooseSteamLibraryRequest(Map<String, String> parameters,
+												 HttpExchange httpExchange,
+												 OutputStream outputStream,
+												 Logger logger,
+												 @SuppressWarnings("unused") String functionName) {
+		handleChooseSteamLibraryRequest(parameters, httpExchange, outputStream, logger, functionName, rlMapManager, lastUpdatedMaps);
+	}
+	
+	public LastUpdated getLastUpdatedMaps() {
+		return lastUpdatedMaps;
 	}
 	
 	private RLMap getMapFromParameters(Map<String, String> parameters, @SuppressWarnings("SameParameterValue") boolean throwIfNotFound) {
@@ -82,22 +144,6 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 	
 	private String getConfig(Map<String, String> parameters) {
 		return rlMapManager.getConfig().toJson();
-	}
-	
-	private String discoverSteamLibrary(Map<String, String> parameters) {
-		String path = parameters.get("postBody").trim();
-		File file = new File(path);
-		SteamLibraryDiscovery.Result result = rlMapManager.getSteamLibraryDiscovery().discoverSteamLibrary(file);
-		if(result.isSuccess()) {
-			result.saveToConfig(rlMapManager.getConfig());
-		}
-		
-		JsonObject json = new JsonObject();
-		json.addProperty("success", result.isSuccess());
-		json.addProperty("message", result.getMessage());
-		
-		lastUpdatedMaps.now(parameters.get("btid"));
-		return GSON.toJson(json);
 	}
 	
 	private String getMaps(Map<String, String> parameters) {
@@ -247,11 +293,11 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		
 		FileUtils.copyURLToFile(downloadURL, newJarFile);
 		
-		String launchCommand = "\"" + System.getProperty("java.home") + "\\bin\\javaw.exe\" -jar \"" + newJarFile.getAbsolutePath() + "\" --autostart";
+		String launchCommand = "\"" + System.getProperty("java.home") + "\\bin\\javaw.exe\" -jar \"" + newJarFile.getAbsolutePath() + "\"";
 		
 		if(rlMapManager.isAutostartEnabled()) {
 			// update registry entry
-			RegistryHelper.add(RLMapManager.REGISTRY_AUTOSTART_KEY, RLMapManager.REGISTRY_AUTOSTART_VALUE, launchCommand);
+			RegistryHelper.add(RLMapManager.REGISTRY_AUTOSTART_KEY, RLMapManager.REGISTRY_AUTOSTART_VALUE, launchCommand + " --autostart");
 		}
 		
 		rlMapManager.getWebInterface().stop();

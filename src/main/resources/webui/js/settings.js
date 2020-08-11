@@ -64,23 +64,25 @@ function storeConfig() {
 }
 
 function chooseSteamappsFolder() {
-    const path = prompt("Please enter the path to the steamapps folder where Rocket League is installed. For example: C:\\Program Files (x86)\\Steam\\steamapps");
-    if(!path || path === '') {
-        return;
-    }
+    let $button = $('#steamLibrarySetupDiv button');
 
-    makeRequest('api/discoverSteamLibrary', null, path, function(data) {
+    $button.attr('disabled', '');
+
+    makeRequest('api/chooseSteamLibrary', null, null, function(data) {
+        $button.attr('disabled', null);
+
+        if(!data) {
+            return;
+        }
         let result = JSON.parse(data);
         if(result['success']) {
             loadConfig();
-            alert('Steam Library successfully configured.');
             startMapDiscovery();
-        } else {
-            alert('Error: ' + result['message']);
         }
+
     }, function() {
-        alert('An error occurred. Please check the log for details about the error.');
-    });
+        $button.attr('disabled', null);
+    }, 3600000);
 }
 
 function updateSetupHints() {
