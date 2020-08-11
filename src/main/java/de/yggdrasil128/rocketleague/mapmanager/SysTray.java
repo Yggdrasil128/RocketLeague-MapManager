@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -87,6 +89,8 @@ public class SysTray {
 		popupMenu.add(menuItem4);
 		
 		TrayIcon trayIcon = new TrayIcon(getImageFromFile(), "RL Map Manager", popupMenu);
+		trayIcon.addMouseListener(new MouseListenerImpl());
+		
 		SystemTray.getSystemTray().add(trayIcon);
 		
 		updateLoadFavoriteMapMenu();
@@ -146,6 +150,35 @@ public class SysTray {
 			}
 			
 			loadFavoriteMapMenu.add(menuItem);
+		}
+	}
+	
+	private class MouseListenerImpl implements MouseListener {
+		@Override
+		public void mouseClicked(MouseEvent e) {
+			
+		}
+		
+		@Override
+		public void mousePressed(MouseEvent e) {
+			if(e.getClickCount() == 2) {
+				rlMapManager.getWebInterface().openInBrowser();
+			}
+		}
+		
+		@Override
+		public void mouseReleased(MouseEvent e) {
+			
+		}
+		
+		@Override
+		public void mouseEntered(MouseEvent e) {
+			
+		}
+		
+		@Override
+		public void mouseExited(MouseEvent e) {
+			
 		}
 	}
 }
