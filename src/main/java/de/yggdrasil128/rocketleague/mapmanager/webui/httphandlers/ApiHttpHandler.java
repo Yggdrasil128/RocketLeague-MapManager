@@ -295,6 +295,11 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		
 		String launchCommand = "\"" + System.getProperty("java.home") + "\\bin\\javaw.exe\" -jar \"" + newJarFile.getAbsolutePath() + "\"";
 		
+		final File shortcut = DesktopShortcutHelper.findShortcut();
+		if(shortcut != null) {
+			DesktopShortcutHelper.createShortcut(shortcut, newJarFile);
+		}
+		
 		if(rlMapManager.isAutostartEnabled()) {
 			// update registry entry
 			RegistryHelper.add(RLMapManager.REGISTRY_AUTOSTART_KEY, RLMapManager.REGISTRY_AUTOSTART_VALUE, launchCommand + " --autostart");

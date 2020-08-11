@@ -58,7 +58,7 @@ public class Main {
 					null);
 			switch(result) {
 				case 0:
-					String command = "\"" + System.getProperty("java.home") + "\\bin\\java.exe\" -jar \"" + installedJarFile.getAbsolutePath() + "\"";
+					String command = "\"" + System.getProperty("java.home") + "\\bin\\javaw.exe\" -jar \"" + installedJarFile.getAbsolutePath() + "\"";
 					Runtime.getRuntime().exec(command);
 				case 2:
 					return;

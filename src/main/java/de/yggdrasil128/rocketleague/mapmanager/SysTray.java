@@ -10,7 +10,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Timer;
@@ -31,20 +30,15 @@ public class SysTray {
 		createIcon();
 	}
 	
-	@SuppressWarnings("unused")
 	private Image getImage() throws IOException {
 		byte[] imageData = rlMapManager
 				.getWebInterface()
 				.getStaticFilesHttpHandler()
 				.getFileData()
-				.get("img/favicon16.png");
+				.get("img/icon16.png");
 		
 		ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(imageData);
 		return ImageIO.read(byteArrayInputStream);
-	}
-	
-	private Image getImageFromFile() throws IOException {
-		return ImageIO.read(new File("E:\\Dropbox\\Eclipse Workspace\\RocketLeague-MapManager\\src\\main\\resources\\webui\\img\\favicon16.png"));
 	}
 	
 	private void createIcon() throws Exception {
@@ -88,7 +82,7 @@ public class SysTray {
 		popupMenu.addSeparator();
 		popupMenu.add(menuItem4);
 		
-		TrayIcon trayIcon = new TrayIcon(getImageFromFile(), "RL Map Manager", popupMenu);
+		TrayIcon trayIcon = new TrayIcon(getImage(), "RL Map Manager", popupMenu);
 		trayIcon.addMouseListener(new MouseListenerImpl());
 		
 		SystemTray.getSystemTray().add(trayIcon);

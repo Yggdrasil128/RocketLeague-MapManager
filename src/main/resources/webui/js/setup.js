@@ -100,8 +100,9 @@ function setupPhase5() {
     $('#contentSetup4 button').attr('disabled', '');
 
     let startApp = $('#startRLMapManagerCheckbox').get(0).checked ? '1' : '0';
+    let createDesktopShortcut = $('#createDesktopShortcutCheckbox').get(0).checked ? '1' : '0';
 
-    makeRequest('api/exit', {startApp: startApp}, null, function() {
+    makeRequest('api/exit', {startApp: startApp, createDesktopShortcut: createDesktopShortcut}, null, function() {
         window.close();
     });
 }

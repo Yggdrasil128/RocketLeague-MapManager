@@ -1,6 +1,7 @@
 package de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers;
 
 import com.sun.net.httpserver.HttpExchange;
+import de.yggdrasil128.rocketleague.mapmanager.DesktopShortcutHelper;
 import de.yggdrasil128.rocketleague.mapmanager.Main;
 import de.yggdrasil128.rocketleague.mapmanager.MapDiscovery;
 import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
@@ -70,6 +71,8 @@ public class SetupApiHttpHandler extends AbstractApiHttpHandler {
 		
 		FileUtils.copyFile(source, target);
 		
+		DesktopShortcutHelper.saveAppIcon(rlMapManager);
+		
 		return "";
 	}
 	
@@ -84,6 +87,7 @@ public class SetupApiHttpHandler extends AbstractApiHttpHandler {
 	
 	private String exit(Map<String, String> parameters) {
 		boolean startApp = "1".equals(parameters.get("startApp"));
+		boolean createDesktopShortcut = "1".equals(parameters.get("createDesktopShortcut"));
 		
 		new Thread(() -> {
 			try {
@@ -93,6 +97,13 @@ public class SetupApiHttpHandler extends AbstractApiHttpHandler {
 			
 			rlMapManager.getWebInterface().stop();
 			rlMapManager.getConfig().save();
+			
+			File jar = Main.findInstalledJarFile();
+			if(createDesktopShortcut && jar != null) {
+				DesktopShortcutHelper.createOrUpdateShortcut(jar);
+			} else {
+				DesktopShortcutHelper.deleteIfExists();
+			}
 			
 			if(!startApp) {
 				System.exit(0);
@@ -104,9 +115,8 @@ public class SetupApiHttpHandler extends AbstractApiHttpHandler {
 			} catch(InterruptedException ignored) {
 			}
 			
-			File jar = Main.findInstalledJarFile();
 			if(jar != null) {
-				String command = "\"" + System.getProperty("java.home") + "\\bin\\java.exe\" -jar \"" + jar.getAbsolutePath() + "\"";
+				String command = "\"" + System.getProperty("java.home") + "\\bin\\javaw.exe\" -jar \"" + jar.getAbsolutePath() + "\"";
 				try {
 					Runtime.getRuntime().exec(command);
 				} catch(IOException e) {
