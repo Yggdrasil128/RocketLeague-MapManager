@@ -51,7 +51,6 @@ div#contentSettings div.buttonContainer button:not(:first-child) {
 }
 
 table.configurationTable .monospace {
-    font-size: larger;
     font-weight: bold;
 }
 

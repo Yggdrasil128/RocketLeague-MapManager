@@ -146,3 +146,14 @@ function steamLibraryDiscovery(disableAlert, useDefaultDirectory, callback) {
             $button.attr('disabled', null);
         }, 3600000);
 }
+
+function cancelInstallation() {
+    let $buttons = $('button.cancelButton');
+    $buttons.html('Cancelling...');
+
+    let callback = function() {
+        window.close();
+    };
+
+    makeRequest('api/cancel', null, null, callback, callback, 1000);
+}

@@ -58,6 +58,8 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		super.registerFunction("getStatus", this::getStatus);
 		super.registerFunction("getUpdateInfo", this::getUpdateInfo);
 		super.registerFunction("installUpdate", this::installUpdate);
+		super.registerFunction("hasDesktopIcon", this::hasDesktopIcon);
+		super.registerFunction("createDesktopIcon", this::createDesktopIcon);
 	}
 	
 	public static void handleChooseSteamLibraryRequest(Map<String, String> parameters,
@@ -66,7 +68,8 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 													   Logger logger,
 													   @SuppressWarnings("unused") String functionName,
 													   RLMapManager rlMapManager,
-													   LastUpdated lastUpdatedMaps) {
+													   LastUpdated lastUpdatedMaps,
+													   boolean saveConfigOnSuccess) {
 		new Thread(() -> {
 			try {
 				File file;
@@ -82,7 +85,7 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 				
 				SteamLibraryDiscovery.Result result = rlMapManager.getSteamLibraryDiscovery().discoverSteamLibrary(file);
 				if(result.isSuccess()) {
-					result.saveToConfig(rlMapManager.getConfig());
+					result.saveToConfig(rlMapManager.getConfig(), saveConfigOnSuccess);
 				}
 				
 				if(lastUpdatedMaps != null) {
@@ -117,7 +120,7 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 												 OutputStream outputStream,
 												 Logger logger,
 												 @SuppressWarnings("unused") String functionName) {
-		handleChooseSteamLibraryRequest(parameters, httpExchange, outputStream, logger, functionName, rlMapManager, lastUpdatedMaps);
+		handleChooseSteamLibraryRequest(parameters, httpExchange, outputStream, logger, functionName, rlMapManager, lastUpdatedMaps, true);
 	}
 	
 	public LastUpdated getLastUpdatedMaps() {
@@ -264,10 +267,12 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		JsonObject json = new JsonObject();
 		
 		json.addProperty("isRLRunning", rlMapManager.isRocketLeagueRunning());
-		if(rlMapManager.getUpdateChecker().isUpdateAvailable()) {
+		if(rlMapManager.getUpdateChecker().getJson() == null) {
+			json.add("updateAvailable", null);
+		} else if(rlMapManager.getUpdateChecker().isUpdateAvailable()) {
 			json.addProperty("updateAvailable", rlMapManager.getUpdateChecker().getLatestVersion().toString());
 		} else {
-			json.add("updateAvailable", null);
+			json.addProperty("updateAvailable", false);
 		}
 		
 		json.add("lastUpdatedMaps", lastUpdatedMaps.toJson());
@@ -315,6 +320,20 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 			Runtime.getRuntime().exec(command);
 		}
 		System.exit(0);
+		
+		return "";
+	}
+	
+	private String hasDesktopIcon(Map<String, String> parameters) {
+		return DesktopShortcutHelper.findShortcut() != null ? "1" : "0";
+	}
+	
+	private String createDesktopIcon(Map<String, String> parameters) {
+		DesktopShortcutHelper.saveAppIcon(rlMapManager);
+		
+		final File jarFile = Main.findInstalledJarFile();
+		assert jarFile != null;
+		DesktopShortcutHelper.createOrUpdateShortcut(jarFile);
 		
 		return "";
 	}

@@ -71,20 +71,23 @@ public class RLMapManager {
 	}
 	
 	public void start() {
+		if(isSetupMode) {
+			webInterface.start(true);
+			return;
+		}
+		
 		config.save();
 		
-		if(!isSetupMode && !config.needsSetup()) {
+		if(!config.needsSetup()) {
 			MapDiscovery.start(this);
 		}
 		
-		webInterface.start(isSetupMode);
+		webInterface.start(false);
 		
-		if(!isSetupMode) {
-			try {
-				sysTray = new SysTray(this);
-			} catch(Exception e) {
-				logger.error("Couldn't create SysTray icon", e);
-			}
+		try {
+			sysTray = new SysTray(this);
+		} catch(Exception e) {
+			logger.error("Couldn't create SysTray icon", e);
 		}
 	}
 	

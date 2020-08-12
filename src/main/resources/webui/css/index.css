@@ -176,6 +176,7 @@ div.modal > div {
 
 .monospace {
     font-family: monospace;
+    font-size: larger;
 }
 
 table.floatLeftRight {

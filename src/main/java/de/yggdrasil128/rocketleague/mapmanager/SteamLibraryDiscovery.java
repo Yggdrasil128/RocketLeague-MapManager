@@ -100,7 +100,7 @@ public class SteamLibraryDiscovery {
 			return message;
 		}
 		
-		public void saveToConfig(Config config) {
+		public void saveToConfig(Config config, boolean saveConfig) {
 			if(!success) {
 				throw new IllegalStateException();
 			}
@@ -109,7 +109,10 @@ public class SteamLibraryDiscovery {
 			config.setExeFile(exeFile);
 			config.setUpkFile(upkFile);
 			config.setWorkshopFolder(workshopFolder);
-			config.save();
+			
+			if(saveConfig) {
+				config.save();
+			}
 		}
 	}
 }

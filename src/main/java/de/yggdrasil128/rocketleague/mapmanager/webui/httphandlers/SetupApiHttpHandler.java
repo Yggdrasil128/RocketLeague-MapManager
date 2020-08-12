@@ -34,6 +34,7 @@ public class SetupApiHttpHandler extends AbstractApiHttpHandler {
 		super.registerFunction("getMapDiscoveryStatus", this::getMapDiscoveryStatus);
 		super.registerFunction("exit", this::exit);
 		super.registerFunction("install", this::install);
+		super.registerFunction("cancel", this::cancel);
 	}
 	
 	private void handleChooseSteamLibraryRequest(Map<String, String> parameters,
@@ -41,7 +42,7 @@ public class SetupApiHttpHandler extends AbstractApiHttpHandler {
 												 OutputStream outputStream,
 												 Logger logger,
 												 @SuppressWarnings("unused") String functionName) {
-		ApiHttpHandler.handleChooseSteamLibraryRequest(parameters, httpExchange, outputStream, logger, functionName, rlMapManager, null);
+		ApiHttpHandler.handleChooseSteamLibraryRequest(parameters, httpExchange, outputStream, logger, functionName, rlMapManager, null, false);
 	}
 	
 	private String getVersion(Map<String, String> parameters) {
@@ -127,6 +128,11 @@ public class SetupApiHttpHandler extends AbstractApiHttpHandler {
 			System.exit(0);
 		}).start();
 		
+		return "";
+	}
+	
+	private String cancel(Map<String, String> parameters) {
+		System.exit(0);
 		return "";
 	}
 }

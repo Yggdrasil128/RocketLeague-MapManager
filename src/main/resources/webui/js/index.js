@@ -66,12 +66,20 @@ function updateStatusCallback(data) {
         }
     }
 
-    if(!oldStatus || oldStatus['updateAvailable'] ^ status['updateAvailable']) {
+    if(!oldStatus || oldStatus['updateAvailable'] !== status['updateAvailable'] && status['updateAvailable'] !== null) {
         if(status['updateAvailable']) {
+            $('#versionDiv .latest').css('display', 'none');
+            $('#versionDiv .updateAvailable').css('display', '');
+
             $('div.anchor[data-divID=contentUpdate]').css('display', '');
+
             loadUpdateInfo();
         } else {
+            $('#versionDiv .latest').css('display', '');
+            $('#versionDiv .updateAvailable').css('display', 'none');
+
             $('div.anchor[data-divID=contentUpdate]').css('display', 'none');
+
             if(currentContentDiv === 'contentUpdate') {
                 $('div.anchor[data-divID=contentMapList]').trigger('click');
             }

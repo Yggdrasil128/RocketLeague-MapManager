@@ -19,7 +19,7 @@ $(function() {
     // fetch version
     makeRequest('/api/getVersion', null, null, function(version) {
         rlmmVersion = version;
-        $('#versionDiv span').html(version);
+        $('#versionDiv span:first-child').html(version);
     });
 });
 

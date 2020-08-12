@@ -7,6 +7,13 @@ $(function() {
 
         loadMaps();
     });
+
+    makeRequest('api/hasDesktopIcon', null, null, function(data) {
+        if(data !== '1') {
+            return;
+        }
+        $('#createDesktopIconButton').css('display', 'none');
+    })
 });
 
 function loadConfig(callback) {
@@ -109,4 +116,14 @@ function exitApp() {
     };
 
     makeRequest('api/exitApp', null, null, callback, callback, 1000);
+}
+
+function createDesktopIcon() {
+    makeRequest('api/createDesktopIcon', null, null, function() {
+        const $button = $('#createDesktopIconButton');
+        $button.html('Done');
+        setTimeout(function() {
+            $button.css('display', 'none');
+        }, 3000);
+    });
 }

@@ -57,6 +57,8 @@
     </p>
     <p>
         <button onclick="setupPhase1()">Next</button>
+        <br/>
+        <button class="cancelButton" onclick="cancelInstallation()">Cancel installation</button>
     </p>
 </div>
 
@@ -108,7 +110,7 @@
 
     <p id="couldNotFindSteamappsFolder">
         Couldn't find your 'steamapps' folder.<br/>
-        Please click the above button and enter the path to the 'steamapps' folder where Rocket League is installed.
+        Please click the above button and select the 'steamapps' folder where Rocket League is installed.
     </p>
     <p id="steamappsFolderIsConfigured">
         Your 'steamapps' folder is configured and ready to go.
@@ -116,6 +118,8 @@
     <p>
         <button onclick="setupPhase0()">Previous</button>
         <button disabled id="toPhase2" onclick="setupPhase2()">Next</button>
+        <br/>
+        <button class="cancelButton" onclick="cancelInstallation()">Cancel installation</button>
     </p>
 </div>
 
@@ -192,6 +196,8 @@
     <p>
         <button onclick="setupPhase1()">Previous</button>
         <button onclick="setupPhase3()">Install</button>
+        <br/>
+        <button class="cancelButton" onclick="cancelInstallation()">Cancel installation</button>
     </p>
 </div>
 
@@ -215,7 +221,7 @@
     </p>
     <p>
         <input checked id="createDesktopShortcutCheckbox" type="checkbox"/>
-        <label for="createDesktopShortcutCheckbox">Create desktop shortcut</label>
+        <label for="createDesktopShortcutCheckbox">Create desktop icon</label>
         <br/>
         <input checked id="startRLMapManagerCheckbox" type="checkbox"/>
         <label for="startRLMapManagerCheckbox">Start RL Map Manager</label>

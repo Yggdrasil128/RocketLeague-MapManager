@@ -2,14 +2,16 @@
     margin-top: 10px;
 }
 
-.monospace {
-    font-size: 16px;
-}
-
 button {
     font-size: 24px;
     margin-top: 20px;
     margin-right: 10px;
+}
+
+button.cancelButton {
+    font-size: 20px;
+    background-color: #ff000020;
+    /*color: #ffaaaa;*/
 }
 
 #installationProgress {
