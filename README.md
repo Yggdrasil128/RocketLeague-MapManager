@@ -38,7 +38,7 @@ The app installs itself into the 'RL-MapManager' folder in your user directory.
 - Many map sorting options
 - Mark maps as favorite
 - A System Tray icon that allows you quickly switch between favorite maps, and start/stop Rocket League.
-- Automatically rename the original (real) `Labs_Underpass_P.upk` to something else when a map is loaded, to prevent the "Ambiguous package name" warning from showing up.
+- Optionally, the app can rename the original (real) `Labs_Underpass_P.upk` to something else when a map is loaded, to prevent the "Ambiguous package name" warning from showing up.
 - Autostart with Windows
 - Automatic check for updates. Plus, you can install updates with just one click on a button.
 - You can set which IP addresses (other than localhost) can have access to the web interface. This allows you to access the web interface on a different computer/phone over the local network.
