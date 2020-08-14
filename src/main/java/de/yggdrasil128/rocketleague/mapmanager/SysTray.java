@@ -121,8 +121,6 @@ public class SysTray {
 				menuItem.addItemListener(event -> {
 					rlMapManager.unloadMap();
 					rlMapManager.getWebInterface().getApiHttpHandler().getLastUpdatedMaps().now(null);
-					updateLoadFavoriteMapMenu();
-					menuItem.setState(false);
 				});
 			} else {
 				menuItem.setState(false);
@@ -131,12 +129,6 @@ public class SysTray {
 						final RLMap rlMap = rlMapManager.getMaps().get(mapID);
 						rlMapManager.loadMap(rlMap);
 						rlMapManager.getWebInterface().getApiHttpHandler().getLastUpdatedMaps().now(null);
-						// set all other to unchecked
-						for(int i = 0; i < loadFavoriteMapMenu.getItemCount(); i++) {
-							CheckboxMenuItem menuItem1 = (CheckboxMenuItem) loadFavoriteMapMenu.getItem(i);
-							menuItem1.setState(false);
-						}
-						menuItem.setState(true);
 					} catch(IOException e) {
 						logger.error("Couldn't load map", e);
 					}

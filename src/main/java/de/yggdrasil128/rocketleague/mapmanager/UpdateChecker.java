@@ -60,6 +60,7 @@ public class UpdateChecker {
 		} catch(Exception e) {
 			logger.warn("Error while checking for updates", e);
 			this.json = null;
+			this.response = null;
 			this.latestVersion = null;
 			this.isUpdateAvailable = false;
 		}
