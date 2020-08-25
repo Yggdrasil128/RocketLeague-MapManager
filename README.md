@@ -19,6 +19,8 @@ From that point on, everything should be fairly self-explanatory.
 When you click on the 'Load map' button in the web interface, the app simply copies the .udk file from the workshop folder to the .upk file in CookedPCConsole\\mods and overwrites it if necessary.  
 
 ## How to install
+A good friend of mine created [this tutorial video on YouTube](https://www.youtube.com/watch?v=9VmGahUXOAI) in which he shows you step-by-step how to install and use the program.  
+If you don't want to watch the video, here's the gist of it:
 1. Make sure you have Java 8 installed. If not, you can download it [here](https://www.java.com/de/download/).
 2. Go to the [Releases page](https://github.com/Yggdrasil128/RocketLeague-MapManager/releases) and download the .jar file of the latest release.
 3. Launch the .jar file. A browser tab will open.
