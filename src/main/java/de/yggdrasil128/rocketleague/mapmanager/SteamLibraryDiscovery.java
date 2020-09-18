@@ -40,7 +40,7 @@ public class SteamLibraryDiscovery {
 		return null;
 	}
 	
-	@SuppressWarnings("unused")
+	@SuppressWarnings({"unused", "RedundantSuppression"})
 	public Result discoverSteamLibrary() {
 		return discoverSteamLibrary(DEFAULT_STEAMAPPS_FOLDER);
 	}
@@ -57,10 +57,18 @@ public class SteamLibraryDiscovery {
 		
 		File exeFile = new File(rocketLeagueGameFolder.getAbsolutePath() + "\\Binaries\\RocketLeague.exe");
 		if(!exeFile.exists()) {
+			exeFile = new File(rocketLeagueGameFolder.getAbsolutePath() + "\\Binaries\\Win64\\RocketLeague.exe");
+		}
+		if(!exeFile.exists()) {
+			exeFile = new File(rocketLeagueGameFolder.getAbsolutePath() + "\\Binaries\\Win32\\RocketLeague.exe");
+		}
+		if(!exeFile.exists()) {
 			return new Result(false, "Rocket League installation not found");
 		}
 		
-		File upkFile = new File(rocketLeagueGameFolder.getAbsolutePath() + "\\TAGame\\CookedPCConsole\\mods\\" + rlMapManager.getConfig().getUpkFilename());
+		final String upkFilename = rlMapManager == null ? Config.DEFAULT_UPK_FILENAME : rlMapManager.getConfig().getUpkFilename();
+		
+		File upkFile = new File(rocketLeagueGameFolder.getAbsolutePath() + "\\TAGame\\CookedPCConsole\\mods\\" + upkFilename);
 		//noinspection ResultOfMethodCallIgnored
 		upkFile.getParentFile().mkdirs();
 		
@@ -113,6 +121,10 @@ public class SteamLibraryDiscovery {
 			if(saveConfig) {
 				config.save();
 			}
+		}
+		
+		public File getExeFile() {
+			return exeFile;
 		}
 	}
 }

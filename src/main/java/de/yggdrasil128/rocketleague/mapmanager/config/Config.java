@@ -25,7 +25,7 @@ public class Config {
 			.registerTypeAdapter(File.class, new FileTypeAdapter())
 			.create();
 	public static final String DEFAULT_UPK_FILENAME = "Labs_Underpass_P.upk";
-	static final int CURRENT_CONFIG_VERSION = 1;
+	static final int CURRENT_CONFIG_VERSION = 2;
 	private static final transient Logger logger = LoggerFactory.getLogger(Config.class.getName());
 	private final HashMap<Long, RLMapMetadata> mapMetadata = new HashMap<>();
 	@SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})

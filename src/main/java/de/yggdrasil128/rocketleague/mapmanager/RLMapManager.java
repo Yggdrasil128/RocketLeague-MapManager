@@ -18,7 +18,7 @@ import java.util.Map;
 public class RLMapManager {
 	public static final File FILE_ROOT;
 	public static final File FILE_CONFIG;
-	public static final UpdateChecker.Version VERSION = new UpdateChecker.Version(1, 2, 1);
+	public static final UpdateChecker.Version VERSION = new UpdateChecker.Version(1, 2, 2);
 	static final File FILE_LOG;
 	public static final String REGISTRY_AUTOSTART_KEY = "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
 	public static final String REGISTRY_AUTOSTART_VALUE = "RL Map Manager";
