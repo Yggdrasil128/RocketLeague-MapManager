@@ -5,7 +5,6 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
-import de.yggdrasil128.rocketleague.mapmanager.SteamLibraryDiscovery;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +29,8 @@ public class Config {
 	private final HashMap<Long, RLMapMetadata> mapMetadata = new HashMap<>();
 	@SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
 	private int configVersion = CURRENT_CONFIG_VERSION;
-	private File steamappsFolder = SteamLibraryDiscovery.DEFAULT_STEAMAPPS_FOLDER;
+	private InstallationType installationType;
+	private File steamappsFolder;
 	private File exeFile;
 	private File upkFile;
 	private File workshopFolder;
@@ -105,6 +105,14 @@ public class Config {
 			return true;
 		}
 		return false;
+	}
+	
+	public InstallationType getInstallationType() {
+		return installationType;
+	}
+	
+	public void setInstallationType(InstallationType installationType) {
+		this.installationType = installationType;
 	}
 	
 	public File getSteamappsFolder() {
@@ -292,6 +300,8 @@ public class Config {
 		
 		json.addProperty("needsSetup", needsSetup());
 		
+		json.addProperty("installationType", getInstallationType().toInt());
+		
 		JsonObject jsonPaths = new JsonObject();
 		json.add("paths", jsonPaths);
 		TriConsumer<JsonObject, String, File> addPathProperty = (jsonObject, propertyName, file) -> {
@@ -455,6 +465,19 @@ public class Config {
 				return 0;
 			}
 			return this == DETAILED_LIST ? 1 : 2;
+		}
+	}
+	
+	public enum InstallationType {
+		STEAM,
+		EPIC;
+		
+		public static InstallationType fromInt(int i) {
+			return i == 0 ? STEAM : EPIC;
+		}
+		
+		public int toInt() {
+			return this == STEAM ? 0 : 1;
 		}
 	}
 	
