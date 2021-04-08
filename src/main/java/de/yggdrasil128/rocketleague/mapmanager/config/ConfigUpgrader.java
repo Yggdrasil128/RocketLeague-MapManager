@@ -3,7 +3,6 @@ package de.yggdrasil128.rocketleague.mapmanager.config;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
-import de.yggdrasil128.rocketleague.mapmanager.SteamLibraryDiscovery;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;

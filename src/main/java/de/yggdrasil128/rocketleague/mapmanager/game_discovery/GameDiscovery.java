@@ -8,31 +8,31 @@ import javax.swing.*;
 import java.io.File;
 
 public interface GameDiscovery {
-	static GameDiscovery forInstallationType(Config.InstallationType installationType) {
-		switch(installationType) {
+	static GameDiscovery forPlatform(Config.Platform platform) {
+		switch(platform) {
 			case STEAM:
 				return new SteamGameDiscovery();
 			case EPIC:
 				return new EpicGameDiscovery();
 			default:
-				throw new IllegalStateException("Unexpected value: " + installationType);
+				throw new IllegalStateException("Unexpected value: " + platform);
 		}
 	}
 	
-	static Result discover(Config.InstallationType installationType, File base, RLMapManager rlMapManager) {
-		return forInstallationType(installationType).discover(base, rlMapManager);
+	static Result discover(Config.Platform platform, File base, RLMapManager rlMapManager) {
+		return forPlatform(platform).discover(base, rlMapManager);
 	}
 	
-	static Result chooseFolderAndDiscover(Config.InstallationType installationType, RLMapManager rlMapManager) {
-		File folder = chooseFolder(installationType);
+	static Result chooseFolderAndDiscover(Config.Platform platform, RLMapManager rlMapManager) {
+		File folder = chooseFolder(platform);
 		if(folder == null) {
 			return null;
 		}
 		
-		return discover(installationType, folder, rlMapManager);
+		return discover(platform, folder, rlMapManager);
 	}
 	
-	static File chooseFolder(Config.InstallationType installationType) {
+	static File chooseFolder(Config.Platform platform) {
 		// we need this JFrame in order for the JFileChooser to be always on top of other applications
 		final JFrame jFrame = new JFrame();
 		jFrame.setAlwaysOnTop(true);
@@ -43,7 +43,7 @@ public interface GameDiscovery {
 		final JFileChooser chooser = new JFileChooser(System.getenv("SystemDrive"));
 		
 		String title;
-		if(installationType == Config.InstallationType.STEAM) {
+		if(platform == Config.Platform.STEAM) {
 			title = "Choose your steamapps folder";
 		} else {
 			title = "Choose your Epic Games folder";
@@ -88,7 +88,7 @@ public interface GameDiscovery {
 		private boolean success;
 		private String message;
 		
-		private Config.InstallationType installationType;
+		private Config.Platform platform;
 		private File exeFile;
 		private File upkFile;
 		
@@ -111,7 +111,7 @@ public interface GameDiscovery {
 			result.success = true;
 			result.message = "OK";
 			
-			result.installationType = Config.InstallationType.STEAM;
+			result.platform = Config.Platform.STEAM;
 			result.exeFile = exeFile;
 			result.upkFile = upkFile;
 			result.steamappsFolder = steamappsFolder;
@@ -125,7 +125,7 @@ public interface GameDiscovery {
 			result.success = true;
 			result.message = "OK";
 			
-			result.installationType = Config.InstallationType.EPIC;
+			result.platform = Config.Platform.EPIC;
 			result.exeFile = exeFile;
 			result.upkFile = upkFile;
 			
@@ -161,7 +161,7 @@ public interface GameDiscovery {
 				throw new IllegalStateException();
 			}
 			
-			config.setInstallationType(installationType);
+			config.setPlatform(platform);
 			config.setSteamappsFolder(steamappsFolder);
 			config.setExeFile(exeFile);
 			config.setUpkFile(upkFile);
@@ -169,6 +169,18 @@ public interface GameDiscovery {
 			
 			if(saveConfig) {
 				config.save();
+			}
+		}
+		
+		public void showResultMessage() {
+			if(isSuccess()) {
+				if(platform == Config.Platform.STEAM) {
+					JOptionPane.showMessageDialog(null, "Steam Library successfully configured", "RL Map Manager", JOptionPane.INFORMATION_MESSAGE);
+				} else {
+					JOptionPane.showMessageDialog(null, "Epic Games folder successfully configured", "RL Map Manager", JOptionPane.INFORMATION_MESSAGE);
+				}
+			} else {
+				JOptionPane.showMessageDialog(null, "Error: " + getMessage(), "RL Map Manager", JOptionPane.ERROR_MESSAGE);
 			}
 		}
 	}

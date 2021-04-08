@@ -1,7 +1,8 @@
 package de.yggdrasil128.rocketleague.mapmanager;
 
 import de.yggdrasil128.rocketleague.mapmanager.config.Config;
-import de.yggdrasil128.rocketleague.mapmanager.config.RLMap;
+import de.yggdrasil128.rocketleague.mapmanager.maps.RLMap;
+import de.yggdrasil128.rocketleague.mapmanager.maps.SteamWorkshopMap;
 import de.yggdrasil128.rocketleague.mapmanager.webui.WebInterface;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -11,28 +12,25 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 
 public class RLMapManager {
 	public static final File FILE_ROOT;
 	public static final File FILE_CONFIG;
-	public static final UpdateChecker.Version VERSION = new UpdateChecker.Version(1, 2, 2);
-	static final File FILE_LOG;
+	public static final UpdateChecker.Version VERSION = new UpdateChecker.Version(2, 0, 0);
 	public static final String REGISTRY_AUTOSTART_KEY = "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
 	public static final String REGISTRY_AUTOSTART_VALUE = "RL Map Manager";
+	static final File FILE_LOG;
 	private static final long IS_RL_RUNNING_CACHE_TTL = 4800;
 	
 	static {
 		String home = System.getProperty("user.home");
-		FILE_ROOT = new File(home, "RL-MapManager");
+		FILE_ROOT = new File(home, "RL-MapManager DEV");
 		FILE_CONFIG = new File(FILE_ROOT, "config.json");
 		FILE_LOG = new File(FILE_ROOT, "log.txt");
-		
-		// set up logging
 		//noinspection ResultOfMethodCallIgnored
 		FILE_ROOT.mkdirs();
+		
+		// set up logging
 		System.setProperty("org.slf4j.simpleLogger.logFile", FILE_LOG.getAbsolutePath());
 		System.setProperty("org.slf4j.simpleLogger.showDateTime", "true");
 		System.setProperty("org.slf4j.simpleLogger.dateTimeFormat", "yyyy-MM-dd HH:mm:ss.SSS");
@@ -42,11 +40,9 @@ public class RLMapManager {
 	private final Logger logger;
 	private final Config config;
 	private final WebInterface webInterface;
-	private final SteamLibraryDiscovery steamLibraryDiscovery;
 	private final UpdateChecker updateChecker;
 	private final boolean isSetupMode;
 	private SysTray sysTray;
-	private Map<Long, RLMap> maps;
 	private boolean isRLRunningCache = false;
 	private long isRLRunningCacheExpiry = 0;
 	
@@ -62,7 +58,6 @@ public class RLMapManager {
 		assert config != null;
 		
 		webInterface = new WebInterface(this, config.getWebInterfacePort());
-		steamLibraryDiscovery = new SteamLibraryDiscovery(this);
 		updateChecker = new UpdateChecker();
 	}
 	
@@ -79,7 +74,7 @@ public class RLMapManager {
 		config.save();
 		
 		if(!config.needsSetup()) {
-			MapDiscovery.start(this);
+			SteamWorkshopMap.MapDiscovery.start(this);
 		}
 		
 		webInterface.start(false);
@@ -103,24 +98,12 @@ public class RLMapManager {
 		return webInterface;
 	}
 	
-	public SteamLibraryDiscovery getSteamLibraryDiscovery() {
-		return steamLibraryDiscovery;
-	}
-	
 	public UpdateChecker getUpdateChecker() {
 		return updateChecker;
 	}
 	
 	public SysTray getSysTray() {
 		return sysTray;
-	}
-	
-	public Map<Long, RLMap> getMaps() {
-		return maps;
-	}
-	
-	void setMaps(HashMap<Long, RLMap> maps) {
-		this.maps = Collections.unmodifiableMap(maps);
 	}
 	
 	public void loadMap(RLMap map) throws IOException {
@@ -142,7 +125,7 @@ public class RLMapManager {
 		
 		FileUtils.copyFile(map.getUdkFile(), config.getUpkFile());
 		config.setLoadedMapID(map.getID());
-		config.getMapMetadata(map.getID()).setLastLoadedTimestamp(System.currentTimeMillis());
+		map.setLastLoadedNow();
 		config.save();
 		
 		if(config.getRenameOriginalUnderpassUPK()) {
@@ -159,12 +142,12 @@ public class RLMapManager {
 	}
 	
 	public void unloadMap() {
-		if(config.getLoadedMapID() == 0) {
+		if(config.getLoadedMapID() == null) {
 			return;
 		}
 		//noinspection ResultOfMethodCallIgnored
 		config.getUpkFile().delete();
-		config.setLoadedMapID(0);
+		config.setLoadedMapID(null);
 		config.save();
 		
 		if(config.getRenameOriginalUnderpassUPK()) {

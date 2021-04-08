@@ -1,10 +1,13 @@
 package de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers;
 
+import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import de.yggdrasil128.rocketleague.mapmanager.DesktopShortcutHelper;
 import de.yggdrasil128.rocketleague.mapmanager.Main;
-import de.yggdrasil128.rocketleague.mapmanager.MapDiscovery;
 import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
+import de.yggdrasil128.rocketleague.mapmanager.config.Config;
+import de.yggdrasil128.rocketleague.mapmanager.game_discovery.GameDiscovery;
+import de.yggdrasil128.rocketleague.mapmanager.maps.SteamWorkshopMap;
 import de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers.api.AbstractApiHttpHandler;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -12,11 +15,12 @@ import org.slf4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @SuppressWarnings("SameReturnValue")
 public class SetupApiHttpHandler extends AbstractApiHttpHandler {
-//	private static final Gson GSON = Config.GSON;
+	private static final Gson GSON = Config.GSON;
 	
 	private final RLMapManager rlMapManager;
 	
@@ -24,7 +28,7 @@ public class SetupApiHttpHandler extends AbstractApiHttpHandler {
 		super(rlMapManager.getLogger());
 		this.rlMapManager = rlMapManager;
 		
-		super.registerHandler("chooseSteamLibrary", this::handleChooseSteamLibraryRequest);
+		super.registerHandler("gameDiscovery", this::handleGameDiscoveryRequest);
 		
 		super.registerFunction("getVersion", this::getVersion);
 		super.registerFunction("getAppPath", this::getAppPath);
@@ -37,12 +41,50 @@ public class SetupApiHttpHandler extends AbstractApiHttpHandler {
 		super.registerFunction("cancel", this::cancel);
 	}
 	
-	private void handleChooseSteamLibraryRequest(Map<String, String> parameters,
-												 HttpExchange httpExchange,
-												 OutputStream outputStream,
-												 Logger logger,
-												 @SuppressWarnings("unused") String functionName) {
-		ApiHttpHandler.handleChooseSteamLibraryRequest(parameters, httpExchange, outputStream, logger, functionName, rlMapManager, null, false);
+	private void handleGameDiscoveryRequest(Map<String, String> parameters,
+											HttpExchange httpExchange,
+											OutputStream outputStream,
+											Logger logger,
+											@SuppressWarnings("unused") String functionName) {
+//		ApiHttpHandler.handleChooseSteamLibraryRequest(parameters, httpExchange, outputStream, logger, functionName, rlMapManager, null, false);
+		new Thread(() -> {
+			try {
+				boolean disableAlert = "1".equals(parameters.get("disableAlert"));
+				boolean useDefaultDirectory = "1".equals(parameters.get("useDefaultDirectory"));
+				Config.Platform platform = Config.Platform.fromInt(Integer.parseInt(parameters.get("platform")));
+				
+				GameDiscovery.Result result;
+				if(useDefaultDirectory) {
+					result = GameDiscovery.discover(platform, null, rlMapManager);
+				} else {
+					result = GameDiscovery.chooseFolderAndDiscover(platform, rlMapManager);
+					if(result == null) {
+						httpExchange.sendResponseHeaders(204, -1);
+						return;
+					}
+				}
+				
+				if(result.isSuccess()) {
+					result.saveToConfig(rlMapManager.getConfig(), false);
+				}
+				
+				final String data = GSON.toJson(result);
+				httpExchange.sendResponseHeaders(200, data.length());
+				outputStream.write(data.getBytes(StandardCharsets.UTF_8));
+				
+				if(!disableAlert) {
+					result.showResultMessage();
+				}
+			} catch(IOException e) {
+				logger.warn("Uncaught exception", e);
+			} finally {
+				try {
+					outputStream.flush();
+					outputStream.close();
+				} catch(IOException ignored) {
+				}
+			}
+		}).start();
 	}
 	
 	private String getVersion(Map<String, String> parameters) {
@@ -78,12 +120,12 @@ public class SetupApiHttpHandler extends AbstractApiHttpHandler {
 	}
 	
 	private String startMapDiscovery(Map<String, String> parameters) {
-		MapDiscovery.start(rlMapManager);
-		return MapDiscovery.getStatusJson();
+		SteamWorkshopMap.MapDiscovery.start(rlMapManager);
+		return SteamWorkshopMap.MapDiscovery.getStatusJson();
 	}
 	
 	private String getMapDiscoveryStatus(Map<String, String> parameters) {
-		return MapDiscovery.getStatusJson();
+		return SteamWorkshopMap.MapDiscovery.getStatusJson();
 	}
 	
 	private String exit(Map<String, String> parameters) {

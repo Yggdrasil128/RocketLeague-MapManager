@@ -63,6 +63,25 @@
 </div>
 
 <div class="content" id="contentSetup1">
+    <h1>Choose your installation type</h1>
+    <p>
+        Please choose whether you'd like to use the Map Manager with the <b>Epic Games</b> or <b>Steam</b> version of
+        Rocket League.
+    </p>
+    <input checked id="platform_epic" name="platform" type="radio" value="1">
+    <label for="platform_epic"> Epic Games</label>
+    <br/>
+    <input id="platform_steam" name="platform" type="radio" value="0">
+    <label for="platform_steam"> Steam</label>
+    <p>
+        <button onclick="setupPhase0()">Previous</button>
+        <button onclick="setupPhase2()">Next</button>
+        <br/>
+        <button class="cancelButton" onclick="cancelInstallation()">Cancel installation</button>
+    </p>
+</div>
+
+<div class="content contentSetup2" id="contentSetup2_steam">
     <h1>Configure your steamapps folder</h1>
     <p>
         In order for the Map Manager to work, it needs to know the location of the 'steamapps' folder where Rocket
@@ -98,33 +117,82 @@
             <td>
                 Workshop folder:
             </td>
-            <td class="monospace" id="workshopFolder">
+            <td class="monospace" id="steamWorkshopFolder">
                 &mdash;
             </td>
         </tr>
     </table>
 
     <div class="buttonContainer">
-        <button onclick="steamLibraryDiscovery(false, false, null); return false;">Choose steamapps folder</button>
+        <button onclick="gameDiscovery(false, false, null); return false;">Choose steamapps folder</button>
     </div>
 
-    <p id="couldNotFindSteamappsFolder">
+    <p class="gameDiscoveryError">
         Couldn't find your 'steamapps' folder.<br/>
         Please click the above button and select the 'steamapps' folder where Rocket League is installed.
     </p>
-    <p id="steamappsFolderIsConfigured">
+    <p class="gameDiscoverySuccess">
         Your 'steamapps' folder is configured and ready to go.
     </p>
     <p>
-        <button onclick="setupPhase0()">Previous</button>
-        <button disabled id="toPhase2" onclick="setupPhase2()">Next</button>
+        <button onclick="setupPhase1()">Previous</button>
+        <button class="toPhase3" disabled onclick="setupPhase3()">Next</button>
         <br/>
         <button class="cancelButton" onclick="cancelInstallation()">Cancel installation</button>
     </p>
 </div>
 
-<div class="content" id="contentSetup2">
+<div class="content contentSetup2" id="contentSetup2_epic">
+    <h1>Configure your Epic Games folder</h1>
+    <p>
+        In order for the Map Manager to work, it needs to know the installation location of Rocket League.<br/>
+        You only need to configure this once, the app will remember these settings afterwards.<br/>
+        If you select the folder manually, please select the Epic Games folder that contains the 'rocketleague' folder.
+    </p>
+    <table>
+        <tr>
+            <td>
+                RocketLeague.exe file:
+            </td>
+            <td class="monospace exeFile">
+                &mdash;
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Target UPK file:
+            </td>
+            <td class="monospace upkFile">
+                &mdash;
+            </td>
+        </tr>
+    </table>
+
+    <div class="buttonContainer">
+        <button onclick="gameDiscovery(false, false, null); return false;">Choose Epic Games folder</button>
+    </div>
+
+    <p class="gameDiscoveryError">
+        Couldn't find your Rocket League installation.<br/>
+        Please click the above button and select the Epic Games folder where Rocket League is installed.<br/>The folder
+        you select should contain the 'rocketleague' folder.
+    </p>
+    <p class="gameDiscoverySuccess">
+        Your Rocket League installation location is configured and ready to go.
+    </p>
+    <p>
+        <button onclick="setupPhase1()">Previous</button>
+        <button class="toPhase3" disabled onclick="setupPhase3()">Next</button>
+        <br/>
+        <button class="cancelButton" onclick="cancelInstallation()">Cancel installation</button>
+    </p>
+</div>
+
+<div class="content" id="contentSetup3">
     <h1>Settings</h1>
+    <p>
+        All settings can also be changed later.
+    </p>
     <table class="configurationTable">
         <tr>
             <th>Setting</th>
@@ -194,14 +262,14 @@
         </tr>
     </table>
     <p>
-        <button onclick="setupPhase1()">Previous</button>
-        <button onclick="setupPhase3()">Install</button>
+        <button onclick="setupPhase2()">Previous</button>
+        <button onclick="setupPhase4()">Install</button>
         <br/>
         <button class="cancelButton" onclick="cancelInstallation()">Cancel installation</button>
     </p>
 </div>
 
-<div class="content current" id="contentSetup3">
+<div class="content" id="contentSetup4">
     <h1>Installing...</h1>
     <p>
         Please wait while RL Map Manager is being installed.
@@ -214,7 +282,7 @@
     </div>
 </div>
 
-<div class="content current" id="contentSetup4">
+<div class="content" id="contentSetup5">
     <h1>Installation successful</h1>
     <p>
         RL Map Manager has been successfully installed on your computer.
@@ -226,7 +294,7 @@
         <input checked id="startRLMapManagerCheckbox" type="checkbox"/>
         <label for="startRLMapManagerCheckbox">Start RL Map Manager</label>
         <br/>
-        <button onclick="setupPhase5()">Finish installation</button>
+        <button onclick="setupPhase6()">Finish installation</button>
     </p>
 </div>
 

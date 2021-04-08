@@ -1,4 +1,4 @@
-import de.yggdrasil128.rocketleague.mapmanager.config.RLMapMetadata;
+import de.yggdrasil128.rocketleague.mapmanager.maps.SteamWorkshopMap;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -7,16 +7,16 @@ import java.io.IOException;
 public class RlMapMetadataTest {
 	@Test
 	public void testRLMapMetadata() {
-		RLMapMetadata rlMapMetadata = new RLMapMetadata(2142821184L);
+		SteamWorkshopMap map = SteamWorkshopMap.create(2142821184L, null);
 		try {
-			rlMapMetadata.fetchFromWorkshop();
+			map.fetchDataFromWorkshop();
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
 		
-		Assert.assertEquals("Minigolf", rlMapMetadata.getTitle());
-		Assert.assertTrue(rlMapMetadata.getDescription().startsWith("Another Minigolf map. 9 holes in total. Hole scored = next course"));
-		Assert.assertEquals("FroYo", rlMapMetadata.getAuthorName());
-		Assert.assertEquals("image/png", rlMapMetadata.getImageFileMIMEType());
+		Assert.assertEquals("Minigolf", map.getTitle());
+		Assert.assertTrue(map.getDescription().startsWith("Another Minigolf map. 9 holes in total. Hole scored = next course"));
+		Assert.assertEquals("FroYo", map.getAuthorName());
+		Assert.assertEquals("image/png", map.getImageFileMimeType());
 	}
 }

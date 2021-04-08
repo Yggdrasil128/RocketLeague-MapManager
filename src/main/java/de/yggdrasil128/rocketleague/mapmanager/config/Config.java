@@ -5,6 +5,8 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
+import de.yggdrasil128.rocketleague.mapmanager.maps.MapType;
+import de.yggdrasil128.rocketleague.mapmanager.maps.RLMap;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -22,20 +25,23 @@ public class Config {
 			.serializeNulls()
 			.setPrettyPrinting()
 			.registerTypeAdapter(File.class, new FileTypeAdapter())
+			.registerTypeAdapter(RLMap.class, new RLMapSerialization())
 			.create();
 	public static final String DEFAULT_UPK_FILENAME = "Labs_Underpass_P.upk";
 	static final int CURRENT_CONFIG_VERSION = 2;
 	private static final transient Logger logger = LoggerFactory.getLogger(Config.class.getName());
-	private final HashMap<Long, RLMapMetadata> mapMetadata = new HashMap<>();
+	
+	private final HashMap<String, RLMap> maps = new HashMap<>();
+	private final transient Map<String, RLMap> mapsReadOnly = Collections.unmodifiableMap(maps);
 	@SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
 	private int configVersion = CURRENT_CONFIG_VERSION;
-	private InstallationType installationType;
+	private Platform platform;
 	private File steamappsFolder;
 	private File exeFile;
 	private File upkFile;
 	private File workshopFolder;
 	private int webInterfacePort = 16016;
-	private long loadedMapID = 0;
+	private String loadedMapID = null;
 	private boolean autostartOpenBrowser = false;
 	private boolean renameOriginalUnderpassUPK = false;
 	private BehaviorWhenRLIsStopped behaviorWhenRLIsStopped = BehaviorWhenRLIsStopped.DO_NOTHING;
@@ -78,6 +84,25 @@ public class Config {
 		}
 	}
 	
+	private static List<InetAddress> parseIPWhitelist(String s) {
+		String[] lines = s.split("\n");
+		ArrayList<InetAddress> list = new ArrayList<>();
+		for(String line : lines) {
+			line = line.trim();
+			if(line.isEmpty()) {
+				continue;
+			}
+			InetAddress address;
+			try {
+				address = InetAddress.getByName(line);
+			} catch(UnknownHostException e) {
+				continue;
+			}
+			list.add(address);
+		}
+		return list;
+	}
+	
 	public synchronized void save() {
 		try {
 			File directory = RLMapManager.FILE_CONFIG.getParentFile();
@@ -107,12 +132,12 @@ public class Config {
 		return false;
 	}
 	
-	public InstallationType getInstallationType() {
-		return installationType;
+	public Platform getPlatform() {
+		return platform;
 	}
 	
-	public void setInstallationType(InstallationType installationType) {
-		this.installationType = installationType;
+	public void setPlatform(Platform platform) {
+		this.platform = platform;
 	}
 	
 	public File getSteamappsFolder() {
@@ -169,11 +194,11 @@ public class Config {
 		this.webInterfacePort = webInterfacePort;
 	}
 	
-	public long getLoadedMapID() {
+	public String getLoadedMapID() {
 		return loadedMapID;
 	}
 	
-	public void setLoadedMapID(long loadedMapID) {
+	public void setLoadedMapID(String loadedMapID) {
 		this.loadedMapID = loadedMapID;
 	}
 	
@@ -244,43 +269,12 @@ public class Config {
 		this.showFavoritesAtTop = showFavoritesAtTop;
 	}
 	
-	private static List<InetAddress> parseIPWhitelist(String s) {
-		String[] lines = s.split("\n");
-		ArrayList<InetAddress> list = new ArrayList<>();
-		for(String line : lines) {
-			line = line.trim();
-			if(line.isEmpty()) {
-				continue;
-			}
-			InetAddress address;
-			try {
-				address = InetAddress.getByName(line);
-			} catch(UnknownHostException e) {
-				continue;
-			}
-			list.add(address);
-		}
-		return list;
-	}
-	
 	public List<InetAddress> getIpWhitelist() {
 		return ipWhitelist;
 	}
 	
 	public void setIpWhitelist(List<InetAddress> ipWhitelist) {
 		this.ipWhitelist = ipWhitelist;
-	}
-	
-	public RLMapMetadata getMapMetadata(long mapID) {
-		return mapMetadata.computeIfAbsent(mapID, mapID_ -> {
-			RLMapMetadata rlMapMetadata = new RLMapMetadata(mapID_);
-			try {
-				rlMapMetadata.fetchFromWorkshop();
-			} catch(IOException e) {
-				logger.error("Couldn't fetch map metadata from workshop", e);
-			}
-			return rlMapMetadata;
-		});
 	}
 	
 	public String getIpWhitelistString() {
@@ -295,12 +289,25 @@ public class Config {
 		return sb.toString();
 	}
 	
+	public Map<String, RLMap> getMaps() {
+		return mapsReadOnly;
+	}
+	
+	public void registerMap(RLMap map) {
+		maps.put(map.getID(), map);
+	}
+	
+	public void deleteMap(RLMap map) {
+		maps.remove(map.getID());
+		map.delete();
+	}
+	
 	public String toJson() {
 		JsonObject json = new JsonObject();
 		
 		json.addProperty("needsSetup", needsSetup());
 		
-		json.addProperty("installationType", getInstallationType().toInt());
+		json.addProperty("platform", getPlatform().toInt());
 		
 		JsonObject jsonPaths = new JsonObject();
 		json.add("paths", jsonPaths);
@@ -350,7 +357,7 @@ public class Config {
 				if(!value) {
 					// has been disabled
 					rlMapManager.renameOriginalUnderpassUPK(true);
-				} else if(getLoadedMapID() != 0) {
+				} else if(getLoadedMapID() != null) {
 					// has been enabled and a map currently loaded
 					rlMapManager.renameOriginalUnderpassUPK(false);
 				}
@@ -468,11 +475,11 @@ public class Config {
 		}
 	}
 	
-	public enum InstallationType {
+	public enum Platform {
 		STEAM,
 		EPIC;
 		
-		public static InstallationType fromInt(int i) {
+		public static Platform fromInt(int i) {
 			return i == 0 ? STEAM : EPIC;
 		}
 		
@@ -503,6 +510,27 @@ public class Config {
 			} else {
 				out.value(value.getAbsolutePath());
 			}
+		}
+	}
+	
+	private static class RLMapSerialization implements JsonSerializer<RLMap>, JsonDeserializer<RLMap> {
+		@Override
+		public RLMap deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+			JsonObject jsonObject = json.getAsJsonObject();
+			MapType mapType = context.deserialize(jsonObject.get("mapType"), MapType.class);
+			if(mapType == null) {
+				throw new JsonParseException("Unknown map type: null");
+			}
+			jsonObject.remove("mapType");
+			return context.deserialize(jsonObject, mapType.getRLMapClass());
+		}
+		
+		@Override
+		public JsonElement serialize(RLMap src, Type typeOfSrc, JsonSerializationContext context) {
+			JsonElement ele = context.serialize(src, src.getType().getRLMapClass());
+			JsonObject obj = ele.getAsJsonObject();
+			obj.add("mapType", context.serialize(src.getType(), MapType.class));
+			return obj;
 		}
 	}
 }

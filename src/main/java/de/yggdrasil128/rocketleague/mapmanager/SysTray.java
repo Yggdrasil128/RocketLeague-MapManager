@@ -1,7 +1,6 @@
 package de.yggdrasil128.rocketleague.mapmanager;
 
-import de.yggdrasil128.rocketleague.mapmanager.config.RLMap;
-import de.yggdrasil128.rocketleague.mapmanager.config.RLMapMetadata;
+import de.yggdrasil128.rocketleague.mapmanager.maps.RLMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,11 +93,10 @@ public class SysTray {
 		loadFavoriteMapMenu.removeAll();
 		
 		// load favorite maps and sort them by title
-		TreeMap<String, Long> maps = new TreeMap<>();
-		for(RLMap rlMap : rlMapManager.getMaps().values()) {
-			final RLMapMetadata mapMetadata = rlMapManager.getConfig().getMapMetadata(rlMap.getID());
-			if(mapMetadata.isFavorite()) {
-				maps.put(mapMetadata.getTitle(), rlMap.getID());
+		TreeMap<String, String> maps = new TreeMap<>();
+		for(RLMap map : rlMapManager.getConfig().getMaps().values()) {
+			if(map.isFavorite()) {
+				maps.put(map.getDisplayName(), map.getID());
 			}
 		}
 		
@@ -109,14 +107,14 @@ public class SysTray {
 			return;
 		}
 		
-		long loadedMapID = rlMapManager.getConfig().getLoadedMapID();
+		String loadedMapID = rlMapManager.getConfig().getLoadedMapID();
 		
-		for(Map.Entry<String, Long> entry : maps.entrySet()) {
+		for(Map.Entry<String, String> entry : maps.entrySet()) {
 			String mapName = entry.getKey();
-			long mapID = entry.getValue();
+			String mapID = entry.getValue();
 			
 			final CheckboxMenuItem menuItem = new CheckboxMenuItem(mapName);
-			if(loadedMapID == mapID) {
+			if(mapID.equals(loadedMapID)) {
 				menuItem.setState(true);
 				menuItem.addItemListener(event -> {
 					rlMapManager.unloadMap();
@@ -126,7 +124,7 @@ public class SysTray {
 				menuItem.setState(false);
 				menuItem.addItemListener(event -> {
 					try {
-						final RLMap rlMap = rlMapManager.getMaps().get(mapID);
+						final RLMap rlMap = rlMapManager.getConfig().getMaps().get(mapID);
 						rlMapManager.loadMap(rlMap);
 						rlMapManager.getWebInterface().getApiHttpHandler().getLastUpdatedMaps().now(null);
 					} catch(IOException e) {

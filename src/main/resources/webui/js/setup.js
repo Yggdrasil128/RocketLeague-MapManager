@@ -1,26 +1,37 @@
 let mapDiscoveryUpdateIntervalHandle = null;
 
 $(function() {
-    setupPhase0();
-});
-
-function setupPhase0() {
     makeRequest('api/getAppPath', null, null, function(data) {
         $('#installationDirSpan').html(data);
-
-        $('div.content.current:not(#contentSetup0)').removeClass('current');
-        $('#contentSetup0').addClass('current');
     });
+});
+
+function getPlatform() {
+    return $('#platform_epic').get(0).checked ? 1 : 0;
+}
+
+function setupPhase0() {
+    $('div.content.current:not(#contentSetup0)').removeClass('current');
+    $('#contentSetup0').addClass('current');
 }
 
 function setupPhase1() {
-    steamLibraryDiscovery(true, true, function() {
-        $('div.content.current:not(#contentSetup1)').removeClass('current');
-        $('#contentSetup1').addClass('current');
-    }, true);
+    $('div.content.current:not(#contentSetup1)').removeClass('current');
+    $('#contentSetup1').addClass('current');
 }
 
 function setupPhase2() {
+    gameDiscovery(true, true, function() {
+        $('div.content.current:not(.contentSetup2)').removeClass('current');
+        if(getPlatform() === 1) {
+            $('#contentSetup2_epic').addClass('current');
+        } else {
+            $('#contentSetup2_steam').addClass('current');
+        }
+    }, true);
+}
+
+function setupPhase3() {
     makeRequest('api/getConfig', null, null, function(data) {
         const config = JSON.parse(data);
 
@@ -28,21 +39,21 @@ function setupPhase2() {
         $('#input_behaviorWhenRLIsStopped').get(0).value = config['behaviorWhenRLIsStopped'];
         $('#input_behaviorWhenRLIsRunning').get(0).value = config['behaviorWhenRLIsRunning'];
 
-        $('div.content.current:not(#contentSetup2)').removeClass('current');
-        $('#contentSetup2').addClass('current');
+        $('div.content.current:not(#contentSetup3)').removeClass('current');
+        $('#contentSetup3').addClass('current');
     });
 }
 
-function setupPhase3() {
-    $('div.content.current:not(#contentSetup3)').removeClass('current');
-    $('#contentSetup3').addClass('current');
+function setupPhase4() {
+    $('div.content.current:not(#contentSetup4)').removeClass('current');
+    $('#contentSetup4').addClass('current');
 
     $('#installationStatus').html('Installing...');
 
-    makeRequest('api/install', null, null, setupPhase3_callback1);
+    makeRequest('api/install', null, null, setupPhase4_callback1);
 }
 
-function setupPhase3_callback1() {
+function setupPhase4_callback1() {
     $('#installationStatus').html('Configuring...');
 
     let config = {
@@ -52,31 +63,35 @@ function setupPhase3_callback1() {
         behaviorWhenRLIsRunning: $('#input_behaviorWhenRLIsRunning').get(0).value,
     };
 
-    makeRequest('api/patchConfig', null, JSON.stringify(config), setupPhase3_callback2);
+    makeRequest('api/patchConfig', null, JSON.stringify(config), setupPhase4_callback2);
 }
 
-function setupPhase3_callback2() {
-    $('#installationStatus').html('Discovering maps...');
+function setupPhase4_callback2() {
+    if(getPlatform() === 0) {
+        $('#installationStatus').html('Discovering workshop maps...');
 
-    makeRequest('api/startMapDiscovery', null, null, setupPhase3_callback3);
+        makeRequest('api/startMapDiscovery', null, null, setupPhase4_callback3);
+    } else {
+        setupPhase5();
+    }
 }
 
-function setupPhase3_callback3() {
-    mapDiscoveryUpdateIntervalHandle = setInterval(setupPhase3_updateMapDiscoveryStatus, 1000);
+function setupPhase4_callback3() {
+    mapDiscoveryUpdateIntervalHandle = setInterval(setupPhase4_updateMapDiscoveryStatus, 1000);
 }
 
-function setupPhase3_updateMapDiscoveryStatus() {
-    makeRequest('api/getMapDiscoveryStatus', null, null, setupPhase3_updateMapDiscoveryStatus_callback);
+function setupPhase4_updateMapDiscoveryStatus() {
+    makeRequest('api/getMapDiscoveryStatus', null, null, setupPhase4_updateMapDiscoveryStatus_callback);
 }
 
-function setupPhase3_updateMapDiscoveryStatus_callback(data) {
+function setupPhase4_updateMapDiscoveryStatus_callback(data) {
     const status = JSON.parse(data);
 
     if(status['isDone']) {
         clearInterval(mapDiscoveryUpdateIntervalHandle);
         mapDiscoveryUpdateIntervalHandle = null;
 
-        setupPhase4();
+        setupPhase5();
 
         return;
     }
@@ -91,13 +106,13 @@ function setupPhase3_updateMapDiscoveryStatus_callback(data) {
     $('#contentSetup3 .progressText').html(s);
 }
 
-function setupPhase4() {
-    $('div.content.current:not(#contentSetup4)').removeClass('current');
-    $('#contentSetup4').addClass('current');
+function setupPhase5() {
+    $('div.content.current:not(#contentSetup5)').removeClass('current');
+    $('#contentSetup5').addClass('current');
 }
 
-function setupPhase5() {
-    $('#contentSetup4 button').attr('disabled', '');
+function setupPhase6() {
+    $('#contentSetup5 button').attr('disabled', '');
 
     let startApp = $('#startRLMapManagerCheckbox').get(0).checked ? '1' : '0';
     let createDesktopShortcut = $('#createDesktopShortcutCheckbox').get(0).checked ? '1' : '0';
@@ -107,14 +122,18 @@ function setupPhase5() {
     });
 }
 
-function steamLibraryDiscovery(disableAlert, useDefaultDirectory, callback) {
+function gameDiscovery(disableAlert, useDefaultDirectory, callback) {
     let $button = $('#contentSetup1 div.buttonContainer button');
 
     $button.attr('disabled', '');
 
     makeRequest(
-        'api/chooseSteamLibrary',
-        {disableAlert: disableAlert ? '1' : '0', useDefaultDirectory: useDefaultDirectory ? '1' : '0'},
+        'api/gameDiscovery',
+        {
+            disableAlert: disableAlert ? '1' : '0',
+            useDefaultDirectory: useDefaultDirectory ? '1' : '0',
+            platform: getPlatform()
+        },
         null,
         function(data) {
             $button.attr('disabled', null);
@@ -124,19 +143,19 @@ function steamLibraryDiscovery(disableAlert, useDefaultDirectory, callback) {
             }
             let result = JSON.parse(data);
 
-            $('#steamappsFolder').html(coalesce(result['steamappsFolder'], '&mdash;'));
-            $('#exeFile').html(coalesce(result['exeFile'], '&mdash;'));
-            $('#upkFile').html(coalesce(result['upkFile'], '&mdash;'));
-            $('#workshopFolder').html(coalesce(result['workshopFolder'], '&mdash;'));
+            $('.steamappsFolder').html(coalesce(result['steamappsFolder'], '&mdash;'));
+            $('.exeFile').html(coalesce(result['exeFile'], '&mdash;'));
+            $('.upkFile').html(coalesce(result['upkFile'], '&mdash;'));
+            $('.steamWorkshopFolder').html(coalesce(result['steamWorkshopFolder'], '&mdash;'));
 
             if(result['success']) {
-                $('#couldNotFindSteamappsFolder').css('display', 'none');
-                $('#steamappsFolderIsConfigured').css('display', '');
-                $('#toPhase2').attr('disabled', null);
+                $('.gameDiscoveryError').css('display', 'none');
+                $('.gameDiscoverySuccess').css('display', '');
+                $('.toPhase3').attr('disabled', null);
             } else {
-                $('#couldNotFindSteamappsFolder').css('display', '');
-                $('#steamappsFolderIsConfigured').css('display', 'none');
-                $('#toPhase2').attr('disabled', '');
+                $('.gameDiscoveryError').css('display', '');
+                $('.gameDiscoverySuccess').css('display', 'none');
+                $('.toPhase3').attr('disabled', '');
             }
 
             if(callback) {

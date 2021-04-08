@@ -1,24 +1,30 @@
 import de.yggdrasil128.rocketleague.mapmanager.config.Config;
-import de.yggdrasil128.rocketleague.mapmanager.game_discovery.GameDiscovery;
+import de.yggdrasil128.rocketleague.mapmanager.maps.RLMap;
+import de.yggdrasil128.rocketleague.mapmanager.maps.SteamWorkshopMap;
+
+import java.io.IOException;
 
 public class TestMain {
-	public static void main(String[] args) {
-		GameDiscovery.Result result;
+	public static void main(String[] args) throws IOException, InterruptedException {
+		long time = System.currentTimeMillis();
+		String json = "{\"mapType\": \"LETHAMYR\", \"title\": \"Test\"}";
+		RLMap map = Config.GSON.fromJson(json, RLMap.class);
+		System.out.println("[" + (System.currentTimeMillis() - time) + "] " + (map instanceof SteamWorkshopMap));
+		json = Config.GSON.toJson(map, RLMap.class);
+		System.out.println("[" + (System.currentTimeMillis() - time) + "] " + json);
 		
-		System.out.println("Steam:");
-		result = GameDiscovery.discover(Config.InstallationType.STEAM, null, null);
-		if(!result.isSuccess()) {
-			System.out.println("Error: " + result.getMessage());
-		} else {
-			System.out.println(result.getExeFile());
+		time = System.currentTimeMillis();
+		for(int i = 0; i < 100; i++) {
+			map = Config.GSON.fromJson(json, RLMap.class);
+			System.out.println(i);
 		}
+		System.out.println("Deserialization: " + (System.currentTimeMillis() - time) / 100);
 		
-		System.out.println("Epic:");
-		result = GameDiscovery.discover(Config.InstallationType.EPIC, null, null);
-		if(!result.isSuccess()) {
-			System.out.println("Error: " + result.getMessage());
-		} else {
-			System.out.println(result.getExeFile());
+		time = System.currentTimeMillis();
+		for(int i = 0; i < 100; i++) {
+			json = Config.GSON.toJson(map, RLMap.class);
+			System.out.println(i);
 		}
+		System.out.println("Serialization: " + (System.currentTimeMillis() - time) / 100);
 	}
 }

@@ -4,10 +4,14 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
-import de.yggdrasil128.rocketleague.mapmanager.*;
+import de.yggdrasil128.rocketleague.mapmanager.DesktopShortcutHelper;
+import de.yggdrasil128.rocketleague.mapmanager.Main;
+import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
+import de.yggdrasil128.rocketleague.mapmanager.RegistryHelper;
 import de.yggdrasil128.rocketleague.mapmanager.config.Config;
-import de.yggdrasil128.rocketleague.mapmanager.config.RLMap;
-import de.yggdrasil128.rocketleague.mapmanager.config.RLMapMetadata;
+import de.yggdrasil128.rocketleague.mapmanager.game_discovery.GameDiscovery;
+import de.yggdrasil128.rocketleague.mapmanager.maps.RLMap;
+import de.yggdrasil128.rocketleague.mapmanager.maps.SteamWorkshopMap;
 import de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers.api.AbstractApiHttpHandler;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -38,7 +42,7 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		this.rlMapManager = rlMapManager;
 		
 		super.registerHandler("getMapImage", this::handleMapImageRequest);
-		super.registerHandler("chooseSteamLibrary", this::handleChooseSteamLibraryRequest);
+		super.registerHandler("gameDiscovery", this::handleGameDiscoveryRequest);
 		
 		super.registerFunction("getVersion", this::getVersion);
 		super.registerFunction("getConfig", this::getConfig);
@@ -62,79 +66,12 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		super.registerFunction("createDesktopIcon", this::createDesktopIcon);
 	}
 	
-	public static void handleChooseSteamLibraryRequest(Map<String, String> parameters,
-													   HttpExchange httpExchange,
-													   OutputStream outputStream,
-													   Logger logger,
-													   @SuppressWarnings("unused") String functionName,
-													   RLMapManager rlMapManager,
-													   LastUpdated lastUpdatedMaps,
-													   boolean saveConfigOnSuccess) {
-		new Thread(() -> {
-			try {
-				File file;
-				if("1".equals(parameters.get("useDefaultDirectory"))) {
-					file = SteamLibraryDiscovery.DEFAULT_STEAMAPPS_FOLDER;
-				} else {
-					file = SteamLibraryDiscovery.chooseFolder();
-					if(file == null) {
-						httpExchange.sendResponseHeaders(204, -1);
-						return;
-					}
-				}
-				
-				SteamLibraryDiscovery.Result result = rlMapManager.getSteamLibraryDiscovery().discoverSteamLibrary(file);
-				if(result.isSuccess()) {
-					result.saveToConfig(rlMapManager.getConfig(), saveConfigOnSuccess);
-				}
-				
-				if(lastUpdatedMaps != null) {
-					lastUpdatedMaps.now(parameters.get("btid"));
-				}
-				
-				final String data = GSON.toJson(result);
-				httpExchange.sendResponseHeaders(200, data.length());
-				outputStream.write(data.getBytes(StandardCharsets.UTF_8));
-				
-				if(!"1".equals(parameters.get("disableAlert"))) {
-					if(result.isSuccess()) {
-						JOptionPane.showMessageDialog(null, "Steam Library successfully configured", "RL Map Manager", JOptionPane.INFORMATION_MESSAGE);
-					} else {
-						JOptionPane.showMessageDialog(null, "Error: " + result.getMessage(), "RL Map Manager", JOptionPane.ERROR_MESSAGE);
-					}
-				}
-			} catch(IOException e) {
-				logger.warn("Uncaught exception", e);
-			} finally {
-				try {
-					outputStream.flush();
-					outputStream.close();
-				} catch(IOException ignored) {
-				}
-			}
-		}).start();
-	}
-	
-	private void handleChooseSteamLibraryRequest(Map<String, String> parameters,
-												 HttpExchange httpExchange,
-												 OutputStream outputStream,
-												 Logger logger,
-												 @SuppressWarnings("unused") String functionName) {
-		handleChooseSteamLibraryRequest(parameters, httpExchange, outputStream, logger, functionName, rlMapManager, lastUpdatedMaps, true);
-	}
-	
 	public LastUpdated getLastUpdatedMaps() {
 		return lastUpdatedMaps;
 	}
 	
 	private RLMap getMapFromParameters(Map<String, String> parameters, @SuppressWarnings("SameParameterValue") boolean throwIfNotFound) {
-		long id;
-		try {
-			id = Long.parseLong(parameters.get("mapID"));
-		} catch(NumberFormatException e) {
-			throw new IllegalArgumentException("Invalid id");
-		}
-		RLMap map = rlMapManager.getMaps().get(id);
+		RLMap map = rlMapManager.getConfig().getMaps().get(parameters.get("mapID"));
 		if(map == null && throwIfNotFound) {
 			throw new NoSuchElementException("Unknown id");
 		}
@@ -152,25 +89,18 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 	private String getMaps(Map<String, String> parameters) {
 		JsonArray array = new JsonArray();
 		
-		Map<Long, RLMap> maps = rlMapManager.getMaps();
+		Map<String, RLMap> maps = rlMapManager.getConfig().getMaps();
 		if(maps == null) {
 			return GSON.toJson(array);
 		}
-		for(RLMap rlMap : maps.values()) {
-			RLMapMetadata rlMapMetadata = rlMapManager.getConfig().getMapMetadata(rlMap.getID());
-			
+		for(RLMap map : maps.values()) {
 			JsonObject json = new JsonObject();
-			json.addProperty("id", String.valueOf(rlMap.getID()));
-			json.addProperty("name", rlMap.getUDKFilename());
-			String title = rlMapMetadata.getTitle();
-			if(title == null) {
-				title = rlMap.getUDKFilename();
-				title = title.substring(0, title.length() - 4);
-			}
-			json.addProperty("title", title);
-			json.addProperty("description", rlMapMetadata.getDescription());
-			json.addProperty("authorName", rlMapMetadata.getAuthorName());
-			final File imageFile = rlMapMetadata.getImageFile();
+			json.addProperty("id", String.valueOf(map.getID()));
+			json.addProperty("name", map.getUdkFilename());
+			json.addProperty("title", map.getDisplayName());
+			json.addProperty("description", map.getDescription());
+			json.addProperty("authorName", map.getAuthorName());
+			final File imageFile = map.getImageFile();
 			if(imageFile == null) {
 				json.addProperty("hasImage", false);
 				json.addProperty("imageMTime", 0);
@@ -178,9 +108,9 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 				json.addProperty("hasImage", true);
 				json.addProperty("imageMTime", imageFile.lastModified());
 			}
-			json.addProperty("isFavorite", rlMapMetadata.isFavorite());
-			json.addProperty("mapSize", String.valueOf(rlMap.getMapSize()));
-			json.addProperty("lastLoadedTimestamp", rlMapMetadata.getLastLoadedTimestamp());
+			json.addProperty("isFavorite", map.isFavorite());
+			json.addProperty("mapSize", String.valueOf(map.getSize()));
+			json.addProperty("lastLoadedTimestamp", map.getLastLoadedTimestamp());
 			
 			array.add(json);
 		}
@@ -188,23 +118,22 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 	}
 	
 	private String startMapDiscovery(Map<String, String> parameters) {
-		MapDiscovery.start(rlMapManager);
+		SteamWorkshopMap.MapDiscovery.start(rlMapManager);
 		return "";
 	}
 	
 	private String getMapDiscoveryStatus(Map<String, String> parameters) {
-		if(MapDiscovery.get().isDone()) {
+		if(SteamWorkshopMap.MapDiscovery.get().isDone()) {
 			lastUpdatedMaps.now(parameters.get("btid"));
 		}
-		return MapDiscovery.getStatusJson();
+		return SteamWorkshopMap.MapDiscovery.getStatusJson();
 	}
 	
 	private String setFavorite(Map<String, String> parameters) {
 		RLMap map = getMapFromParameters(parameters, true);
-		RLMapMetadata metadata = rlMapManager.getConfig().getMapMetadata(map.getID());
 		
 		boolean isFavorite = "1".equals(parameters.get("isFavorite"));
-		metadata.setFavorite(isFavorite);
+		map.setFavorite(isFavorite);
 		rlMapManager.getConfig().save();
 		
 		lastUpdatedMaps.now(parameters.get("btid"));
@@ -231,9 +160,10 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		return "";
 	}
 	
-	private String refreshMapMetadata(Map<String, String> parameters) throws IOException {
+	private String refreshMapMetadata(Map<String, String> parameters) {
 		RLMap map = getMapFromParameters(parameters, true);
-		rlMapManager.getConfig().getMapMetadata(map.getID()).fetchFromWorkshop();
+		map.refreshMetadata();
+		rlMapManager.getConfig().save();
 		lastUpdatedMaps.now(parameters.get("btid"));
 		return "";
 	}
@@ -342,17 +272,16 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 									   HttpExchange httpExchange,
 									   OutputStream outputStream,
 									   Logger logger,
-									   @SuppressWarnings("unused") String functionName) {
+									   String functionName) {
 		mapImageRequestsThreadPool.execute(() -> {
 			try {
 				RLMap map = getMapFromParameters(parameters, true);
-				RLMapMetadata metadata = rlMapManager.getConfig().getMapMetadata(map.getID());
-				File mapImageFile = metadata.getImageFile();
+				File mapImageFile = map.getImageFile();
 				if(mapImageFile == null) {
 					httpExchange.sendResponseHeaders(404, -1);
 					return;
 				}
-				String mimeType = metadata.getImageFileMIMEType();
+				String mimeType = map.getImageFileMimeType();
 				if(mimeType != null) {
 					httpExchange.getResponseHeaders().set("Content-Type", mimeType);
 				}
@@ -371,6 +300,62 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 				}
 			}
 		});
+	}
+	
+	private void handleGameDiscoveryRequest(Map<String, String> parameters,
+											HttpExchange httpExchange,
+											OutputStream outputStream,
+											Logger logger,
+											String functionName) {
+		new Thread(() -> {
+			try {
+				Config.Platform platform = Config.Platform.fromInt(Integer.parseInt(parameters.get("platform")));
+				boolean tryDefaultDirectoryFirst = "1".equals(parameters.get("tryDefaultDirectoryFirst"));
+				
+				GameDiscovery.Result result;
+				
+				if(tryDefaultDirectoryFirst) {
+					result = GameDiscovery.discover(platform, null, rlMapManager);
+					if(!result.isSuccess()) {
+						int choice = JOptionPane.showConfirmDialog(
+								null,
+								"Couldn't automatically detect your Rocket League installation. Select folder manually?",
+								"Rocket League Map Manager",
+								JOptionPane.YES_NO_OPTION);
+						if(choice != 0) {
+							httpExchange.sendResponseHeaders(204, -1);
+							return;
+						}
+					}
+				}
+				
+				result = GameDiscovery.chooseFolderAndDiscover(platform, rlMapManager);
+				if(result == null) {
+					httpExchange.sendResponseHeaders(204, -1);
+					return;
+				}
+				
+				if(result.isSuccess()) {
+					result.saveToConfig(rlMapManager.getConfig(), true);
+				}
+				
+				lastUpdatedMaps.now(parameters.get("btid"));
+				
+				final String data = GSON.toJson(result);
+				httpExchange.sendResponseHeaders(200, data.length());
+				outputStream.write(data.getBytes(StandardCharsets.UTF_8));
+				
+				result.showResultMessage();
+			} catch(IOException e) {
+				logger.warn("Uncaught exception", e);
+			} finally {
+				try {
+					outputStream.flush();
+					outputStream.close();
+				} catch(IOException ignored) {
+				}
+			}
+		}).start();
 	}
 	
 	public static class LastUpdated {
