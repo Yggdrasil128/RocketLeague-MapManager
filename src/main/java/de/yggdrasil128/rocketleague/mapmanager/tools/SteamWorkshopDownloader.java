@@ -1,4 +1,4 @@
-package de.yggdrasil128.rocketleague.mapmanager;
+package de.yggdrasil128.rocketleague.mapmanager.tools;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

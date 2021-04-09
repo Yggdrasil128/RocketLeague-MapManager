@@ -1,4 +1,4 @@
-package de.yggdrasil128.rocketleague.mapmanager;
+package de.yggdrasil128.rocketleague.mapmanager.tools;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

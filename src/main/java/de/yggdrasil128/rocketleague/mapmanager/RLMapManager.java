@@ -2,7 +2,8 @@ package de.yggdrasil128.rocketleague.mapmanager;
 
 import de.yggdrasil128.rocketleague.mapmanager.config.Config;
 import de.yggdrasil128.rocketleague.mapmanager.maps.RLMap;
-import de.yggdrasil128.rocketleague.mapmanager.maps.SteamWorkshopMap;
+import de.yggdrasil128.rocketleague.mapmanager.tools.RegistryHelper;
+import de.yggdrasil128.rocketleague.mapmanager.tools.UpdateChecker;
 import de.yggdrasil128.rocketleague.mapmanager.webui.WebInterface;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -72,10 +73,6 @@ public class RLMapManager {
 		}
 		
 		config.save();
-		
-		if(!config.needsSetup()) {
-			SteamWorkshopMap.MapDiscovery.start(this);
-		}
 		
 		webInterface.start(false);
 		

@@ -2,6 +2,7 @@ package de.yggdrasil128.rocketleague.mapmanager.game_discovery;
 
 import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
 import de.yggdrasil128.rocketleague.mapmanager.config.Config;
+import de.yggdrasil128.rocketleague.mapmanager.tools.JavaXSwingTools;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,12 +34,7 @@ public interface GameDiscovery {
 	}
 	
 	static File chooseFolder(Config.Platform platform) {
-		// we need this JFrame in order for the JFileChooser to be always on top of other applications
-		final JFrame jFrame = new JFrame();
-		jFrame.setAlwaysOnTop(true);
-		jFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		jFrame.setLocationRelativeTo(null);
-		jFrame.requestFocus();
+		JFrame jFrame = JavaXSwingTools.makeModalFrame();
 		
 		final JFileChooser chooser = new JFileChooser(System.getenv("SystemDrive"));
 		
@@ -173,15 +169,17 @@ public interface GameDiscovery {
 		}
 		
 		public void showResultMessage() {
+			JFrame jFrame = JavaXSwingTools.makeModalFrame();
 			if(isSuccess()) {
 				if(platform == Config.Platform.STEAM) {
-					JOptionPane.showMessageDialog(null, "Steam Library successfully configured", "RL Map Manager", JOptionPane.INFORMATION_MESSAGE);
+					JOptionPane.showMessageDialog(jFrame, "Steam Library successfully configured", "RL Map Manager", JOptionPane.INFORMATION_MESSAGE);
 				} else {
-					JOptionPane.showMessageDialog(null, "Epic Games folder successfully configured", "RL Map Manager", JOptionPane.INFORMATION_MESSAGE);
+					JOptionPane.showMessageDialog(jFrame, "Epic Games folder successfully configured", "RL Map Manager", JOptionPane.INFORMATION_MESSAGE);
 				}
 			} else {
-				JOptionPane.showMessageDialog(null, "Error: " + getMessage(), "RL Map Manager", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(jFrame, "Error: " + getMessage(), "RL Map Manager", JOptionPane.ERROR_MESSAGE);
 			}
+			jFrame.dispose();
 		}
 	}
 }

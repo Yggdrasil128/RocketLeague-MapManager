@@ -32,7 +32,6 @@ public class Config {
 	private static final transient Logger logger = LoggerFactory.getLogger(Config.class.getName());
 	
 	private final HashMap<String, RLMap> maps = new HashMap<>();
-	private final transient Map<String, RLMap> mapsReadOnly = Collections.unmodifiableMap(maps);
 	@SuppressWarnings({"FieldMayBeFinal", "CanBeFinal"})
 	private int configVersion = CURRENT_CONFIG_VERSION;
 	private Platform platform;
@@ -117,16 +116,21 @@ public class Config {
 	}
 	
 	public boolean needsSetup() {
-		if(steamappsFolder == null || !steamappsFolder.exists()) {
+		if(platform == null) {
 			return true;
+		}
+		if(platform == Platform.STEAM) {
+			if(steamappsFolder == null || !steamappsFolder.exists()) {
+				return true;
+			}
+			if(workshopFolder == null) {
+				return true;
+			}
 		}
 		if(exeFile == null || !exeFile.exists()) {
 			return true;
 		}
 		if(upkFile == null) {
-			return true;
-		}
-		if(workshopFolder == null) {
 			return true;
 		}
 		return false;
@@ -290,7 +294,7 @@ public class Config {
 	}
 	
 	public Map<String, RLMap> getMaps() {
-		return mapsReadOnly;
+		return maps;
 	}
 	
 	public void registerMap(RLMap map) {

@@ -14,6 +14,10 @@ button.cancelButton {
     /*color: #ffaaaa;*/
 }
 
+.gameDiscoverySuccess {
+    color: #a6cea6;
+}
+
 #installationProgress {
     width: 300px;
     text-align: center;

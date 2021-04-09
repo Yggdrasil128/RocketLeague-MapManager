@@ -3,6 +3,7 @@ package de.yggdrasil128.rocketleague.mapmanager.config;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
+import de.yggdrasil128.rocketleague.mapmanager.game_discovery.GameDiscovery;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -51,8 +52,7 @@ public class ConfigUpgrader {
 			return;
 		}
 		File steamappsFolder = new File(jsonElement.getAsString());
-		final SteamLibraryDiscovery steamLibraryDiscovery = new SteamLibraryDiscovery(null);
-		final SteamLibraryDiscovery.Result result = steamLibraryDiscovery.discoverSteamLibrary(steamappsFolder);
+		GameDiscovery.Result result = GameDiscovery.discover(Config.Platform.STEAM, steamappsFolder, null);
 		if(!result.isSuccess()) {
 			// SteamLibraryDiscovery has failed.
 			// Our best course of action is to ignore this and continue with broken Steam Library paths,

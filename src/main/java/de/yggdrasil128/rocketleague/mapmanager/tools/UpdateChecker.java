@@ -1,8 +1,9 @@
-package de.yggdrasil128.rocketleague.mapmanager;
+package de.yggdrasil128.rocketleague.mapmanager.tools;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
 import de.yggdrasil128.rocketleague.mapmanager.config.Config;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -99,9 +100,7 @@ public class UpdateChecker {
 		}
 		
 		public Version(int major, int minor) {
-			this.major = major;
-			this.minor = minor;
-			this.patch = 0;
+			this(major, minor, 0);
 		}
 		
 		public static Version parse(String s) {

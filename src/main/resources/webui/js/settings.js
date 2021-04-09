@@ -27,10 +27,28 @@ function loadConfig(callback) {
 }
 
 function fillFromConfig() {
-    $('#steamappsFolder').html(coalesce(config['paths']['steamappsFolder'], '&mdash;'));
-    $('#exeFile').html(coalesce(config['paths']['exeFile'], '&mdash;'));
-    $('#upkFile').html(coalesce(config['paths']['upkFile'], '&mdash;'));
-    $('#workshopFolder').html(coalesce(config['paths']['workshopFolder'], '&mdash;'));
+    if(config['platform'] === 0) {
+        // Steam
+        $('#platform td:nth-child(2)').html('Steam');
+        $('#switchPlatforms').html('Switch to Epic Games');
+        $('#selectGameFolder').html('Choose steamapps folder');
+
+        $('#steamappsFolder').css('display', '');
+        $('#steamappsFolder td:nth-child(2)').html(coalesce(config['paths']['steamappsFolder'], '&mdash;'));
+        $('#workshopFolder').css('display', '');
+        $('#workshopFolder td:nth-child(2)').html(coalesce(config['paths']['workshopFolder'], '&mdash;'));
+    } else {
+        // Epic Games
+        $('#platform td:nth-child(2)').html('Epic Games');
+        $('#switchPlatforms').html('Switch to Steam');
+        $('#selectGameFolder').html('Choose Epic Games folder');
+
+        $('#steamappsFolder').css('display', 'none');
+        $('#workshopFolder').css('display', 'none');
+    }
+
+    $('#exeFile td:nth-child(2)').html(coalesce(config['paths']['exeFile'], '&mdash;'));
+    $('#upkFile td:nth-child(2)').html(coalesce(config['paths']['upkFile'], '&mdash;'));
 
     $('#input_autostart').get(0).value = config['autostart'];
     $('#input_renameOriginalUnderpassUPK').get(0).value = config['renameOriginalUnderpassUPK'] ? '1' : '0';
@@ -70,13 +88,26 @@ function storeConfig() {
     });
 }
 
-function chooseSteamappsFolder() {
-    let $button = $('#steamLibrarySetupDiv button');
+function gameDiscovery(switchPlatforms) {
+    let $buttons = $('#gameLibrarySetupDiv button');
 
-    $button.attr('disabled', '');
+    $buttons.attr('disabled', '');
 
-    makeRequest('api/chooseSteamLibrary', null, null, function(data) {
-        $button.attr('disabled', null);
+    let params;
+    if(switchPlatforms) {
+        params = {
+            platform: 1 - config['platform'],
+            tryDefaultDirectoryFirst: '1'
+        }
+    } else {
+        params = {
+            platform: config['platform'],
+            tryDefaultDirectoryFirst: '0'
+        }
+    }
+
+    makeRequest('api/gameDiscovery', params, null, function(data) {
+        $buttons.attr('disabled', null);
 
         if(!data) {
             return;
@@ -84,11 +115,10 @@ function chooseSteamappsFolder() {
         let result = JSON.parse(data);
         if(result['success']) {
             loadConfig();
-            startMapDiscovery();
         }
 
     }, function() {
-        $button.attr('disabled', null);
+        $buttons.attr('disabled', null);
     }, 3600000);
 }
 

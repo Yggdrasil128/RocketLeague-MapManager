@@ -1,0 +1,12 @@
+.importOption:not(:first-of-type) {
+    margin-top: 20px;
+}
+
+.importOption input {
+    width: 500px;
+}
+
+.importOption button {
+    font-size: 18px;
+    margin: 10px;
+}

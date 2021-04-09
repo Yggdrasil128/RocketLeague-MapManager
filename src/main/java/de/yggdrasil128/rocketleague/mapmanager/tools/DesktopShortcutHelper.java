@@ -1,5 +1,6 @@
-package de.yggdrasil128.rocketleague.mapmanager;
+package de.yggdrasil128.rocketleague.mapmanager.tools;
 
+import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
 import mslinks.ShellLink;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.LoggerFactory;

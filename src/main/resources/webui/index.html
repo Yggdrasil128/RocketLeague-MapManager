@@ -9,6 +9,7 @@
 
     <link rel="stylesheet" href="css/index.css" type="text/css"/>
     <link rel="stylesheet" href="css/mapList.css" type="text/css"/>
+    <link href="css/importMaps.css" rel="stylesheet" type="text/css"/>
     <link href="css/settings.css" rel="stylesheet" type="text/css"/>
 
     <script src="js/lib/jquery-3.5.1.min.js" type="application/javascript"></script>
@@ -17,6 +18,7 @@
     <script src="js/utils.js" type="application/javascript"></script>
     <script src="js/index.js" type="application/javascript"></script>
     <script src="js/mapDiscovery.js" type="application/javascript"></script>
+    <script src="js/importMaps.js" type="application/javascript"></script>
     <script src="js/mapList.js" type="application/javascript"></script>
     <script src="js/settings.js" type="application/javascript"></script>
     <script src="js/update.js" type="application/javascript"></script>
@@ -24,7 +26,7 @@
 <body>
 <div id="header">
     <div class="headerLeft">
-        <img src="img/logo.png" alt="Logo"/>
+        <img alt="Banner" src="img/banner.png"/>
     </div>
     <div class="headerRight">
         <div style="font-size: 30px">
@@ -44,9 +46,10 @@
 <div id="navBar">
     <div class="navList">
         <div class="anchor current" data-divID="contentMapList">Map List</div>
+        <div class="anchor" data-divID="contentImportMaps">Import Maps</div>
         <div class="anchor setupHint hint--bottom-right hint--always hint--rounded hint--warning"
              data-divID="contentSettings"
-             data-hint="The Steam library isn't configured yet. Please click here.">
+             data-hint="The Rocket League installation isn't configured yet. Please click here.">
             Settings
         </div>
         <div class="anchor" data-divID="contentAbout">About</div>
@@ -135,58 +138,147 @@
     </div>
 </div>
 
+<div class="content" id="contentImportMaps">
+    <h1>Import Maps</h1>
+
+    <div class="importOption" id="fromSteamWorkshopDirect">
+        <h2>From Steam Workshop</h2>
+        <p>
+            To import a map from the Steam workshop, subscribe to it, wait for it to be downloaded, and then click the
+            button below.
+        </p>
+        <p style="margin-top: -8px">
+            <a href="https://steamcommunity.com/app/252950/workshop/" rel="noreferrer" target="_blank">
+                Visit Rocket League workshop
+            </a>
+        </p>
+
+        <button onclick="refreshSteamWorkshopMaps()" style="margin-top: 0">Refresh workshop maps</button>
+
+        <div class="statusDiv" style="display: none">
+            Status: <span class="status"></span>
+        </div>
+    </div>
+    <div class="importOption" id="fromSteamWorkshopURL">
+        <h2>From Steam Workshop</h2>
+        <p>
+            To import a map from the Steam workshop, please provide the URL of the workshop item.<br/>
+            Example: <span class="monospace">https://steamcommunity.com/sharedfiles/filedetails/?id=2142821184</span>
+        </p>
+        <p style="margin-top: -8px">
+            <a href="https://steamcommunity.com/app/252950/workshop/" rel="noreferrer" target="_blank">
+                Visit Rocket League workshop
+            </a>
+        </p>
+
+        <label for="fromSteamWorkshopURL_input">URL: </label>
+        <input id="fromSteamWorkshopURL_input" type="text"/>
+        <br/>
+        <button onclick="importFromSteamWorkshopURL()">Import map</button>
+
+        <div class="statusDiv" style="display: none">
+            Status: <span class="status"></span>
+        </div>
+    </div>
+    <div class="importOption" id="fromLethamyrURL">
+        <h2>From lethamyr.com</h2>
+        <p>
+            To import a map from lethamyr.com, please provide the URL of the map.<br/>
+            Example: <span class="monospace">https://lethamyr.com/mymaps/grand-hall</span>
+        </p>
+        <p style="margin-top: -8px">
+            <a href="https://lethamyr.com/mymaps" rel="noreferrer" target="_blank">
+                Visit lethamyr.com
+            </a>
+        </p>
+
+        <label for="fromLethamyrURL_input">URL: </label>
+        <input id="fromLethamyrURL_input" type="text"/>
+        <br/>
+        <button onclick="importFromLethamyrURL()">Import map</button>
+
+        <div class="statusDiv" style="display: none">
+            Status: <span class="status"></span>
+        </div>
+    </div>
+    <div class="importOption" id="fromFile">
+        <h2>From file</h2>
+        <p>
+            You can also import a map that you have already downloaded on your computer.
+        </p>
+
+        <label for="fromFile_input">Select map file: </label>
+        <input id="fromFile_input" type="file"/>
+        <br/>
+        <button onclick="importFromFile()">Import map</button>
+
+        <div class="statusDiv" style="display: none">
+            Status: <span class="status"></span>
+        </div>
+
+    </div>
+</div>
+
 <div class="content" id="contentSettings">
     <h1>Settings</h1>
 
-    <div id="steamLibrarySetupDiv">
-        <h2>Steam Library Setup</h2>
+    <div id="gameLibrarySetupDiv">
+        <h2>Game paths</h2>
         <p>
-            In order for the Map Manager to work, it needs to know the location of the 'steamapps' folder where Rocket
-            League is installed.<br/>
-            You only need to configure this once, the app will remember these settings afterwards.
+            In order for the Map Manager to work, it needs to know the location of the Rocket League installation on
+            your computer.<br/>
         </p>
         <table>
-            <tr>
+            <tr id="platform">
+                <td>
+                    Platform:
+                </td>
+                <td>
+                    &mdash;
+                </td>
+            </tr>
+            <tr id="steamappsFolder">
                 <td>
                     'steamapps' folder:
                 </td>
-                <td id="steamappsFolder" class="monospace">
+                <td class="monospace">
                     &mdash;
                 </td>
             </tr>
-            <tr>
+            <tr id="exeFile">
                 <td>
                     RocketLeague.exe file:
                 </td>
-                <td id="exeFile" class="monospace">
+                <td class="monospace">
                     &mdash;
                 </td>
             </tr>
-            <tr>
+            <tr id="upkFile">
                 <td>
                     Target UPK file:
                 </td>
-                <td id="upkFile" class="monospace">
+                <td class="monospace">
                     &mdash;
                 </td>
             </tr>
-            <tr>
+            <tr id="workshopFolder">
                 <td>
                     Workshop folder:
                 </td>
-                <td id="workshopFolder" class="monospace">
+                <td class="monospace">
                     &mdash;
                 </td>
             </tr>
         </table>
 
         <div class="buttonContainer one">
-            <button onclick="chooseSteamappsFolder(); return false;">Choose steamapps folder</button>
+            <button id="switchPlatforms" onclick="gameDiscovery(true); return false;">Switch to ?</button>
+            <button id="selectGameFolder" onclick="gameDiscovery(false); return false;">Choose ? folder</button>
         </div>
 
         <p class="showOnlyWhenSetupIsNeeded">
-            Couldn't find your 'steamapps' folder.<br/>
-            Please click this button and enter the path to the 'steamapps' folder where Rocket League is installed.
+            Couldn't find your Rocket League installation location.<br/>
+            Please configure using the buttons above.
         </p>
     </div>
 

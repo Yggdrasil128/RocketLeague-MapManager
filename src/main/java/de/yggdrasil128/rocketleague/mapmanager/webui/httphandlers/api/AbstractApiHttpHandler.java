@@ -51,9 +51,12 @@ public abstract class AbstractApiHttpHandler implements HttpHandler {
 				}
 				index = part.indexOf('=');
 				if(index == -1) {
-					parameters.put(part, null);
+					String parameter = java.net.URLDecoder.decode(part, StandardCharsets.UTF_8.name());
+					parameters.put(parameter, null);
 				} else {
-					parameters.put(part.substring(0, index), part.substring(index + 1));
+					String parameter = java.net.URLDecoder.decode(part.substring(0, index), StandardCharsets.UTF_8.name());
+					String value = java.net.URLDecoder.decode(part.substring(index + 1), StandardCharsets.UTF_8.name());
+					parameters.put(parameter, value);
 				}
 			}
 		}

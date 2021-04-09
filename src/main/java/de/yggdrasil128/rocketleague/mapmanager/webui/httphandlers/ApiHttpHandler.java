@@ -4,14 +4,15 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
-import de.yggdrasil128.rocketleague.mapmanager.DesktopShortcutHelper;
 import de.yggdrasil128.rocketleague.mapmanager.Main;
 import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
-import de.yggdrasil128.rocketleague.mapmanager.RegistryHelper;
 import de.yggdrasil128.rocketleague.mapmanager.config.Config;
 import de.yggdrasil128.rocketleague.mapmanager.game_discovery.GameDiscovery;
 import de.yggdrasil128.rocketleague.mapmanager.maps.RLMap;
 import de.yggdrasil128.rocketleague.mapmanager.maps.SteamWorkshopMap;
+import de.yggdrasil128.rocketleague.mapmanager.tools.DesktopShortcutHelper;
+import de.yggdrasil128.rocketleague.mapmanager.tools.JavaXSwingTools;
+import de.yggdrasil128.rocketleague.mapmanager.tools.RegistryHelper;
 import de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers.api.AbstractApiHttpHandler;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -44,11 +45,13 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		super.registerHandler("getMapImage", this::handleMapImageRequest);
 		super.registerHandler("gameDiscovery", this::handleGameDiscoveryRequest);
 		
+		super.registerFunction("steamWorkshopMapDiscovery_start", this::steamWorkshopMapDiscovery_start);
+		super.registerFunction("steamWorkshopMapDiscovery_getStatus", this::steamWorkshopMapDiscovery_getStatus);
+		super.registerFunction("steamWorkshopMapDiscovery_cancel", this::steamWorkshopMapDiscovery_cancel);
+		
 		super.registerFunction("getVersion", this::getVersion);
 		super.registerFunction("getConfig", this::getConfig);
 		super.registerFunction("getMaps", this::getMaps);
-		super.registerFunction("startMapDiscovery", this::startMapDiscovery);
-		super.registerFunction("getMapDiscoveryStatus", this::getMapDiscoveryStatus);
 		super.registerFunction("setFavorite", this::setFavorite);
 		super.registerFunction("getLoadedMapID", this::getLoadedMapID);
 		super.registerFunction("loadMap", this::loadMap);
@@ -90,13 +93,10 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		JsonArray array = new JsonArray();
 		
 		Map<String, RLMap> maps = rlMapManager.getConfig().getMaps();
-		if(maps == null) {
-			return GSON.toJson(array);
-		}
 		for(RLMap map : maps.values()) {
 			JsonObject json = new JsonObject();
-			json.addProperty("id", String.valueOf(map.getID()));
-			json.addProperty("name", map.getUdkFilename());
+			json.addProperty("id", map.getID());
+			json.addProperty("udkName", map.getUdkFilename());
 			json.addProperty("title", map.getDisplayName());
 			json.addProperty("description", map.getDescription());
 			json.addProperty("authorName", map.getAuthorName());
@@ -109,7 +109,8 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 				json.addProperty("imageMTime", imageFile.lastModified());
 			}
 			json.addProperty("isFavorite", map.isFavorite());
-			json.addProperty("mapSize", String.valueOf(map.getSize()));
+			json.addProperty("mapSize", map.getSize());
+			json.addProperty("addedTimestamp", map.getAddedTimestamp());
 			json.addProperty("lastLoadedTimestamp", map.getLastLoadedTimestamp());
 			
 			array.add(json);
@@ -117,16 +118,27 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		return GSON.toJson(array);
 	}
 	
-	private String startMapDiscovery(Map<String, String> parameters) {
-		SteamWorkshopMap.MapDiscovery.start(rlMapManager);
-		return "";
+	private String steamWorkshopMapDiscovery_start(Map<String, String> parameters) {
+		final String btid = parameters.get("btid");
+		Runnable onFinish = () -> lastUpdatedMaps.now(btid);
+		final SteamWorkshopMap.MapDiscovery mapDiscovery = SteamWorkshopMap.MapDiscovery.start(rlMapManager, onFinish);
+		return mapDiscovery.getStatusJson();
 	}
 	
-	private String getMapDiscoveryStatus(Map<String, String> parameters) {
-		if(SteamWorkshopMap.MapDiscovery.get().isDone()) {
-			lastUpdatedMaps.now(parameters.get("btid"));
+	private String steamWorkshopMapDiscovery_getStatus(Map<String, String> parameters) {
+		final SteamWorkshopMap.MapDiscovery mapDiscovery = SteamWorkshopMap.MapDiscovery.get();
+		if(mapDiscovery == null) {
+			return "";
 		}
-		return SteamWorkshopMap.MapDiscovery.getStatusJson();
+		return mapDiscovery.getStatusJson();
+	}
+	
+	private String steamWorkshopMapDiscovery_cancel(Map<String, String> parameters) {
+		final SteamWorkshopMap.MapDiscovery mapDiscovery = SteamWorkshopMap.MapDiscovery.get();
+		if(mapDiscovery != null) {
+			mapDiscovery.cancel();
+		}
+		return "";
 	}
 	
 	private String setFavorite(Map<String, String> parameters) {
@@ -317,19 +329,27 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 				if(tryDefaultDirectoryFirst) {
 					result = GameDiscovery.discover(platform, null, rlMapManager);
 					if(!result.isSuccess()) {
+						JFrame jFrame = JavaXSwingTools.makeModalFrame();
+						
 						int choice = JOptionPane.showConfirmDialog(
-								null,
+								jFrame,
 								"Couldn't automatically detect your Rocket League installation. Select folder manually?",
 								"Rocket League Map Manager",
 								JOptionPane.YES_NO_OPTION);
+						
+						jFrame.dispose();
+						
 						if(choice != 0) {
 							httpExchange.sendResponseHeaders(204, -1);
 							return;
 						}
+						
+						result = GameDiscovery.chooseFolderAndDiscover(platform, rlMapManager);
 					}
+				} else {
+					result = GameDiscovery.chooseFolderAndDiscover(platform, rlMapManager);
 				}
 				
-				result = GameDiscovery.chooseFolderAndDiscover(platform, rlMapManager);
 				if(result == null) {
 					httpExchange.sendResponseHeaders(204, -1);
 					return;
@@ -341,12 +361,12 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 				
 				lastUpdatedMaps.now(parameters.get("btid"));
 				
+				result.showResultMessage();
+				
 				final String data = GSON.toJson(result);
 				httpExchange.sendResponseHeaders(200, data.length());
 				outputStream.write(data.getBytes(StandardCharsets.UTF_8));
-				
-				result.showResultMessage();
-			} catch(IOException e) {
+			} catch(Exception e) {
 				logger.warn("Uncaught exception", e);
 			} finally {
 				try {

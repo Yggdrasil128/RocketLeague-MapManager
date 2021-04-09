@@ -7,7 +7,7 @@ import java.io.IOException;
 public class RlMapMetadataTest {
 	@Test
 	public void testRLMapMetadata() {
-		SteamWorkshopMap map = SteamWorkshopMap.create(2142821184L, null);
+		SteamWorkshopMap map = SteamWorkshopMap.create(2142821184L, null, false);
 		try {
 			map.fetchDataFromWorkshop();
 		} catch(IOException e) {

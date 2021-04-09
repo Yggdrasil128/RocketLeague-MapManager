@@ -1,12 +1,14 @@
 let maps = [];
-let loadedMapID = '0';
-let lastPlayedFormatter = new Intl.DateTimeFormat(undefined, {year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'});
+let loadedMapID = null;
+let lastPlayedFormatter = new Intl.DateTimeFormat(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+});
 let mapComparator = null;
 let mapComparatorOptions = null;
-
-$(function() {
-    updateMapComparator();
-});
 
 function getMapDataById(mapID) {
     for(let map of maps) {
@@ -26,7 +28,7 @@ function loadMapsCallback(data) {
     $('.mapListHeader h1').html('Map List (' + maps.length + ')');
 
     makeRequest('api/getLoadedMapID', null, null, function(data) {
-        loadedMapID = data;
+        loadedMapID = data === 'null' ? null : data;
         sortMaps();
         refreshMapView();
     });
@@ -109,7 +111,7 @@ function loadMap(mapID) {
 }
 
 function unloadMap(callback) {
-    if(loadedMapID === '0') {
+    if(loadedMapID === null) {
         if(callback) {
             callback();
         }
@@ -361,9 +363,9 @@ function refreshMapView_detailedList() {
         html += '<td class="two">';
         html += '<div class="title">' + map['title'] + '</div>';
         html += '<table class="udkAndAuthor floatLeftRight"><tr><td><div class="udkFilename">';
-        html += map['name'].substr(0, map['name'].length - 4);
+        html += map['udkName'].substr(0, map['udkName'].length - 4);
         html += '<span>';
-        html += map['name'].substr(map['name'].length - 4, 4);
+        html += map['udkName'].substr(map['udkName'].length - 4, 4);
         html += '</span>';
         html += '</div></td><td><div class="authorName">';
         html += '<span>Created by </span>';

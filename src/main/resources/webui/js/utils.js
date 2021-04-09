@@ -40,7 +40,7 @@ function makeRequest(url, params, body, successCallback, errorCallback, timeoutM
     if(params) {
         for(let key in params) {
             if(params.hasOwnProperty(key)) {
-                url += '&' + key + '=' + params[key];
+                url += '&' + encodeURI(key) + '=' + encodeURI(params[key]);
             }
         }
     }

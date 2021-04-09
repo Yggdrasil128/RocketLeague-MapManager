@@ -1,8 +1,8 @@
 package de.yggdrasil128.rocketleague.mapmanager.maps;
 
-import com.google.gson.JsonObject;
 import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
 import de.yggdrasil128.rocketleague.mapmanager.config.Config;
+import de.yggdrasil128.rocketleague.mapmanager.tools.Task;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jsoup.Jsoup;
@@ -19,17 +19,17 @@ import java.net.URL;
 import java.util.HashSet;
 import java.util.LinkedList;
 
-import static de.yggdrasil128.rocketleague.mapmanager.config.Config.GSON;
-
 public class SteamWorkshopMap extends RLMap {
 	private static final transient Logger logger = LoggerFactory.getLogger(SteamWorkshopMap.class.getName());
 	
 	private long workshopID;
+	private boolean isManuallyDownloaded;
 	
-	public static SteamWorkshopMap create(long workshopID, File udkFile) {
+	public static SteamWorkshopMap create(long workshopID, File udkFile, boolean isManuallyDownloaded) {
 		SteamWorkshopMap map = new SteamWorkshopMap();
 		map.workshopID = workshopID;
 		map.udkFile = udkFile;
+		map.isManuallyDownloaded = isManuallyDownloaded;
 		return map;
 	}
 	
@@ -45,6 +45,10 @@ public class SteamWorkshopMap extends RLMap {
 	@Override
 	public MapType getType() {
 		return MapType.STEAM_WORKSHOP;
+	}
+	
+	public boolean isManuallyDownloaded() {
+		return isManuallyDownloaded;
 	}
 	
 	@Override
@@ -123,123 +127,101 @@ public class SteamWorkshopMap extends RLMap {
 		}
 	}
 	
-	public static class MapDiscovery {
+	public static class MapDiscovery extends Task {
 		private static MapDiscovery task = null;
-		private static Logger logger;
 		private final RLMapManager rlMapManager;
-		private final Thread thread;
-		private int progress, progressTarget;
-		private Throwable throwable = null;
+		private final Runnable onFinish;
 		
-		private MapDiscovery(RLMapManager rlMapManager) {
-			if(logger == null) {
-				logger = LoggerFactory.getLogger(MapDiscovery.class.getName());
-			}
+		private MapDiscovery(RLMapManager rlMapManager, Runnable onFinish) {
+			super();
 			this.rlMapManager = rlMapManager;
-			thread = new Thread(this::run);
-			progress = 0;
-			progressTarget = 0;
-			thread.start();
+			this.onFinish = onFinish;
 		}
 		
 		public synchronized static MapDiscovery get() {
 			return task;
 		}
 		
-		public synchronized static void start(RLMapManager rlMapManager) {
-			if(task != null && !task.isDone()) {
+		public synchronized static MapDiscovery start(RLMapManager rlMapManager) {
+			return start(rlMapManager, null);
+		}
+		
+		public synchronized static MapDiscovery start(RLMapManager rlMapManager, Runnable onFinish) {
+			if(task != null && !task.isRunning()) {
 				throw new IllegalStateException("Already running");
 			}
 			if(rlMapManager.getConfig().getPlatform() != Config.Platform.STEAM || rlMapManager.getConfig().getWorkshopFolder() == null) {
 				throw new IllegalStateException("Steam workshop map discovery is only available for Steam installations");
 			}
-			task = new MapDiscovery(rlMapManager);
+			task = new MapDiscovery(rlMapManager, onFinish);
+			task.start();
+			return task;
 		}
 		
-		public static String getStatusJson() {
-			JsonObject json = new JsonObject();
-			if(task == null) {
-				json.addProperty("progressFloat", 0);
-				json.addProperty("isDone", true);
-				json.addProperty("message", "Not started");
-				return GSON.toJson(json);
-			}
+		@Override
+		protected void run() throws Exception {
+			statusMessage = "Scanning for maps...";
+			final HashSet<Long> knownMaps = getKnownMaps();
+			final LinkedList<Pair<Long, File>> installedMaps = getInstalledMaps();
+			final LinkedList<Pair<Long, File>> newMaps = new LinkedList<>();
 			
-			boolean isDone = task.isDone();
-			json.addProperty("isDone", isDone);
-			
-			if(isDone) {
-				Throwable throwable = task.getThrowable();
-				if(throwable == null) {
-					int mapCount = task.rlMapManager.getConfig().getMaps().size();
-					String s = "Successfully discovered " + mapCount + (mapCount == 1 ? " map." : " maps.");
-					json.addProperty("message", s);
-					return GSON.toJson(json);
+			for(Pair<Long, File> pair : installedMaps) {
+				long id = pair.getLeft();
+				
+				if(knownMaps.contains(id)) {
+					knownMaps.remove(id);
+					continue;
 				}
 				
-				json.addProperty("message", "Error:<br />" + throwable);
-				return GSON.toJson(json);
+				// map is new
+				newMaps.add(pair);
 			}
 			
-			json.addProperty("message", "Discovering maps, please wait...");
-			json.addProperty("progress", task.getProgress());
-			json.addProperty("progressTarget", task.getProgressTarget());
-			return GSON.toJson(json);
-		}
-		
-		public boolean isDone() {
-			return !thread.isAlive();
-		}
-		
-		public int getProgress() {
-			return progress;
-		}
-		
-		public int getProgressTarget() {
-			return progressTarget;
-		}
-		
-		public Throwable getThrowable() {
-			return throwable;
-		}
-		
-		private void run() {
-			logger.info("Starting Map Discovery");
-			try {
-				final HashSet<Long> knownMaps = getKnownMaps();
-				final LinkedList<Pair<Long, File>> installedMaps = getInstalledMaps();
-				progressTarget = installedMaps.size();
+			statusMessage = "Downloading map data from workshop...";
+			showProgress = true;
+			showPercentage = true;
+			progressTarget = newMaps.size();
+			
+			LinkedList<SteamWorkshopMap> registrableMaps = new LinkedList<>();
+			
+			for(Pair<Long, File> pair : newMaps) {
+				long id = pair.getLeft();
+				File udkFile = pair.getRight();
 				
-				for(Pair<Long, File> installedMap : installedMaps) {
-					progress++;
-					long id = installedMap.getLeft();
-					File udkFile = installedMap.getRight();
-					
-					if(knownMaps.contains(id)) {
-						knownMaps.remove(id);
-						continue;
-					}
-					
-					// map is new
-					SteamWorkshopMap map = SteamWorkshopMap.create(id, udkFile);
-					map.fetchDataFromWorkshop();
-					rlMapManager.getConfig().registerMap(map);
-				}
+				SteamWorkshopMap map = SteamWorkshopMap.create(id, udkFile, false);
+				map.fetchDataFromWorkshop();
+				registrableMaps.add(map);
 				
-				// at this point, knownMaps contains only maps that are not installed anymore
-				// -> delete them
-				for(Long id : knownMaps) {
-					String key = MapType.STEAM_WORKSHOP.getAbbreviation() + "-" + id;
-					RLMap map = rlMapManager.getConfig().getMaps().get(key);
-					if(map != null) {
-						rlMapManager.getConfig().deleteMap(map);
-					}
+				progress++;
+				
+				if(Thread.interrupted()) {
+					throw new InterruptedException();
 				}
-			} catch(Exception e) {
-				throwable = e;
-				logger.error("Fatal error", e);
 			}
-			logger.info("Finished Map Discovery");
+			
+			resetProgress();
+			statusMessage = "Finishing up...";
+			
+			// register all new maps
+			for(SteamWorkshopMap map : registrableMaps) {
+				rlMapManager.getConfig().registerMap(map);
+			}
+			
+			// at this point, knownMaps contains only maps that are not installed anymore
+			// -> delete them, if they are not manually downloaded
+			for(Long id : knownMaps) {
+				String key = MapType.STEAM_WORKSHOP.getAbbreviation() + "-" + id;
+				SteamWorkshopMap map = (SteamWorkshopMap) rlMapManager.getConfig().getMaps().get(key);
+				if(map != null && !map.isManuallyDownloaded()) {
+					rlMapManager.getConfig().deleteMap(map);
+				}
+			}
+			
+			rlMapManager.getConfig().save();
+			
+			if(onFinish != null) {
+				onFinish.run();
+			}
 		}
 		
 		private HashSet<Long> getKnownMaps() {

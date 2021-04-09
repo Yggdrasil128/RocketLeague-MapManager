@@ -1,4 +1,4 @@
-import de.yggdrasil128.rocketleague.mapmanager.RegistryHelper;
+import de.yggdrasil128.rocketleague.mapmanager.tools.RegistryHelper;
 import org.junit.Assert;
 import org.junit.Test;
 
