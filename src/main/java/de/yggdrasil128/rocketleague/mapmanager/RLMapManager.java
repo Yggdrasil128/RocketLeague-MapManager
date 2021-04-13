@@ -17,6 +17,7 @@ import java.io.InputStreamReader;
 public class RLMapManager {
 	public static final File FILE_ROOT;
 	public static final File FILE_CONFIG;
+	public static final File FILE_MAPS;
 	public static final UpdateChecker.Version VERSION = new UpdateChecker.Version(2, 0, 0);
 	public static final String REGISTRY_AUTOSTART_KEY = "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
 	public static final String REGISTRY_AUTOSTART_VALUE = "RL Map Manager";
@@ -27,9 +28,10 @@ public class RLMapManager {
 		String home = System.getProperty("user.home");
 		FILE_ROOT = new File(home, "RL-MapManager DEV");
 		FILE_CONFIG = new File(FILE_ROOT, "config.json");
+		FILE_MAPS = new File(FILE_ROOT, "maps");
 		FILE_LOG = new File(FILE_ROOT, "log.txt");
 		//noinspection ResultOfMethodCallIgnored
-		FILE_ROOT.mkdirs();
+		FILE_MAPS.mkdirs();
 		
 		// set up logging
 		System.setProperty("org.slf4j.simpleLogger.logFile", FILE_LOG.getAbsolutePath());

@@ -1,10 +1,14 @@
 package de.yggdrasil128.rocketleague.mapmanager.maps;
 
 import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
+import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
+import javax.net.ssl.HttpsURLConnection;
 import java.io.File;
+import java.net.URL;
 import java.util.Objects;
 
 public abstract class RLMap {
@@ -33,6 +37,8 @@ public abstract class RLMap {
 	protected abstract String getDiscriminator();
 	
 	public abstract MapType getType();
+	
+	protected abstract Logger getLogger();
 	
 	public String getID() {
 		return getType().getAbbreviation() + "-" + getDiscriminator();
@@ -102,10 +108,11 @@ public abstract class RLMap {
 	@NotNull
 	public String getDisplayName() {
 		String s = getTitle();
-		if(s == null) {
-			s = getUdkFilename();
-			s = s.substring(0, s.length() - 4);
+		if(s != null) {
+			return s;
 		}
+		s = getUdkFilename();
+		s = s.substring(0, s.length() - 4);
 		return s;
 	}
 	
@@ -115,6 +122,26 @@ public abstract class RLMap {
 			imageFile.delete();
 			imageFile = null;
 			imageFileMimeType = null;
+		}
+	}
+	
+	protected void downloadImage(String src) {
+		try {
+			URL url = new URL(src);
+			HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
+			if(con.getResponseCode() != 200) {
+				return;
+			}
+			
+			clearImageFile();
+			
+			String mimeType = con.getHeaderField("Content-Type");
+			imageFile = new File(IMAGES_FOLDER, getID() + getImageFileExtension(mimeType));
+			imageFileMimeType = mimeType;
+			
+			FileUtils.copyInputStreamToFile(con.getInputStream(), imageFile);
+		} catch(Exception e) {
+			getLogger().warn("Couldn't load image url '" + src + "' for map " + getID());
 		}
 	}
 	

@@ -17,9 +17,8 @@
 
     <script src="js/utils.js" type="application/javascript"></script>
     <script src="js/index.js" type="application/javascript"></script>
-    <script src="js/mapDiscovery.js" type="application/javascript"></script>
-    <script src="js/importMaps.js" type="application/javascript"></script>
     <script src="js/mapList.js" type="application/javascript"></script>
+    <script src="js/importMaps.js" type="application/javascript"></script>
     <script src="js/settings.js" type="application/javascript"></script>
     <script src="js/update.js" type="application/javascript"></script>
 </head>
@@ -47,6 +46,14 @@
     <div class="navList">
         <div class="anchor current" data-divID="contentMapList">Map List</div>
         <div class="anchor" data-divID="contentImportMaps">Import Maps</div>
+        <!--
+        <div class="anchor" data-divID="contentNetwork" style="margin-right: 26px; padding-right: 6px;">
+            Network
+            <div style="font-size: 40px; line-height: 35px; overflow: hidden; position: absolute; top: 0; left: 100%; color: #9e9e9e;">
+                &bull;
+            </div>
+        </div>
+        -->
         <div class="anchor setupHint hint--bottom-right hint--always hint--rounded hint--warning"
              data-divID="contentSettings"
              data-hint="The Rocket League installation isn't configured yet. Please click here.">
@@ -63,8 +70,9 @@
                     <br/>
                     <button onclick="startStopRocketLeague()">Start RL</button>
                 </td>
-                <td>Local time:</td>
-                <td id="localTime"></td>
+                <td style="text-align: center">
+                    Local time:<br/><span id="localTime"></span>
+                </td>
             </tr>
         </table>
     </div>
@@ -153,10 +161,14 @@
             </a>
         </p>
 
-        <button onclick="refreshSteamWorkshopMaps()" style="margin-top: 0">Refresh workshop maps</button>
+        <button onclick="importMapsTask(this, null, 'steamWorkshopMapDiscovery')" style="margin-top: 0">Refresh workshop
+            maps
+        </button>
 
         <div class="statusDiv" style="display: none">
             Status: <span class="status"></span>
+            <br/>
+            <button onclick="makeRequest('api/steamWorkshopMapDiscovery_cancel'); this.disabled = true;">Cancel</button>
         </div>
     </div>
     <div class="importOption" id="fromSteamWorkshopURL">
@@ -174,7 +186,8 @@
         <label for="fromSteamWorkshopURL_input">URL: </label>
         <input id="fromSteamWorkshopURL_input" type="text"/>
         <br/>
-        <button onclick="importFromSteamWorkshopURL()">Import map</button>
+        <button onclick="importMapsTask(this, 'fromSteamWorkshopURL_input', 'steamWorkshopMapDownload')">Import map
+        </button>
 
         <div class="statusDiv" style="display: none">
             Status: <span class="status"></span>
@@ -195,7 +208,7 @@
         <label for="fromLethamyrURL_input">URL: </label>
         <input id="fromLethamyrURL_input" type="text"/>
         <br/>
-        <button onclick="importFromLethamyrURL()">Import map</button>
+        <button onclick="importMapsTask(this, 'fromLethamyrURL_input', 'lethamyrMapDownload')">Import map</button>
 
         <div class="statusDiv" style="display: none">
             Status: <span class="status"></span>
@@ -210,7 +223,7 @@
         <label for="fromFile_input">Select map file: </label>
         <input id="fromFile_input" type="file"/>
         <br/>
-        <button onclick="importFromFile()">Import map</button>
+        <button onclick="">Import map</button>
 
         <div class="statusDiv" style="display: none">
             Status: <span class="status"></span>

@@ -8,11 +8,13 @@ import de.yggdrasil128.rocketleague.mapmanager.Main;
 import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
 import de.yggdrasil128.rocketleague.mapmanager.config.Config;
 import de.yggdrasil128.rocketleague.mapmanager.game_discovery.GameDiscovery;
+import de.yggdrasil128.rocketleague.mapmanager.maps.LethamyrMap;
 import de.yggdrasil128.rocketleague.mapmanager.maps.RLMap;
 import de.yggdrasil128.rocketleague.mapmanager.maps.SteamWorkshopMap;
 import de.yggdrasil128.rocketleague.mapmanager.tools.DesktopShortcutHelper;
 import de.yggdrasil128.rocketleague.mapmanager.tools.JavaXSwingTools;
 import de.yggdrasil128.rocketleague.mapmanager.tools.RegistryHelper;
+import de.yggdrasil128.rocketleague.mapmanager.tools.Task;
 import de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers.api.AbstractApiHttpHandler;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -46,8 +48,14 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		super.registerHandler("gameDiscovery", this::handleGameDiscoveryRequest);
 		
 		super.registerFunction("steamWorkshopMapDiscovery_start", this::steamWorkshopMapDiscovery_start);
-		super.registerFunction("steamWorkshopMapDiscovery_getStatus", this::steamWorkshopMapDiscovery_getStatus);
+		super.registerFunction("steamWorkshopMapDiscovery_status", this::steamWorkshopMapDiscovery_status);
 		super.registerFunction("steamWorkshopMapDiscovery_cancel", this::steamWorkshopMapDiscovery_cancel);
+		
+		super.registerFunction("steamWorkshopMapDownload_start", this::steamWorkshopMapDownload_start);
+		super.registerFunction("steamWorkshopMapDownload_status", this::steamWorkshopMapDownload_status);
+		
+		super.registerFunction("lethamyrMapDownload_start", this::lethamyrMapDownload_start);
+		super.registerFunction("lethamyrMapDownload_status", this::lethamyrMapDownload_status);
 		
 		super.registerFunction("getVersion", this::getVersion);
 		super.registerFunction("getConfig", this::getConfig);
@@ -121,24 +129,54 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 	private String steamWorkshopMapDiscovery_start(Map<String, String> parameters) {
 		final String btid = parameters.get("btid");
 		Runnable onFinish = () -> lastUpdatedMaps.now(btid);
-		final SteamWorkshopMap.MapDiscovery mapDiscovery = SteamWorkshopMap.MapDiscovery.start(rlMapManager, onFinish);
-		return mapDiscovery.getStatusJson();
+		final Task task = SteamWorkshopMap.MapDiscovery.start(rlMapManager, onFinish);
+		return task.getStatusJson();
 	}
 	
-	private String steamWorkshopMapDiscovery_getStatus(Map<String, String> parameters) {
-		final SteamWorkshopMap.MapDiscovery mapDiscovery = SteamWorkshopMap.MapDiscovery.get();
-		if(mapDiscovery == null) {
+	private String steamWorkshopMapDiscovery_status(Map<String, String> parameters) {
+		final Task task = SteamWorkshopMap.MapDiscovery.get();
+		if(task == null) {
 			return "";
 		}
-		return mapDiscovery.getStatusJson();
+		return task.getStatusJson();
 	}
 	
 	private String steamWorkshopMapDiscovery_cancel(Map<String, String> parameters) {
-		final SteamWorkshopMap.MapDiscovery mapDiscovery = SteamWorkshopMap.MapDiscovery.get();
-		if(mapDiscovery != null) {
-			mapDiscovery.cancel();
+		final Task task = SteamWorkshopMap.MapDiscovery.get();
+		if(task != null) {
+			task.cancel();
 		}
 		return "";
+	}
+	
+	private String steamWorkshopMapDownload_start(Map<String, String> parameters) {
+		final String btid = parameters.get("btid");
+		Runnable onFinish = () -> lastUpdatedMaps.now(btid);
+		final Task task = SteamWorkshopMap.MapDownload.start(parameters.get("url"), rlMapManager, onFinish);
+		return task.getStatusJson();
+	}
+	
+	private String steamWorkshopMapDownload_status(Map<String, String> parameters) {
+		final Task task = SteamWorkshopMap.MapDownload.get();
+		if(task == null) {
+			return "";
+		}
+		return task.getStatusJson();
+	}
+	
+	private String lethamyrMapDownload_start(Map<String, String> parameters) {
+		final String btid = parameters.get("btid");
+		Runnable onFinish = () -> lastUpdatedMaps.now(btid);
+		final Task task = LethamyrMap.MapDownload.start(parameters.get("url"), rlMapManager, onFinish);
+		return task.getStatusJson();
+	}
+	
+	private String lethamyrMapDownload_status(Map<String, String> parameters) {
+		final Task task = LethamyrMap.MapDownload.get();
+		if(task == null) {
+			return "";
+		}
+		return task.getStatusJson();
 	}
 	
 	private String setFavorite(Map<String, String> parameters) {
