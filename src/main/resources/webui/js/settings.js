@@ -2,7 +2,7 @@ let config = null;
 
 $(function() {
     loadConfig(function() {
-        loadMapSortingSettingsFromConfig();
+        loadMapListSettingsFromConfig();
         updateMapComparator();
 
         loadMaps();

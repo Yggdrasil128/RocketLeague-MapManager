@@ -118,10 +118,6 @@
                         <option value="3">Map Size (largest first)</option>
                         <option value="-3">Map Size (smallest first)</option>
                     </optgroup>
-                    <optgroup label="Map ID">
-                        <option value="4">Map ID (ascending)</option>
-                        <option value="-4">Map ID (descending)</option>
-                    </optgroup>
                 </select>
                 <div class="checkboxContainer">
                     <input id="mapSorting_loadedMapAtTop" type="checkbox" onchange="onUpdateSortOptions()"/>
@@ -131,12 +127,14 @@
                     <label for="mapSorting_favoritesAtTop">Show favorites at top</label>
                 </div>
             </td>
-            <td class="actions">
-                <button onclick="startMapDiscovery()">Refresh list</button>
-                <br/>
-                <a href="https://steamcommunity.com/app/252950/workshop/" target="_blank" rel="noreferrer">
-                    Visit Rocket League workshop
-                </a>
+            <td class="search">
+                <label for="mapSearch">Search:</label>
+                <input id="mapSearch" oninput="filterMaps()" type="text">
+
+                <div data-children-count="1">
+                    <input id="mapSearchFocus" onchange="onUpdateMapSearchFocus()" type="checkbox"/>
+                    <label for="mapSearchFocus">Press CTRL+F or F3 to search</label>
+                </div>
             </td>
         </tr>
         </tbody>
@@ -149,10 +147,11 @@
 <div class="content" id="contentImportMaps">
     <h1>Import Maps</h1>
 
-    <div class="importOption" id="fromSteamWorkshopDirect">
+    <div class="importOption" data-api-endpoint-name="steamWorkshopMapDiscovery" id="fromSteamWorkshopDirect">
         <h2>From Steam Workshop</h2>
         <p>
-            To import a map from the Steam workshop, subscribe to it, wait for it to be downloaded, and then click the
+            To import a map from the Steam workshop, subscribe to it, wait for it to be downloaded by the Steam client,
+            and then click the
             button below.
         </p>
         <p style="margin-top: -8px">
@@ -161,17 +160,19 @@
             </a>
         </p>
 
-        <button onclick="importMapsTask(this, null, 'steamWorkshopMapDiscovery')" style="margin-top: 0">Refresh workshop
-            maps
+        <button class="start" onclick="importMapsTask('fromSteamWorkshopDirect')" style="margin-top: 0">
+            Refresh workshop maps
         </button>
 
         <div class="statusDiv" style="display: none">
             Status: <span class="status"></span>
             <br/>
-            <button onclick="makeRequest('api/steamWorkshopMapDiscovery_cancel'); this.disabled = true;">Cancel</button>
+            <button class="cancel" onclick="makeRequest('api/steamWorkshopMapDiscovery_cancel'); this.disabled = true;">
+                Cancel
+            </button>
         </div>
     </div>
-    <div class="importOption" id="fromSteamWorkshopURL">
+    <div class="importOption" data-api-endpoint-name="steamWorkshopMapDownload" id="fromSteamWorkshopURL">
         <h2>From Steam Workshop</h2>
         <p>
             To import a map from the Steam workshop, please provide the URL of the workshop item.<br/>
@@ -186,14 +187,19 @@
         <label for="fromSteamWorkshopURL_input">URL: </label>
         <input id="fromSteamWorkshopURL_input" type="text"/>
         <br/>
-        <button onclick="importMapsTask(this, 'fromSteamWorkshopURL_input', 'steamWorkshopMapDownload')">Import map
+        <button class="start" onclick="importMapsTask('fromSteamWorkshopURL')">
+            Import map
         </button>
 
         <div class="statusDiv" style="display: none">
             Status: <span class="status"></span>
+            <br/>
+            <button class="cancel" onclick="makeRequest('api/steamWorkshopMapDownload_cancel'); this.disabled = true;">
+                Cancel
+            </button>
         </div>
     </div>
-    <div class="importOption" id="fromLethamyrURL">
+    <div class="importOption" data-api-endpoint-name="lethamyrMapDownload" id="fromLethamyrURL">
         <h2>From lethamyr.com</h2>
         <p>
             To import a map from lethamyr.com, please provide the URL of the map.<br/>
@@ -208,22 +214,29 @@
         <label for="fromLethamyrURL_input">URL: </label>
         <input id="fromLethamyrURL_input" type="text"/>
         <br/>
-        <button onclick="importMapsTask(this, 'fromLethamyrURL_input', 'lethamyrMapDownload')">Import map</button>
+        <button class="start" onclick="importMapsTask('fromLethamyrURL')">
+            Import map
+        </button>
 
         <div class="statusDiv" style="display: none">
             Status: <span class="status"></span>
+            <br/>
+            <button class="cancel" onclick="makeRequest('api/lethamyrMapDownload_cancel'); this.disabled = true;">
+                Cancel
+            </button>
         </div>
     </div>
     <div class="importOption" id="fromFile">
         <h2>From file</h2>
         <p>
-            You can also import a map that you have already downloaded on your computer.
+            You can also import a map that you have already downloaded on your computer.<br/>
+            You can either select a UDK/UPK file or a ZIP file containing a UDK/UPK file.
         </p>
 
         <label for="fromFile_input">Select map file: </label>
         <input id="fromFile_input" type="file"/>
         <br/>
-        <button onclick="">Import map</button>
+        <button class="start" onclick="uploadMap(this)">Import map</button>
 
         <div class="statusDiv" style="display: none">
             Status: <span class="status"></span>

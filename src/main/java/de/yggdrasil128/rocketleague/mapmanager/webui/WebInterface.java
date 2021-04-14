@@ -2,10 +2,7 @@ package de.yggdrasil128.rocketleague.mapmanager.webui;
 
 import com.sun.net.httpserver.HttpServer;
 import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
-import de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers.ApiHttpHandler;
-import de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers.IPWhitelist;
-import de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers.SetupApiHttpHandler;
-import de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers.StaticFilesHttpHandler;
+import de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,10 +70,14 @@ public class WebInterface {
 			staticFilesHttpHandler = new StaticFilesHttpHandler(isSetupMode);
 			httpServer.createContext("/", ipWhitelist.forHttpHandler(staticFilesHttpHandler));
 			if(isSetupMode) {
-				httpServer.createContext("/api/", ipWhitelist.forHttpHandler(new SetupApiHttpHandler(rlMapManager)));
-			} else {
-				apiHttpHandler = new ApiHttpHandler(rlMapManager);
+				SetupApiHttpHandler apiHttpHandler = new SetupApiHttpHandler(rlMapManager, "/api/");
 				httpServer.createContext("/api/", ipWhitelist.forHttpHandler(apiHttpHandler));
+			} else {
+				apiHttpHandler = new ApiHttpHandler(rlMapManager, "/api/");
+				httpServer.createContext("/api/", ipWhitelist.forHttpHandler(apiHttpHandler));
+				
+				ApiUploadHttpHandler apiUploadHttpHandler = new ApiUploadHttpHandler(rlMapManager, "/api/upload/");
+				httpServer.createContext("/api/upload/", ipWhitelist.forHttpHandler(apiUploadHttpHandler));
 			}
 			httpServer.start();
 		} catch(Exception e) {

@@ -15,7 +15,6 @@ import de.yggdrasil128.rocketleague.mapmanager.tools.DesktopShortcutHelper;
 import de.yggdrasil128.rocketleague.mapmanager.tools.JavaXSwingTools;
 import de.yggdrasil128.rocketleague.mapmanager.tools.RegistryHelper;
 import de.yggdrasil128.rocketleague.mapmanager.tools.Task;
-import de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers.api.AbstractApiHttpHandler;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 
@@ -39,8 +38,8 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 	private final Executor mapImageRequestsThreadPool = Executors.newFixedThreadPool(2);
 	private final LastUpdated lastUpdatedMaps = new LastUpdated(), lastUpdatedConfig = new LastUpdated();
 	
-	public ApiHttpHandler(RLMapManager rlMapManager) {
-		super(rlMapManager.getLogger());
+	public ApiHttpHandler(RLMapManager rlMapManager, String context) {
+		super(context, rlMapManager.getLogger());
 		
 		this.rlMapManager = rlMapManager;
 		
@@ -53,9 +52,11 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		
 		super.registerFunction("steamWorkshopMapDownload_start", this::steamWorkshopMapDownload_start);
 		super.registerFunction("steamWorkshopMapDownload_status", this::steamWorkshopMapDownload_status);
+		super.registerFunction("steamWorkshopMapDownload_cancel", this::steamWorkshopMapDownload_cancel);
 		
 		super.registerFunction("lethamyrMapDownload_start", this::lethamyrMapDownload_start);
 		super.registerFunction("lethamyrMapDownload_status", this::lethamyrMapDownload_status);
+		super.registerFunction("lethamyrMapDownload_cancel", this::lethamyrMapDownload_cancel);
 		
 		super.registerFunction("getVersion", this::getVersion);
 		super.registerFunction("getConfig", this::getConfig);
@@ -104,10 +105,11 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		for(RLMap map : maps.values()) {
 			JsonObject json = new JsonObject();
 			json.addProperty("id", map.getID());
-			json.addProperty("udkName", map.getUdkFilename());
 			json.addProperty("title", map.getDisplayName());
 			json.addProperty("description", map.getDescription());
 			json.addProperty("authorName", map.getAuthorName());
+			json.addProperty("udkName", map.getUdkFilename());
+			json.addProperty("url", map.getURL());
 			final File imageFile = map.getImageFile();
 			if(imageFile == null) {
 				json.addProperty("hasImage", false);
@@ -164,6 +166,14 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		return task.getStatusJson();
 	}
 	
+	private String steamWorkshopMapDownload_cancel(Map<String, String> parameters) {
+		final Task task = SteamWorkshopMap.MapDownload.get();
+		if(task != null) {
+			task.cancel();
+		}
+		return "";
+	}
+	
 	private String lethamyrMapDownload_start(Map<String, String> parameters) {
 		final String btid = parameters.get("btid");
 		Runnable onFinish = () -> lastUpdatedMaps.now(btid);
@@ -177,6 +187,14 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 			return "";
 		}
 		return task.getStatusJson();
+	}
+	
+	private String lethamyrMapDownload_cancel(Map<String, String> parameters) {
+		final Task task = LethamyrMap.MapDownload.get();
+		if(task != null) {
+			task.cancel();
+		}
+		return "";
 	}
 	
 	private String setFavorite(Map<String, String> parameters) {
@@ -257,6 +275,12 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		
 		json.add("lastUpdatedMaps", lastUpdatedMaps.toJson());
 		json.add("lastUpdatedConfig", lastUpdatedConfig.toJson());
+		
+		JsonObject tasksRunning = new JsonObject();
+		tasksRunning.addProperty("steamWorkshopMapDiscovery", SteamWorkshopMap.MapDiscovery.isTaskRunning());
+		tasksRunning.addProperty("steamWorkshopMapDownload", SteamWorkshopMap.MapDownload.isTaskRunning());
+		tasksRunning.addProperty("lethamyrMapDownload", LethamyrMap.MapDownload.isTaskRunning());
+		json.add("tasksRunning", tasksRunning);
 		
 		return GSON.toJson(json);
 	}

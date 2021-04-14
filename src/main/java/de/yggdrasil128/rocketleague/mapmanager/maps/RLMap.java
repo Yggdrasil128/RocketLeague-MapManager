@@ -14,7 +14,7 @@ import java.util.Objects;
 public abstract class RLMap {
 	protected static final File IMAGES_FOLDER = new File(RLMapManager.FILE_ROOT, "mapImages");
 	protected final long addedTimestamp = System.currentTimeMillis();
-	protected String title, description, authorName, imageFileMimeType;
+	protected String title, description, authorName, imageFileMimeType, udkFilename;
 	protected File udkFile, imageFile;
 	protected boolean isFavorite;
 	protected long lastLoadedTimestamp = 0;
@@ -44,6 +44,8 @@ public abstract class RLMap {
 		return getType().getAbbreviation() + "-" + getDiscriminator();
 	}
 	
+	public abstract String getURL();
+	
 	@Nullable
 	public String getTitle() {
 		return title;
@@ -54,7 +56,7 @@ public abstract class RLMap {
 	}
 	
 	public String getAuthorName() {
-		return authorName;
+		return authorName != null ? authorName : "Unknown";
 	}
 	
 	public File getUdkFile() {
@@ -62,7 +64,7 @@ public abstract class RLMap {
 	}
 	
 	public String getUdkFilename() {
-		return getUdkFile().getName();
+		return udkFilename;
 	}
 	
 	public File getImageFile() {

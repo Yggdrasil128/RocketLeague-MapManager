@@ -31,6 +31,7 @@ function loadMapsCallback(data) {
         loadedMapID = data === 'null' ? null : data;
         sortMaps();
         refreshMapView();
+        filterMaps();
     });
 }
 
@@ -67,7 +68,7 @@ function favoriteClick(mapID) {
 
     let isFavorite = map['isFavorite'] = !map['isFavorite'];
 
-    let $favorite = $('#map' + mapID + ' .favorite');
+    let $favorite = $('#map-' + mapID + ' .favorite');
     if(isFavorite) {
         $favorite.addClass('isFavorite');
     } else {
@@ -83,6 +84,7 @@ function favoriteClick(mapID) {
         setTimeout(function() {
             sortMaps();
             refreshMapView();
+            filterMaps();
             scrollMapIntoView(mapID, 'ifScrolled');
         }, 1000);
     }
@@ -97,7 +99,7 @@ function loadMap(mapID) {
         return;
     }
 
-    let $newMapButton = $('#map' + mapID + ' .loadMapButton');
+    let $newMapButton = $('#map-' + mapID + ' .loadMapButton');
     $newMapButton.attr('disabled', '').html('Loading...');
 
     makeRequest('api/loadMap', {mapID: mapID}, null, function() {
@@ -106,6 +108,7 @@ function loadMap(mapID) {
 
         sortMaps();
         refreshMapView();
+        filterMaps();
         scrollMapIntoView(mapID, 'ifScrolled');
     });
 }
@@ -119,14 +122,15 @@ function unloadMap(callback) {
     }
 
     makeRequest('api/unloadMap', null, null, function() {
-        $('#map' + loadedMapID).removeClass('loaded');
-        $('#map' + loadedMapID + ' .loadMapButton').html('Load Map');
+        $('#map-' + loadedMapID).removeClass('loaded');
+        $('#map-' + loadedMapID + ' .loadMapButton').html('Load Map');
 
         let oldLoadedMapID = loadedMapID;
         loadedMapID = '0';
 
         sortMaps();
         refreshMapView();
+        filterMaps();
         scrollMapIntoView(oldLoadedMapID, 'ifScrolled');
 
         if(callback) {
@@ -144,7 +148,7 @@ function loadMapButtonClick(mapID) {
 }
 
 function refreshMapMetadata(mapID) {
-    let $button = $('#map' + mapID + ' button.refreshMapMetadataButton');
+    let $button = $('#map-' + mapID + ' button.refreshMapMetadataButton');
     $button.attr('disabled', '').html('Refreshing...');
 
     makeRequest('api/refreshMapMetadata', {mapID: mapID}, null, function() {
@@ -159,7 +163,7 @@ function refreshMapMetadata(mapID) {
 }
 
 function scrollMapIntoView(mapID, highlight) {
-    let $map = $('#map' + mapID);
+    let $map = $('#map-' + mapID);
     if($map.length === 0) {
         return;
     }
@@ -200,15 +204,13 @@ function mapComparator_title(mapA, mapB) {
 }
 
 function mapComparator_lastLoaded(mapA, mapB) {
-    return mapB['lastLoadedTimestamp'] - mapA['lastLoadedTimestamp'];
+    let timestampA = mapA['lastLoadedTimestamp'] <= 0 ? mapA['addedTimestamp'] : mapA['lastLoadedTimestamp'];
+    let timestampB = mapB['lastLoadedTimestamp'] <= 0 ? mapB['addedTimestamp'] : mapB['lastLoadedTimestamp'];
+    return timestampB - timestampA;
 }
 
 function mapComparator_mapSize(mapA, mapB) {
     return parseFloat(mapB['mapSize']) - parseFloat(mapA['mapSize']);
-}
-
-function mapComparator_mapID(mapA, mapB) {
-    return parseFloat(mapA['id']) - parseFloat(mapB['id']);
 }
 
 function mapComparator_authorName(mapA, mapB) {
@@ -220,15 +222,37 @@ const mapComparators = [
     mapComparator_title,
     mapComparator_lastLoaded,
     mapComparator_mapSize,
-    mapComparator_mapID,
+    null,
     mapComparator_authorName
 ];
 
-function loadMapSortingSettingsFromConfig() {
+function filterMaps() {
+    let s = $('#mapSearch').val().toLowerCase();
+
+    let odd = true;
+    for(const map of maps) {
+        let mapID = map['id'];
+        let mapElement = $('#map-' + mapID);
+        if(map['title'].toLowerCase().includes(s)) {
+            mapElement.removeClass("hidden");
+            if(odd) {
+                mapElement.addClass("odd");
+            } else {
+                mapElement.removeClass("odd");
+            }
+            odd = !odd;
+        } else {
+            mapElement.addClass("hidden");
+        }
+    }
+}
+
+function loadMapListSettingsFromConfig() {
     $('#mapLayoutSelect').get(0).value = config['mayLayout'];
     $('#mapSortingSelect').get(0).value = config['mapSorting'];
     $('#mapSorting_loadedMapAtTop').get(0).checked = config['showLoadedMapAtTop'];
     $('#mapSorting_favoritesAtTop').get(0).checked = config['showFavoritesAtTop'];
+    $('#mapSearchFocus').get(0).checked = config['focusSearchOnHotkey'];
 }
 
 function updateMapComparator() {
@@ -268,6 +292,7 @@ function onUpdateSortOptions() {
     updateMapComparator();
     sortMaps();
     refreshMapView();
+    filterMaps();
 
     // the mapComparatorOptions object has already been updated by updateMapComparator
     makeRequest('api/patchConfig', null, JSON.stringify(mapComparatorOptions));
@@ -275,8 +300,13 @@ function onUpdateSortOptions() {
 
 function onUpdateLayoutOption() {
     let i = refreshMapView();
+    filterMaps();
 
     makeRequest('api/patchConfig', null, JSON.stringify({mapLayout: i}));
+}
+
+function onUpdateMapSearchFocus() {
+    makeRequest('api/patchConfig', null, JSON.stringify({focusSearchOnHotkey: $('#mapSearchFocus').get(0).checked}));
 }
 
 function refreshMapView_compactList() {
@@ -288,9 +318,9 @@ function refreshMapView_compactList() {
         let thisMapIsLoaded = loadedMapID === mapID;
 
         if(thisMapIsLoaded) {
-            html += '<tr id="map' + mapID + '" class="loaded">';
+            html += '<tr id="map-' + mapID + '" class="map loaded">';
         } else {
-            html += '<tr id="map' + mapID + '">';
+            html += '<tr id="map-' + mapID + '" class="map">';
         }
 
         html += '<td class="one">';
@@ -313,10 +343,26 @@ function refreshMapView_compactList() {
         html += '</td>';
 
         html += '<td class="four">';
-        html += '<div class="lastLoaded">Last loaded: ';
-        html += map['lastLoadedTimestamp'] <= 0 ? 'never' : lastPlayedFormatter.format(new Date(map['lastLoadedTimestamp']));
+        html += '<div class="lastLoaded">';
+        if(map['lastLoadedTimestamp'] <= 0) {
+            html += 'Added: ';
+            html += lastPlayedFormatter.format(new Date(map['addedTimestamp']));
+        } else {
+            html += 'Last loaded: ';
+            html += lastPlayedFormatter.format(new Date(map['lastLoadedTimestamp']));
+        }
         html += '</div>';
-        html += '<a href="https://steamcommunity.com/sharedfiles/filedetails/?id=' + mapID + '" target="_blank" rel="noreferrer">Visit workshop page</a>';
+        if(map['url']) {
+            html += '<a href="' + map['url'] + '" target="_blank" rel="noreferrer">';
+            if(mapID.startsWith('S-')) {
+                html += 'Visit Steam workshop page';
+            } else if(mapID.startsWith('L-')) {
+                html += 'Visit lethamyr.com page';
+            } else {
+                html += 'Visit page';
+            }
+            html += '</a>';
+        }
         html += '</td>';
 
         html += '<td class="five">';
@@ -346,9 +392,9 @@ function refreshMapView_detailedList() {
         let thisMapIsLoaded = loadedMapID === mapID;
 
         if(thisMapIsLoaded) {
-            html += '<tr id="map' + mapID + '" class="loaded">';
+            html += '<tr id="map-' + mapID + '" class="map loaded">';
         } else {
-            html += '<tr id="map' + mapID + '">';
+            html += '<tr id="map-' + mapID + '" class="map">';
         }
 
         html += '<td class="one">';
@@ -384,15 +430,31 @@ function refreshMapView_detailedList() {
         html += '<img class="favorite' + (map['isFavorite'] ? ' isFavorite' : '') + '" alt="Mark as favorite" src="/img/star.png" onclick="favoriteClick(' + mapIDStr + ')" />';
         html += '</td></tr></table>';
 
-        html += '<span class="lastLoaded">Last loaded: <wbr />';
-        html += map['lastLoadedTimestamp'] <= 0 ? 'never' : lastPlayedFormatter.format(new Date(map['lastLoadedTimestamp']));
+        html += '<span class="lastLoaded">';
+        if(map['lastLoadedTimestamp'] <= 0) {
+            html += 'Added: <wbr />';
+            html += lastPlayedFormatter.format(new Date(map['addedTimestamp']));
+        } else {
+            html += 'Last loaded: <wbr />';
+            html += lastPlayedFormatter.format(new Date(map['lastLoadedTimestamp']));
+        }
         html += '</span>';
 
         html += '<br />';
 
         html += '<button class="refreshMapMetadataButton" type="button" onclick="refreshMapMetadata(' + mapIDStr + ')">Refresh metadata</button>';
         html += '<br />';
-        html += '<a href="https://steamcommunity.com/sharedfiles/filedetails/?id=' + mapID + '" target="_blank" rel="noreferrer">Visit workshop page</a>';
+        if(map['url']) {
+            html += '<a href="' + map['url'] + '" target="_blank" rel="noreferrer">';
+            if(mapID.startsWith('S-')) {
+                html += 'Visit Steam workshop page';
+            } else if(mapID.startsWith('L-')) {
+                html += 'Visit lethamyr.com page';
+            } else {
+                html += 'Visit page';
+            }
+            html += '</a>';
+        }
 
         html += '<div class="mapIDAndSize" style="font-size: 14px; margin-top: 48px;">';
         html += 'Map ID: ' + mapID;
@@ -420,9 +482,9 @@ function refreshMapView_gridView() {
         let thisMapIsLoaded = loadedMapID === mapID;
 
         if(thisMapIsLoaded) {
-            html += '<div id="map' + mapID + '" class="loaded">';
+            html += '<div id="map-' + mapID + '" class="map loaded">';
         } else {
-            html += '<div id="map' + mapID + '">';
+            html += '<div id="map-' + mapID + '" class="map">';
         }
 
         html += '<div class="one">';
@@ -440,10 +502,26 @@ function refreshMapView_gridView() {
         html += '</td></tr></table>';
 
         html += '<table class="floatLeftRight three"><tr><td>';
-        html += '<div class="lastLoaded">Last loaded: ';
-        html += map['lastLoadedTimestamp'] <= 0 ? 'never' : lastPlayedFormatter.format(new Date(map['lastLoadedTimestamp']));
+        html += '<div class="lastLoaded">';
+        if(map['lastLoadedTimestamp'] <= 0) {
+            html += 'Added: ';
+            html += lastPlayedFormatter.format(new Date(map['addedTimestamp']));
+        } else {
+            html += 'Last loaded: ';
+            html += lastPlayedFormatter.format(new Date(map['lastLoadedTimestamp']));
+        }
         html += '</div>';
-        html += '<a href="https://steamcommunity.com/sharedfiles/filedetails/?id=' + mapID + '" target="_blank" rel="noreferrer">Visit workshop page</a>';
+        if(map['url']) {
+            html += '<a href="' + map['url'] + '" target="_blank" rel="noreferrer">';
+            if(mapID.startsWith('S-')) {
+                html += 'Visit Steam workshop page';
+            } else if(mapID.startsWith('L-')) {
+                html += 'Visit lethamyr.com page';
+            } else {
+                html += 'Visit page';
+            }
+            html += '</a>';
+        }
         html += '</td><td>';
         html += '<button class="loadMapButton" type="button" onclick="loadMapButtonClick(' + mapIDStr + ')">';
         html += thisMapIsLoaded ? 'Unload Map' : 'Load Map';
@@ -454,10 +532,8 @@ function refreshMapView_gridView() {
         count++;
     }
 
-    while(count % 3 !== 0) {
-        html += '<div class="filler"></div>';
-        count++;
-    }
+    html += '<div class="filler"></div>';
+    html += '<div class="filler"></div>';
 
     html += '</div>';
 

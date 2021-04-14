@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class ProgressInputStream extends FilterInputStream {
 	private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#0.0");
-	private static final long MEBIBYTE_SIZE = 1024 * 1024;
+	public static final long MEBIBYTE_SIZE = 1024 * 1024;
 	private final AtomicLong totalNumBytesRead = new AtomicLong(0);
 	private final long totalSize;
 	private final ExponentialMovingAverage ema;
@@ -30,7 +30,7 @@ public class ProgressInputStream extends FilterInputStream {
 	}
 	
 	public String getStatusString() {
-		final long now = System.currentTimeMillis();
+		final long now = System.nanoTime();
 		final long progress = getTotalNumBytesRead();
 		final long progressCapped = totalSize > 0 ? Math.min(progress, totalSize) : progress;
 		
@@ -50,8 +50,18 @@ public class ProgressInputStream extends FilterInputStream {
 		}
 		
 		if(lastTimestamp != 0) {
-			double speed = ((double) (progress - lastProgress)) / (now - lastTimestamp) / MEBIBYTE_SIZE * 1000;
-			speed = ema.average(speed);
+			long timeDiff = now - lastTimestamp;
+			double speed;
+			if(timeDiff / 1000000 > 400) {
+				// require at least 400ms between speed updates
+				speed = ((double) (progress - lastProgress)) / (now - lastTimestamp) / MEBIBYTE_SIZE * 1000000000;
+				speed = ema.average(speed);
+				
+				lastTimestamp = now;
+				lastProgress = progress;
+			} else {
+				speed = ema.getCurrent();
+			}
 			
 			status += ", ";
 			status += DECIMAL_FORMAT.format(speed);
@@ -72,10 +82,10 @@ public class ProgressInputStream extends FilterInputStream {
 					status += ", " + s + "s left";
 				}
 			}
+		} else {
+			lastTimestamp = now;
+			lastProgress = progress;
 		}
-		
-		lastTimestamp = now;
-		lastProgress = progress;
 		
 		return status;
 	}

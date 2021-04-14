@@ -1,9 +1,9 @@
-function importMapsTask(buttonElement, inputElementID, apiEndpointName) {
-    let startButton = $(buttonElement);
-    let importOptionDiv = $(buttonElement.parentElement);
-    // noinspection JSCheckFunctionSignatures
+// noinspection JSCheckFunctionSignatures
+
+function importMapsTask(importOptionDivID, doStartTask = true) {
+    let importOptionDiv = $('#' + importOptionDivID);
+    let startButton = importOptionDiv.find('button.start');
     let statusDiv = importOptionDiv.find('.statusDiv');
-    // noinspection JSCheckFunctionSignatures
     let statusSpan = statusDiv.find('.status');
     let cancelButton = statusDiv.find('button');
 
@@ -12,6 +12,9 @@ function importMapsTask(buttonElement, inputElementID, apiEndpointName) {
     statusSpan.html('').css('color', '#c2ffbb');
     statusDiv.css('display', '');
 
+    let apiEndpointName = importOptionDiv.data('api-endpoint-name');
+    tasksRunning[apiEndpointName] = true;
+
     let intervalHandle;
 
     let updateStatus = function(data) {
@@ -19,6 +22,8 @@ function importMapsTask(buttonElement, inputElementID, apiEndpointName) {
         statusSpan.html(status['message']);
         if(status['isFinished']) {
             clearInterval(intervalHandle);
+
+            tasksRunning[apiEndpointName] = false;
 
             cancelButton.attr('disabled', '');
             startButton.attr('disabled', null);
@@ -29,6 +34,13 @@ function importMapsTask(buttonElement, inputElementID, apiEndpointName) {
             loadMaps();
         }
     };
+    if(!doStartTask) {
+        intervalHandle = setInterval(function() {
+            makeRequest('api/' + apiEndpointName + '_status', null, null, updateStatus);
+        }, 500);
+        return;
+    }
+
     let startCallback = function(data) {
         intervalHandle = setInterval(function() {
             makeRequest('api/' + apiEndpointName + '_status', null, null, updateStatus);
@@ -37,13 +49,52 @@ function importMapsTask(buttonElement, inputElementID, apiEndpointName) {
     };
 
     let params = null;
-    if(inputElementID != null) {
-        let input = $('#' + inputElementID);
-        let type = input.attr('type');
-        if(type === 'text') {
-            params = {url: input.val()}
-        }
+    let input = importOptionDiv.find('input');
+    if(input.length > 0) {
+        params = {url: input.val()};
     }
 
-    makeRequest('api/' + apiEndpointName + '_start', params, null, startCallback);
+    makeRequest('api/' + apiEndpointName + '_start', params, null, startCallback, function() {
+        statusSpan.html('Error: Unable to start the task.').css('color', '#ffbbbb');
+        cancelButton.attr('disabled', '');
+        startButton.attr('disabled', null);
+    });
+}
+
+function uploadMap(buttonElement) {
+    let startButton = $(buttonElement);
+    let importOptionDiv = $(buttonElement.parentElement);
+    let statusDiv = importOptionDiv.find('.statusDiv');
+    let statusSpan = statusDiv.find('.status');
+    let cancelButton = statusDiv.find('button');
+
+    startButton.attr('disabled', '');
+    cancelButton.attr('disabled', null);
+    statusSpan.html('Importing...').css('color', '#c2ffbb');
+    statusDiv.css('display', '');
+
+    let callback = function(response) {
+        statusSpan.html(response);
+        cancelButton.attr('disabled', '');
+        startButton.attr('disabled', null);
+        if(response.startsWith('Error')) {
+            statusSpan.css('color', '#ffbbbb');
+        }
+
+        loadMaps();
+    };
+
+    let files = $('#fromFile_input').get(0).files;
+    if(files.length === 0) {
+        callback("Error: Please select a UDK/UPK file or a ZIP file containing a UDK/UPK file.");
+        return;
+    }
+    let file = files[0];
+
+    let fileReader = new FileReader();
+    fileReader.onload = function(event) {
+        let data = event.target.result;
+        makeRequest('api/upload/map', {filename: file.name}, data, callback);
+    };
+    fileReader.readAsArrayBuffer(file);
 }

@@ -29,7 +29,6 @@ public class SteamWorkshopMap extends RLMap {
 	
 	private long workshopID;
 	private boolean isManuallyDownloaded;
-	private String udkFilename;
 	
 	public static SteamWorkshopMap create(long workshopID, File udkFile, String udkFilename, boolean isManuallyDownloaded) {
 		SteamWorkshopMap map = new SteamWorkshopMap();
@@ -60,8 +59,8 @@ public class SteamWorkshopMap extends RLMap {
 	}
 	
 	@Override
-	public String getUdkFilename() {
-		return udkFilename;
+	public String getURL() {
+		return "https://steamcommunity.com/sharedfiles/filedetails/?id=" + workshopID;
 	}
 	
 	public boolean isManuallyDownloaded() {
@@ -80,7 +79,7 @@ public class SteamWorkshopMap extends RLMap {
 	public void fetchDataFromWorkshop() throws IOException {
 		Document doc;
 		try {
-			doc = Jsoup.connect("https://steamcommunity.com/sharedfiles/filedetails/?id=" + workshopID).timeout(5000).get();
+			doc = Jsoup.connect(getURL()).timeout(5000).get();
 		} catch(IOException e) {
 			title = null;
 			description = "Error: Couldn't fetch information about this map from the Steam workshop because an error occurred.";
@@ -127,6 +126,7 @@ public class SteamWorkshopMap extends RLMap {
 	}
 	
 	public static class MapDiscovery extends Task {
+		private static final transient Logger logger = LoggerFactory.getLogger(MapDiscovery.class.getName());
 		private static MapDiscovery task = null;
 		private final RLMapManager rlMapManager;
 		private final Runnable onFinish;
@@ -155,6 +155,18 @@ public class SteamWorkshopMap extends RLMap {
 			task = new MapDiscovery(rlMapManager, onFinish);
 			task.start();
 			return task;
+		}
+		
+		public static boolean isTaskRunning() {
+			if(task == null) {
+				return false;
+			}
+			return task.isRunning();
+		}
+		
+		@Override
+		public Logger getLogger() {
+			return logger;
 		}
 		
 		@Override
@@ -282,6 +294,7 @@ public class SteamWorkshopMap extends RLMap {
 	}
 	
 	public static class MapDownload extends Task {
+		private static final transient Logger logger = LoggerFactory.getLogger(MapDownload.class.getName());
 		private static MapDownload task = null;
 		private final RLMapManager rlMapManager;
 		private final Runnable onFinish;
@@ -316,18 +329,30 @@ public class SteamWorkshopMap extends RLMap {
 			return task;
 		}
 		
+		public static boolean isTaskRunning() {
+			if(task == null) {
+				return false;
+			}
+			return task.isRunning();
+		}
+		
 		public static ZipEntry findUdkFile(ZipFile zipFile) throws Exception {
 			Enumeration<? extends ZipEntry> zipEntries = zipFile.entries();
 			
 			while(zipEntries.hasMoreElements()) {
 				ZipEntry entry = zipEntries.nextElement();
 				final String name = entry.getName();
-				if(name.endsWith(".udk")) {
+				if(name.endsWith(".udk") || name.endsWith(".upk")) {
 					return entry;
 				}
 			}
 			
 			throw new Exception("UDK file not found in downloaded zip.");
+		}
+		
+		@Override
+		public Logger getLogger() {
+			return logger;
 		}
 		
 		@Override
@@ -356,12 +381,13 @@ public class SteamWorkshopMap extends RLMap {
 				}
 			};
 			
-			tempFile = File.createTempFile("RLMM-download-steam", mapID);
+			tempFile = File.createTempFile("RLMM-download-steam-" + workshopID, null);
 			steamWorkshopDownloader = new SteamWorkshopDownloader(workshopID, tempFile, stateChangeConsumer);
 			steamWorkshopDownloader.download();
 			steamWorkshopDownloader = null;
 			
 			resetProgress();
+			checkIfTaskIsCancelled();
 			statusMessage = "Unzipping...";
 			
 			ZipFile zipFile = new ZipFile(tempFile);
@@ -375,6 +401,7 @@ public class SteamWorkshopMap extends RLMap {
 			
 			FileUtils.copyInputStreamToFile(zipFile.getInputStream(zipEntry), targetFile);
 			
+			checkIfTaskIsCancelled();
 			statusMessage = "Downloading map metadata from workshop...";
 			
 			SteamWorkshopMap map = create(workshopID, targetFile, udkFilename, true);
@@ -387,6 +414,13 @@ public class SteamWorkshopMap extends RLMap {
 			
 			if(onFinish != null) {
 				onFinish.run();
+			}
+		}
+		
+		@Override
+		protected void onCancel() {
+			if(steamWorkshopDownloader != null) {
+				steamWorkshopDownloader.cancel();
 			}
 		}
 		

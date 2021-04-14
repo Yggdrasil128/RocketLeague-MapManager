@@ -1,6 +1,7 @@
 package de.yggdrasil128.rocketleague.mapmanager.tools;
 
 import com.google.gson.JsonObject;
+import org.slf4j.Logger;
 
 import java.text.DecimalFormat;
 
@@ -26,6 +27,9 @@ public abstract class Task {
 			} catch(Exception e) {
 				state = State.ERROR;
 				exception = e;
+				if(getLogger() != null) {
+					getLogger().warn("Uncaught exception", e);
+				}
 				return;
 			} finally {
 				cleanup();
@@ -55,6 +59,16 @@ public abstract class Task {
 			throw new IllegalStateException();
 		}
 		state = State.CANCELLING;
+		onCancel();
+	}
+	
+	protected void checkIfTaskIsCancelled() throws InterruptedException {
+		if(isCancelled()) {
+			throw new InterruptedException();
+		}
+	}
+	
+	protected void onCancel() {
 		thread.interrupt();
 	}
 	
@@ -77,6 +91,10 @@ public abstract class Task {
 	
 	protected void beforeStatusQuery() {
 		
+	}
+	
+	protected Logger getLogger() {
+		return null;
 	}
 	
 	public String getStatusJson() {

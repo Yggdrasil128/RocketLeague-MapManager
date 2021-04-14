@@ -1,7 +1,7 @@
 package de.yggdrasil128.rocketleague.mapmanager.maps;
 
 import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
-import de.yggdrasil128.rocketleague.mapmanager.tools.ProgressInputStream;
+import de.yggdrasil128.rocketleague.mapmanager.tools.GoogleDriveDownloader;
 import de.yggdrasil128.rocketleague.mapmanager.tools.Task;
 import org.apache.commons.io.FileUtils;
 import org.jsoup.Jsoup;
@@ -11,10 +11,7 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.HttpsURLConnection;
 import java.io.File;
-import java.io.IOException;
-import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -22,7 +19,7 @@ import java.util.zip.ZipFile;
 
 public class LethamyrMap extends RLMap {
 	private static final transient Logger logger = LoggerFactory.getLogger(LethamyrMap.class.getName());
-	private String urlName, udkFilename;
+	private String urlName;
 	
 	public static LethamyrMap create(String urlName) {
 		LethamyrMap map = new LethamyrMap();
@@ -34,7 +31,8 @@ public class LethamyrMap extends RLMap {
 		return urlName;
 	}
 	
-	public String getUrl() {
+	@Override
+	public String getURL() {
 		return "https://lethamyr.com/mymaps/" + urlName;
 	}
 	
@@ -51,16 +49,6 @@ public class LethamyrMap extends RLMap {
 	@Override
 	protected Logger getLogger() {
 		return logger;
-	}
-	
-	@Override
-	public String getAuthorName() {
-		return "Lethamyr";
-	}
-	
-	@Override
-	public String getUdkFilename() {
-		return udkFilename;
 	}
 	
 	private void fillMetadataFromJsoupDocument(Document doc) {
@@ -95,7 +83,7 @@ public class LethamyrMap extends RLMap {
 	@Override
 	public void refreshMetadata() {
 		try {
-			Document doc = Jsoup.connect(getUrl()).get();
+			Document doc = Jsoup.connect(getURL()).get();
 			fillMetadataFromJsoupDocument(doc);
 		} catch(Exception e) {
 			logger.warn("Uncaught exception during refreshMetadata()", e);
@@ -103,12 +91,13 @@ public class LethamyrMap extends RLMap {
 	}
 	
 	public static class MapDownload extends Task {
+		private static final transient Logger logger = LoggerFactory.getLogger(MapDownload.class.getName());
 		private static MapDownload task = null;
 		private final RLMapManager rlMapManager;
 		private final Runnable onFinish;
 		private final String url;
 		private File tempFile;
-		private ProgressInputStream progressInputStream;
+		private GoogleDriveDownloader googleDriveDownloader;
 		
 		private MapDownload(String url, RLMapManager rlMapManager, Runnable onFinish) {
 			super();
@@ -134,6 +123,18 @@ public class LethamyrMap extends RLMap {
 			return task;
 		}
 		
+		public static boolean isTaskRunning() {
+			if(task == null) {
+				return false;
+			}
+			return task.isRunning();
+		}
+		
+		@Override
+		public Logger getLogger() {
+			return logger;
+		}
+		
 		@Override
 		protected void run() throws Exception {
 			statusMessage = "Checking URL...";
@@ -142,10 +143,12 @@ public class LethamyrMap extends RLMap {
 			LethamyrMap map = new LethamyrMap();
 			map.urlName = urlName;
 			map.udkFile = new File(RLMapManager.FILE_MAPS, map.getID() + ".udk");
+			map.authorName = "Lethamyr";
 			
+			checkIfTaskIsCancelled();
 			statusMessage = "Fetching map metadata from lethamyr.com...";
 			
-			Document doc = Jsoup.connect(map.getUrl()).get();
+			Document doc = Jsoup.connect(map.getURL()).get();
 			map.fillMetadataFromJsoupDocument(doc);
 			
 			Elements elements = doc.select("a[href*=drive.google.com]");
@@ -160,23 +163,20 @@ public class LethamyrMap extends RLMap {
 				throw new Exception("Google Drive URL not recognized");
 			}
 			String googleDriveID = matcher.group(1);
-			tempFile = File.createTempFile("RLMM-download-lethamyr", map.getUrlName());
+			tempFile = File.createTempFile("RLMM-download-lethamyr-" + map.getUrlName(), null);
 			
+			checkIfTaskIsCancelled();
 			statusMessage = "Downloading...";
 			
-			googleDriveURL = "https://drive.google.com/uc?export=download&id=" + googleDriveID;
-			HttpsURLConnection con = (HttpsURLConnection) new URL(googleDriveURL).openConnection();
-			final int responseCode = con.getResponseCode();
-			if(responseCode != 200) {
-				throw new IOException("Google drive API returned unexpected response code " + responseCode);
-			}
+			googleDriveDownloader = new GoogleDriveDownloader(googleDriveID, tempFile);
+			googleDriveDownloader.download();
+			googleDriveDownloader = null;
 			
-			progressInputStream = new ProgressInputStream(con.getInputStream(), 0);
-			FileUtils.copyInputStreamToFile(progressInputStream, tempFile);
-			progressInputStream = null;
-			
+			checkIfTaskIsCancelled();
 			resetProgress();
 			statusMessage = "Unzipping...";
+			
+			FileUtils.copyFile(tempFile, new File("C:\\Users\\Yggdrasil128\\temp\\" + map.urlName + ".zip"));
 			
 			ZipFile zipFile = new ZipFile(tempFile);
 			ZipEntry zipEntry = SteamWorkshopMap.MapDownload.findUdkFile(zipFile);
@@ -201,14 +201,21 @@ public class LethamyrMap extends RLMap {
 		}
 		
 		@Override
+		protected void onCancel() {
+			if(googleDriveDownloader != null) {
+				googleDriveDownloader.cancel();
+			}
+		}
+		
+		@Override
 		protected void cleanup() {
 			FileUtils.deleteQuietly(tempFile);
 		}
 		
 		@Override
 		protected void beforeStatusQuery() {
-			if(progressInputStream != null) {
-				statusMessage = "Downloading... " + progressInputStream.getStatusString();
+			if(googleDriveDownloader != null) {
+				statusMessage = googleDriveDownloader.getStatus();
 			}
 		}
 		

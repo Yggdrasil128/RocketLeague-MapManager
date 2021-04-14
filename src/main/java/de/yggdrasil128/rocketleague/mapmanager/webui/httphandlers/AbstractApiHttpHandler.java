@@ -1,10 +1,12 @@
-package de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers.api;
+package de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 
+import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -14,10 +16,12 @@ import java.util.NoSuchElementException;
 
 @SuppressWarnings("SameReturnValue")
 public abstract class AbstractApiHttpHandler implements HttpHandler {
-	private final HashMap<String, ApiHandler> handlers = new HashMap<>();
+	private final String context;
 	private final Logger logger;
+	private final HashMap<String, ApiHandler> handlers = new HashMap<>();
 	
-	public AbstractApiHttpHandler(Logger logger) {
+	public AbstractApiHttpHandler(String context, Logger logger) {
+		this.context = context;
 		this.logger = logger;
 	}
 	
@@ -33,16 +37,13 @@ public abstract class AbstractApiHttpHandler implements HttpHandler {
 		registerFunctionRaw(name, ApiFunctionRaw.of(function));
 	}
 	
-	@Override
-	public void handle(HttpExchange httpExchange) throws IOException {
-		OutputStream outputStream = httpExchange.getResponseBody();
-		
-		String functionName = httpExchange.getRequestURI().toString().substring(5);
+	public static Pair<String, HashMap<String, String>> parseRequestURI(String uri) throws IOException {
 		HashMap<String, String> parameters = new HashMap<>();
-		int index = functionName.indexOf('?');
+		String functionName;
+		int index = uri.indexOf('?');
 		if(index != -1) {
-			String s = functionName.substring(index + 1);
-			functionName = functionName.substring(0, index);
+			String s = uri.substring(index + 1);
+			functionName = uri.substring(0, index);
 			String[] parts = s.split("&");
 			for(String part : parts) {
 				part = part.trim();
@@ -59,19 +60,33 @@ public abstract class AbstractApiHttpHandler implements HttpHandler {
 					parameters.put(parameter, value);
 				}
 			}
+		} else {
+			functionName = uri;
 		}
 		if(functionName.endsWith("/")) {
 			functionName = functionName.substring(0, functionName.length() - 1);
 		}
+		return Pair.of(functionName, parameters);
+	}
+	
+	@Override
+	public void handle(HttpExchange httpExchange) throws IOException {
+		String uri = httpExchange.getRequestURI().toString().substring(context.length());
+		final Pair<String, HashMap<String, String>> pair = parseRequestURI(uri);
+		String functionName = pair.getLeft();
+		HashMap<String, String> parameters = pair.getRight();
+		
 		// POST body
 		if(httpExchange.getRequestMethod().equalsIgnoreCase("POST")) {
 			String postBody = IOUtils.toString(httpExchange.getRequestBody(), StandardCharsets.UTF_8);
 			parameters.put("postBody", postBody);
 		}
 		
+		OutputStream outputStream = httpExchange.getResponseBody();
+		
 		ApiHandler handler = handlers.get(functionName);
 		if(handler == null) {
-			httpExchange.sendResponseHeaders(404, -1);
+			httpExchange.sendResponseHeaders(HttpsURLConnection.HTTP_NOT_FOUND, -1);
 			outputStream.flush();
 			outputStream.close();
 			return;
@@ -88,28 +103,28 @@ public abstract class AbstractApiHttpHandler implements HttpHandler {
 				try {
 					output = apiFunctionRaw.apply(parameters, httpExchange, outputStream);
 				} catch(AssertionError | IllegalArgumentException e) {
-					httpExchange.sendResponseHeaders(400, -1);
+					httpExchange.sendResponseHeaders(HttpsURLConnection.HTTP_BAD_REQUEST, -1);
 					outputStream.flush();
 					outputStream.close();
 					return;
 				} catch(NoSuchElementException e) {
-					httpExchange.sendResponseHeaders(404, -1);
+					httpExchange.sendResponseHeaders(HttpsURLConnection.HTTP_NOT_FOUND, -1);
 					outputStream.flush();
 					outputStream.close();
 					return;
 				} catch(Exception e) {
 					logger.error("Uncaught exception on ApiHttpHandler command '" + functionName + "'", e);
 					
-					httpExchange.sendResponseHeaders(500, -1);
+					httpExchange.sendResponseHeaders(HttpsURLConnection.HTTP_INTERNAL_ERROR, -1);
 					outputStream.flush();
 					outputStream.close();
 					return;
 				}
 				
 				if(output.length == 0) {
-					httpExchange.sendResponseHeaders(204, -1);
+					httpExchange.sendResponseHeaders(HttpsURLConnection.HTTP_NO_CONTENT, -1);
 				} else {
-					httpExchange.sendResponseHeaders(200, output.length);
+					httpExchange.sendResponseHeaders(HttpsURLConnection.HTTP_OK, output.length);
 					outputStream.write(output);
 				}
 				outputStream.flush();

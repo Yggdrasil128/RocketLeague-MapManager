@@ -30,6 +30,8 @@ public class SteamWorkshopDownloader {
 	private JsonObject mapInfoJson, preparingStatusJson;
 	private long downloadSize;
 	private ProgressInputStream progressInputStream;
+	private boolean cancelled = false;
+	private HttpsURLConnection downloadingHttpsURLConnection;
 	
 	public SteamWorkshopDownloader(long mapID, File file, Consumer<State> stateChangeConsumer) {
 		this.mapID = mapID;
@@ -57,6 +59,13 @@ public class SteamWorkshopDownloader {
 		return preparingStatusJson;
 	}
 	
+	public void cancel() {
+		cancelled = true;
+		if(downloadingHttpsURLConnection != null) {
+			downloadingHttpsURLConnection.disconnect();
+		}
+	}
+	
 	public void download() throws Exception {
 		if(state != null) {
 			throw new IllegalStateException("Already started");
@@ -65,8 +74,6 @@ public class SteamWorkshopDownloader {
 		if(stateChangeConsumer != null) {
 			stateChangeConsumer.accept(state);
 		}
-		
-		long startTime = System.currentTimeMillis();
 		
 		String result = postRequest(FILE_ENDPOINT, "[" + mapID + "]");
 		if(result.trim().equalsIgnoreCase("null")) {
@@ -79,6 +86,10 @@ public class SteamWorkshopDownloader {
 		
 		if(!"Rocket League".equals(mapInfoJson.get("app_name").getAsString())) {
 			throw new Exception("Not a Rocket League map");
+		}
+		
+		if(cancelled) {
+			throw new InterruptedException();
 		}
 		
 		JsonObject json = new JsonObject();
@@ -94,7 +105,9 @@ public class SteamWorkshopDownloader {
 		json = gson.fromJson(result, JsonObject.class);
 		String uuid = json.get("uuid").getAsString();
 		
-		System.out.println("[" + (System.currentTimeMillis() - startTime) + "] UUID is " + uuid);
+		if(cancelled) {
+			throw new InterruptedException();
+		}
 		
 		data = "{\"uuids\":[\"" + uuid + "\"]}";
 		String status;
@@ -106,29 +119,30 @@ public class SteamWorkshopDownloader {
 			//noinspection BusyWait
 			Thread.sleep(1000);
 			
+			if(cancelled) {
+				throw new InterruptedException();
+			}
+			
 			result = postRequest(STATUS_ENDPOINT, data);
-			System.out.println(result);
 			json = gson.fromJson(result, JsonObject.class);
 			json = json.get(uuid).getAsJsonObject();
 			preparingStatusJson = json;
 			status = json.get("status").getAsString();
-			
-			System.out.println("[" + (System.currentTimeMillis() - startTime) + "] Status: " + status);
 		} while(status.equals("retrieving") || status.equals("preparing"));
 		
 		if(!status.equals("prepared")) {
 			throw new IOException("Unexpected status: " + status);
 		}
 		
-		System.out.println("[" + (System.currentTimeMillis() - startTime) + "] Downloading...");
+		if(cancelled) {
+			throw new InterruptedException();
+		}
 		
 		state = State.DOWNLOADING;
 		if(stateChangeConsumer != null) {
 			stateChangeConsumer.accept(state);
 		}
 		download(TRANSMIT_ENDPOINT + "?uuid=" + uuid, file);
-		
-		System.out.println("[" + (System.currentTimeMillis() - startTime) + "] Done!");
 	}
 	
 	private String postRequest(@NotNull String url, @NotNull String data) throws IOException {
@@ -158,22 +172,31 @@ public class SteamWorkshopDownloader {
 		return sb.toString();
 	}
 	
-	private void download(@NotNull String url, File file) throws IOException {
-		HttpsURLConnection con = (HttpsURLConnection) new URL(url).openConnection();
-		con.setRequestMethod("GET");
-		con.setDoInput(true);
-		
-		final int responseCode = con.getResponseCode();
-		if(responseCode != HttpsURLConnection.HTTP_OK) {
-			throw new IOException("Unexpected response code " + responseCode);
+	private void download(@NotNull String url, File file) throws IOException, InterruptedException {
+		try {
+			downloadingHttpsURLConnection = (HttpsURLConnection) new URL(url).openConnection();
+			downloadingHttpsURLConnection.setRequestMethod("GET");
+			downloadingHttpsURLConnection.setDoInput(true);
+			
+			final int responseCode = downloadingHttpsURLConnection.getResponseCode();
+			if(responseCode != HttpsURLConnection.HTTP_OK) {
+				throw new IOException("Unexpected response code " + responseCode);
+			}
+			
+			for(Map.Entry<String, List<String>> stringListEntry : downloadingHttpsURLConnection.getHeaderFields().entrySet()) {
+				System.out.println(stringListEntry.getKey() + ": " + StringUtils.join(stringListEntry.getValue(), " || "));
+			}
+			
+			progressInputStream = new ProgressInputStream(downloadingHttpsURLConnection.getInputStream(), downloadSize);
+			FileUtils.copyInputStreamToFile(progressInputStream, file);
+			downloadingHttpsURLConnection = null;
+		} catch(Exception e) {
+			if(cancelled) {
+				throw new InterruptedException();
+			} else {
+				throw e;
+			}
 		}
-		
-		for(Map.Entry<String, List<String>> stringListEntry : con.getHeaderFields().entrySet()) {
-			System.out.println(stringListEntry.getKey() + ": " + StringUtils.join(stringListEntry.getValue(), " || "));
-		}
-		
-		progressInputStream = new ProgressInputStream(con.getInputStream(), downloadSize);
-		FileUtils.copyInputStreamToFile(progressInputStream, file);
 	}
 	
 	public enum State {

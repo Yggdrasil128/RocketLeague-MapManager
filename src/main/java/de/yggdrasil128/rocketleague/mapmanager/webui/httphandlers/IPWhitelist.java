@@ -2,6 +2,7 @@ package de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers;
 
 import com.sun.net.httpserver.HttpHandler;
 
+import javax.net.ssl.HttpsURLConnection;
 import java.net.InetAddress;
 import java.util.Collection;
 import java.util.Collections;
@@ -22,7 +23,7 @@ public class IPWhitelist {
 	public HttpHandler forHttpHandler(HttpHandler httpHandler) {
 		return exchange -> {
 			if(!checkAddress(exchange.getRemoteAddress().getAddress())) {
-				exchange.sendResponseHeaders(403, -1);
+				exchange.sendResponseHeaders(HttpsURLConnection.HTTP_FORBIDDEN, -1);
 				exchange.getResponseBody().close();
 				return;
 			}

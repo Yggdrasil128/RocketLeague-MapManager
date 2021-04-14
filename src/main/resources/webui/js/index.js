@@ -1,9 +1,14 @@
-let currentContentDiv = 'contentHome';
+let currentContentDiv = 'contentMapList';
 let status = null;
 let statusUpdateIntervalHandle = null;
 let disconnectedModalShown = false;
 let lastUpdatedMapsTimestamp = 0;
 let lastUpdatedConfigTimestamp = 0;
+let tasksRunning = {
+    steamWorkshopMapDiscovery: false,
+    steamWorkshopMapDownload: false,
+    lethamyrMapDiscovery: false,
+};
 
 $(function() {
     // onclick handler for navbar
@@ -49,7 +54,7 @@ function updateStatusCallback(data) {
         lastUpdatedConfigTimestamp = status['lastUpdatedConfig']['timestamp'];
         console.log('Reloading config');
         loadConfig(function() {
-            loadMapSortingSettingsFromConfig();
+            loadMapListSettingsFromConfig();
             updateMapComparator();
             sortMaps();
             refreshMapView();
@@ -85,6 +90,16 @@ function updateStatusCallback(data) {
             }
         }
     }
+
+    if(status['tasksRunning']['steamWorkshopMapDiscovery'] && !tasksRunning['steamWorkshopMapDiscovery']) {
+        importMapsTask('fromSteamWorkshopDirect', false);
+    }
+    if(status['tasksRunning']['steamWorkshopMapDownload'] && !tasksRunning['steamWorkshopMapDownload']) {
+        importMapsTask('fromSteamWorkshopURL', false);
+    }
+    if(status['tasksRunning']['lethamyrMapDownload'] && !tasksRunning['lethamyrMapDownload']) {
+        importMapsTask('fromLethamyrURL', false);
+    }
 }
 
 function updateStatusCallbackError() {
@@ -105,3 +120,14 @@ function startStopRocketLeague() {
         makeRequest('api/startRocketLeague', null, null, updateStatus);
     }
 }
+
+window.addEventListener("keydown", function(e) {
+    if((e.ctrlKey && e.key === "f") || e.key === "F3") {
+        if(currentContentDiv === 'contentMapList' && $('#mapSearchFocus').get(0).checked) {
+            let mapSearch = $('#mapSearch').get(0);
+            mapSearch.focus();
+            mapSearch.select();
+            e.preventDefault();
+        }
+    }
+});

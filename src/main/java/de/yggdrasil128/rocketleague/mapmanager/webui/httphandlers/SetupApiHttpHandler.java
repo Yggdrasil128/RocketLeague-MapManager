@@ -8,10 +8,10 @@ import de.yggdrasil128.rocketleague.mapmanager.config.Config;
 import de.yggdrasil128.rocketleague.mapmanager.game_discovery.GameDiscovery;
 import de.yggdrasil128.rocketleague.mapmanager.maps.SteamWorkshopMap.MapDiscovery;
 import de.yggdrasil128.rocketleague.mapmanager.tools.DesktopShortcutHelper;
-import de.yggdrasil128.rocketleague.mapmanager.webui.httphandlers.api.AbstractApiHttpHandler;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 
+import javax.net.ssl.HttpsURLConnection;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -24,8 +24,8 @@ public class SetupApiHttpHandler extends AbstractApiHttpHandler {
 	
 	private final RLMapManager rlMapManager;
 	
-	public SetupApiHttpHandler(RLMapManager rlMapManager) {
-		super(rlMapManager.getLogger());
+	public SetupApiHttpHandler(RLMapManager rlMapManager, String context) {
+		super(context, rlMapManager.getLogger());
 		this.rlMapManager = rlMapManager;
 		
 		super.registerHandler("gameDiscovery", this::handleGameDiscoveryRequest);
@@ -59,7 +59,7 @@ public class SetupApiHttpHandler extends AbstractApiHttpHandler {
 				} else {
 					result = GameDiscovery.chooseFolderAndDiscover(platform, rlMapManager);
 					if(result == null) {
-						httpExchange.sendResponseHeaders(204, -1);
+						httpExchange.sendResponseHeaders(HttpsURLConnection.HTTP_NO_CONTENT, -1);
 						return;
 					}
 				}
@@ -69,7 +69,7 @@ public class SetupApiHttpHandler extends AbstractApiHttpHandler {
 				}
 				
 				final String data = GSON.toJson(result);
-				httpExchange.sendResponseHeaders(200, data.length());
+				httpExchange.sendResponseHeaders(HttpsURLConnection.HTTP_OK, data.length());
 				outputStream.write(data.getBytes(StandardCharsets.UTF_8));
 				
 				if(!disableAlert) {

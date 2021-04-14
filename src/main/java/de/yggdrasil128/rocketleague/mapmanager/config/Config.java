@@ -49,9 +49,16 @@ public class Config {
 	private int mapSorting = 1;
 	private boolean showLoadedMapAtTop = false;
 	private boolean showFavoritesAtTop = false;
+	private boolean focusSearchOnHotkey = true;
 	private List<InetAddress> ipWhitelist = Collections.emptyList();
+	private int nextCustomMapID = 1;
 	
 	private transient RLMapManager rlMapManager;
+	
+	// no-args constructor is used by Gson
+	@SuppressWarnings("unused")
+	private Config() {
+	}
 	
 	public Config(RLMapManager rlMapManager) {
 		this.rlMapManager = rlMapManager;
@@ -273,6 +280,14 @@ public class Config {
 		this.showFavoritesAtTop = showFavoritesAtTop;
 	}
 	
+	public boolean getFocusSearchOnHotkey() {
+		return focusSearchOnHotkey;
+	}
+	
+	public void setFocusSearchOnHotkey(boolean focusSearchOnHotkey) {
+		this.focusSearchOnHotkey = focusSearchOnHotkey;
+	}
+	
 	public List<InetAddress> getIpWhitelist() {
 		return ipWhitelist;
 	}
@@ -344,6 +359,7 @@ public class Config {
 		json.addProperty("mapSorting", getMapSorting());
 		json.addProperty("showLoadedMapAtTop", getShowLoadedMapAtTop());
 		json.addProperty("showFavoritesAtTop", getShowFavoritesAtTop());
+		json.addProperty("focusSearchOnHotkey", getFocusSearchOnHotkey());
 		
 		return GSON.toJson(json);
 	}
@@ -422,8 +438,16 @@ public class Config {
 			boolean value = json.get("showFavoritesAtTop").getAsBoolean();
 			setShowFavoritesAtTop(value);
 		}
+		if(json.has("focusSearchOnHotkey")) {
+			boolean value = json.get("focusSearchOnHotkey").getAsBoolean();
+			setFocusSearchOnHotkey(value);
+		}
 		
 		save();
+	}
+	
+	public int getNextCustomMapID() {
+		return nextCustomMapID++;
 	}
 	
 	public enum BehaviorWhenRLIsStopped {

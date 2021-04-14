@@ -17,4 +17,8 @@ class ExponentialMovingAverage {
 		oldValue = newValue;
 		return newValue;
 	}
+	
+	public double getCurrent() {
+		return oldValue == null ? 0 : oldValue;
+	}
 }
