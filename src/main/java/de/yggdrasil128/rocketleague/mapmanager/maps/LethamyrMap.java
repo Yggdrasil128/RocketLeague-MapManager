@@ -54,6 +54,8 @@ public class LethamyrMap extends RLMap {
 	private void fillMetadataFromJsoupDocument(Document doc) {
 		Elements elements;
 		
+		authorName = "Lethamyr";
+		
 		elements = doc.getElementsByTag("h1");
 		if(!elements.isEmpty()) {
 			title = elements.first().text();
@@ -143,7 +145,6 @@ public class LethamyrMap extends RLMap {
 			LethamyrMap map = new LethamyrMap();
 			map.urlName = urlName;
 			map.udkFile = new File(RLMapManager.FILE_MAPS, map.getID() + ".udk");
-			map.authorName = "Lethamyr";
 			
 			checkIfTaskIsCancelled();
 			statusMessage = "Fetching map metadata from lethamyr.com...";

@@ -65,6 +65,7 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		super.registerFunction("getLoadedMapID", this::getLoadedMapID);
 		super.registerFunction("loadMap", this::loadMap);
 		super.registerFunction("unloadMap", this::unloadMap);
+		super.registerFunction("editMap", this::editMap);
 		super.registerFunction("refreshMapMetadata", this::refreshMapMetadata);
 		super.registerFunction("isRocketLeagueRunning", this::isRocketLeagueRunning);
 		super.registerFunction("startRocketLeague", this::startRocketLeague);
@@ -225,6 +226,24 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 	private String unloadMap(Map<String, String> parameters) {
 		rlMapManager.unloadMap();
 		lastUpdatedMaps.now(parameters.get("btid"));
+		return "";
+	}
+	
+	private String editMap(Map<String, String> parameters) {
+		RLMap map = getMapFromParameters(parameters, true);
+		String title = parameters.get("title").trim();
+		String authorName = parameters.get("authorName").trim();
+		String description = parameters.get("description").trim();
+		
+		map.setTitle(title);
+		if(authorName.isEmpty()) {
+			map.setAuthorName(null);
+		} else {
+			map.setAuthorName(authorName);
+		}
+		map.setDescription(description);
+		
+		rlMapManager.getConfig().save();
 		return "";
 	}
 	

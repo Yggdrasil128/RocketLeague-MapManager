@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpExchange;
 import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
 import de.yggdrasil128.rocketleague.mapmanager.maps.CustomMap;
 import de.yggdrasil128.rocketleague.mapmanager.maps.MapType;
+import de.yggdrasil128.rocketleague.mapmanager.maps.RLMap;
 import de.yggdrasil128.rocketleague.mapmanager.maps.SteamWorkshopMap;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -26,7 +27,7 @@ public class ApiUploadHttpHandler extends AbstractApiUploadHttpHandler {
 		this.rlMapManager = rlMapManager;
 		
 		registerHandler("map", this::handleMapUpload);
-		registerHandler("test", this::handleTestUpload);
+		registerHandler("mapImage", this::handleMapImageUpload);
 	}
 	
 	private void handleMapUpload(File file, HashMap<String, String> parameters, HttpExchange httpExchange, OutputStream outputStream) throws Exception {
@@ -80,11 +81,34 @@ public class ApiUploadHttpHandler extends AbstractApiUploadHttpHandler {
 		outputStream.close();
 	}
 	
-	private void handleTestUpload(File file, HashMap<String, String> parameters, HttpExchange httpExchange, OutputStream outputStream) throws Exception {
-		File targetFile = new File("C:\\Users\\Yggdrasil128\\temp\\testUpload.bin");
-		FileUtils.copyFile(file, targetFile);
+	private void handleMapImageUpload(File file, HashMap<String, String> parameters, HttpExchange httpExchange, OutputStream outputStream) throws Exception {
+		int responseCode = HttpsURLConnection.HTTP_OK;
 		
-		httpExchange.sendResponseHeaders(HttpsURLConnection.HTTP_NO_CONTENT, -1);
+		try {
+			String mapID = parameters.get("mapID");
+			String filename = parameters.get("filename");
+			String mimeType = parameters.get("mimeType");
+			
+			RLMap map = rlMapManager.getConfig().getMaps().get(mapID);
+			
+			int index = filename.lastIndexOf('.');
+			String fileExtension = filename.substring(index);
+			
+			File targetFile = new File(RLMap.IMAGES_FOLDER, mapID + fileExtension);
+			
+			FileUtils.copyFile(file, targetFile);
+			
+			map.setImage(targetFile, mimeType);
+			rlMapManager.getConfig().save();
+		} catch(IllegalArgumentException | NullPointerException | IndexOutOfBoundsException e) {
+			responseCode = HttpsURLConnection.HTTP_BAD_REQUEST;
+		} catch(Exception e) {
+			logger.error("Uncaught exception on map upload", e);
+			
+			responseCode = HttpsURLConnection.HTTP_INTERNAL_ERROR;
+		}
+		
+		httpExchange.sendResponseHeaders(responseCode, -1);
 		outputStream.flush();
 		outputStream.close();
 	}

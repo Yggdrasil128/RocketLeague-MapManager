@@ -50,6 +50,11 @@ table.mapListHeader .search > div {
     margin-top: 4px;
 }
 
+img.edit {
+    filter: invert(0.8);
+    cursor: pointer;
+}
+
 img.favorite {
     filter: grayscale(1);
     transition-duration: 1s;
@@ -132,6 +137,15 @@ table.maps.compactList td.five button.loadMapButton {
     font-size: 20px;
 }
 
+table.maps.compactList td.six {
+    width: 75px;
+}
+
+table.maps.compactList td.six img.edit {
+    height: 32px;
+    margin-right: 10px;
+}
+
 table.maps.compactList td.six img.favorite {
     height: 32px;
 }
@@ -195,22 +209,28 @@ table.maps.detailedList td.two table.udkAndAuthor span {
 }
 
 table.maps.detailedList td.two table.udkAndAuthor div {
-    padding-top: 5px;
+    padding-top: 3px;
     font-size: 22px;
 }
 
 table.maps.detailedList td.two .description {
-    margin-top: 5px;
+    margin-top: 3px;
     font-size: 16px;
     max-height: 106px;
     max-width: 550px;
     overflow-y: auto;
     overflow-x: hidden;
     word-wrap: break-word;
+    white-space: pre-line;
 }
 
 table.maps.detailedList td.three button.loadMapButton {
     font-size: 20px;
+}
+
+table.maps.detailedList td.three img.edit {
+    height: 32px;
+    margin-right: 10px;
 }
 
 table.maps.detailedList td.three img.favorite {
@@ -272,15 +292,23 @@ div.maps.gridView .one > * {
 }
 
 div.maps.gridView .title {
-    max-width: 320px;
+    max-width: 275px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
+div.maps.gridView img.edit {
+    height: 32px;
+    margin-top: 4px;
+    margin-bottom: -4px;
+    margin-right: 10px;
+}
+
 div.maps.gridView img.favorite {
     height: 32px;
-    margin-top: 2px;
+    margin-top: 4px;
+    margin-bottom: -4px;
 }
 
 div.maps.gridView .three {

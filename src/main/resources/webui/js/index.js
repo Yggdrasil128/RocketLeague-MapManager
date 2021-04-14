@@ -46,13 +46,11 @@ function updateStatusCallback(data) {
 
     if(status['lastUpdatedMaps']['browserTabID'] !== browserTabID && status['lastUpdatedMaps']['timestamp'] > lastUpdatedMapsTimestamp) {
         lastUpdatedMapsTimestamp = status['lastUpdatedMaps']['timestamp'];
-        console.log('Reloading maps');
         loadMaps();
     }
 
     if(status['lastUpdatedConfig']['browserTabID'] !== browserTabID && status['lastUpdatedConfig']['timestamp'] > lastUpdatedConfigTimestamp) {
         lastUpdatedConfigTimestamp = status['lastUpdatedConfig']['timestamp'];
-        console.log('Reloading config');
         loadConfig(function() {
             loadMapListSettingsFromConfig();
             updateMapComparator();

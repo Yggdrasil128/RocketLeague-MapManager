@@ -12,7 +12,7 @@ import java.net.URL;
 import java.util.Objects;
 
 public abstract class RLMap {
-	protected static final File IMAGES_FOLDER = new File(RLMapManager.FILE_ROOT, "mapImages");
+	public static final File IMAGES_FOLDER = new File(RLMapManager.FILE_ROOT, "mapImages");
 	protected final long addedTimestamp = System.currentTimeMillis();
 	protected String title, description, authorName, imageFileMimeType, udkFilename;
 	protected File udkFile, imageFile;
@@ -51,12 +51,30 @@ public abstract class RLMap {
 		return title;
 	}
 	
+	public void setTitle(String title) {
+		if(title == null) {
+			throw new NullPointerException("Title must be non-null");
+		}
+		this.title = title;
+	}
+	
 	public String getDescription() {
 		return description;
 	}
 	
+	public void setDescription(String description) {
+		if(description == null) {
+			throw new NullPointerException("Description must be non-null");
+		}
+		this.description = description;
+	}
+	
 	public String getAuthorName() {
 		return authorName != null ? authorName : "Unknown";
+	}
+	
+	public void setAuthorName(String authorName) {
+		this.authorName = authorName;
 	}
 	
 	public File getUdkFile() {
@@ -73,6 +91,18 @@ public abstract class RLMap {
 	
 	public String getImageFileMimeType() {
 		return imageFileMimeType;
+	}
+	
+	public void setImage(File imageFile, String imageFileMimeType) {
+		if(imageFile == null) {
+			clearImageFile();
+			return;
+		}
+		if(!imageFile.equals(this.imageFile)) {
+			FileUtils.deleteQuietly(this.imageFile);
+		}
+		this.imageFile = imageFile;
+		this.imageFileMimeType = imageFileMimeType;
 	}
 	
 	public long getAddedTimestamp() {
@@ -120,8 +150,7 @@ public abstract class RLMap {
 	
 	public void clearImageFile() {
 		if(imageFile != null) {
-			//noinspection ResultOfMethodCallIgnored
-			imageFile.delete();
+			FileUtils.deleteQuietly(imageFile);
 			imageFile = null;
 			imageFileMimeType = null;
 		}

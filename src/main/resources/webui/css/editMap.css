@@ -1,0 +1,22 @@
+#contentEditMap table td {
+    padding: 5px 12px 4px;
+}
+
+#contentEditMap table td:nth-child(1) {
+    text-align: right;
+    width: 120px;
+}
+
+#contentEditMap table td:nth-child(2) {
+    text-align: left;
+}
+
+#contentEditMap textarea {
+    width: 500px;
+    height: 200px;
+}
+
+#contentEditMap button {
+    font-size: 24px;
+    margin-top: 16px;
+}

@@ -372,7 +372,8 @@ function refreshMapView_compactList() {
         html += '</td>';
 
         html += '<td class="six">';
-        html += '<img class="favorite' + (map['isFavorite'] ? ' isFavorite' : '') + '" alt="Mark as favorite" src="/img/star.png" onclick="favoriteClick(' + mapIDStr + ')" />';
+        html += '<img class="edit" title="Edit Map" alt="Edit Map" src="/img/edit.png" onclick="startEditMap(' + mapIDStr + ')">';
+        html += '<img class="favorite' + (map['isFavorite'] ? ' isFavorite' : '') + '" title="Favorite" alt="Mark as favorite" src="/img/star.png" onclick="favoriteClick(' + mapIDStr + ')" />';
         html += '</td>';
 
         html += '</tr>';
@@ -426,8 +427,9 @@ function refreshMapView_detailedList() {
         html += thisMapIsLoaded ? 'Unload Map' : 'Load Map';
         html += '</button>';
         html += '</td><td>';
+        html += '<img class="edit" title="Edit Map" alt="Edit Map" src="/img/edit.png" onclick="startEditMap(' + mapIDStr + ')">';
         // noinspection HtmlUnknownTarget
-        html += '<img class="favorite' + (map['isFavorite'] ? ' isFavorite' : '') + '" alt="Mark as favorite" src="/img/star.png" onclick="favoriteClick(' + mapIDStr + ')" />';
+        html += '<img class="favorite' + (map['isFavorite'] ? ' isFavorite' : '') + '" title="Favorite" alt="Mark as favorite" src="/img/star.png" onclick="favoriteClick(' + mapIDStr + ')" />';
         html += '</td></tr></table>';
 
         html += '<span class="lastLoaded">';
@@ -498,7 +500,8 @@ function refreshMapView_gridView() {
         html += '<table class="floatLeftRight two"><tr><td class="title">';
         html += map['title'];
         html += '</td><td>';
-        html += '<img class="favorite' + (map['isFavorite'] ? ' isFavorite' : '') + '" alt="Mark as favorite" src="/img/star.png" onclick="favoriteClick(' + mapIDStr + ')" />';
+        html += '<img class="edit" title="Edit Map" alt="Edit Map" src="/img/edit.png" onclick="startEditMap(' + mapIDStr + ')">';
+        html += '<img class="favorite' + (map['isFavorite'] ? ' isFavorite' : '') + '" title="Favorite" alt="Mark as favorite" src="/img/star.png" onclick="favoriteClick(' + mapIDStr + ')" />';
         html += '</td></tr></table>';
 
         html += '<table class="floatLeftRight three"><tr><td>';
