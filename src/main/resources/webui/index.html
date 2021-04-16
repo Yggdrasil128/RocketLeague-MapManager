@@ -112,6 +112,10 @@
                         <option value="2">Last loaded (most recent first)</option>
                         <option value="-2">Last loaded (most recent last)</option>
                     </optgroup>
+                    <optgroup label="Added to Map Manager">
+                        <option value="4">Added (most recent first)</option>
+                        <option value="-4">Added (most recent last)</option>
+                    </optgroup>
                     <optgroup label="Author Name">
                         <option value="5">Author Name (A -> Z)</option>
                         <option value="-5">Author Name (Z -> A)</option>
@@ -429,7 +433,7 @@
     </div>
 
     <div class="buttonContainer three">
-        <button id="exitButton" onclick="exitApp(); return false;">Exit RL Map Manager</button>
+        <button class="redButton" id="exitButton" onclick="exitApp(); return false;">Exit RL Map Manager</button>
         <button id="createDesktopIconButton" onclick="createDesktopIcon(); return false;">Create desktop icon</button>
     </div>
 </div>
@@ -438,8 +442,8 @@
     <h1>About</h1>
     <p>
         Welcome to the web interface of the <b>Rocket League Map Manager</b> made by Yggdrasil128.<br/>
-        This app is open-source and available on <a href="https://github.com/Yggdrasil128/RocketLeague-MapManager"
-                                                    rel="noreferrer" target="_blank">GitHub</a>.
+        This app is open-source and available on
+        <a href="https://github.com/Yggdrasil128/RocketLeague-MapManager" rel="noreferrer" target="_blank">GitHub</a>.
     </p>
     <p>
         <b>RL Map Manager</b> allows you to easily switch between Rocket League Workshop maps from within the comfort of
@@ -451,19 +455,20 @@
         For example, the map list can be sorted in various ways, you can mark maps as favorite,
         you can quickly go to the Steam workshop page of any map,
         and the app even remembers the last time you loaded a map, so you can easily see which maps you don't play
-        anymore,
-        to clear them out if you're low on hard drive space.
+        anymore, to clear them out if you're low on hard drive space.
     </p>
     <p>
-        In order to function, the app must be aware of the location of the <span class="monospace">steamapps</span>
-        folder on your computer, where Rocket League is installed.<br/>
-        Once that is configured, the app will automatically scan your Steam workshop folder for any custom maps you have
-        downloaded, and fetch the latest information about those maps from their respective workshop pages.<br/>
-        This is called Map Discovery and can take a few minutes if it runs for the first time, depending on the number
-        of maps you have downloaded.
+        In order to function, the app must be aware of the location of the Rocket League installation on your
+        computer. The app supports both the Steam and Epic Games versions of Rocket League.
+        <br/>
+        After you have set that up, you have several options for importing maps:
+        From Steam workshop, from lethamyr.com, and from a file on your computer. See the "Import Maps" tab for more
+        details.
     </p>
     <p>
-        From that point on, everything should be fairly self-explanatory.
+        If you have any questions or problems, feel free to open an issue or a discussion on the
+        <a href="https://github.com/Yggdrasil128/RocketLeague-MapManager" rel="noreferrer" target="_blank">GitHub
+            repository</a>.
     </p>
     <p>
         Enjoy! (and GLHF)
@@ -500,6 +505,13 @@
             </tr>
         </table>
         <button id="mapEditSubmitButton" type="submit">Save changes</button>
+        <button id="mapEditRefreshButton" onclick="refreshDataFromSourcePage(); return false;"
+                style="margin-left: 20px;">Refresh data from Steam workshop page
+        </button>
+        <br/>
+        <button class="redButton" id="deleteMapButton" onclick="deleteMap(); return false;" style="margin-top: 20px;">
+            Delete map
+        </button>
     </form>
 </div>
 

@@ -147,21 +147,6 @@ function loadMapButtonClick(mapID) {
     }
 }
 
-function refreshMapMetadata(mapID) {
-    let $button = $('#map-' + mapID + ' button.refreshMapMetadataButton');
-    $button.attr('disabled', '').html('Refreshing...');
-
-    makeRequest('api/refreshMapMetadata', {mapID: mapID}, null, function() {
-        $button.html('Done.');
-        setTimeout(loadMaps, 2000);
-    }, function() {
-        $button.html('Error!');
-        setTimeout(function() {
-            $button.attr('disabled', null).html('Refresh metadata');
-        }, 2000);
-    }, 5000);
-}
-
 function scrollMapIntoView(mapID, highlight) {
     let $map = $('#map-' + mapID);
     if($map.length === 0) {
@@ -209,6 +194,10 @@ function mapComparator_lastLoaded(mapA, mapB) {
     return timestampB - timestampA;
 }
 
+function mapComparator_added(mapA, mapB) {
+    return mapB['addedTimestamp'] - mapA['addedTimestamp'];
+}
+
 function mapComparator_mapSize(mapA, mapB) {
     return parseFloat(mapB['mapSize']) - parseFloat(mapA['mapSize']);
 }
@@ -222,7 +211,7 @@ const mapComparators = [
     mapComparator_title,
     mapComparator_lastLoaded,
     mapComparator_mapSize,
-    null,
+    mapComparator_added,
     mapComparator_authorName
 ];
 
@@ -352,17 +341,7 @@ function refreshMapView_compactList() {
             html += lastPlayedFormatter.format(new Date(map['lastLoadedTimestamp']));
         }
         html += '</div>';
-        if(map['url']) {
-            html += '<a href="' + map['url'] + '" target="_blank" rel="noreferrer">';
-            if(mapID.startsWith('S-')) {
-                html += 'Visit Steam workshop page';
-            } else if(mapID.startsWith('L-')) {
-                html += 'Visit lethamyr.com page';
-            } else {
-                html += 'Visit page';
-            }
-            html += '</a>';
-        }
+        html += getMapLink(map);
         html += '</td>';
 
         html += '<td class="five">';
@@ -432,31 +411,16 @@ function refreshMapView_detailedList() {
         html += '<img class="favorite' + (map['isFavorite'] ? ' isFavorite' : '') + '" title="Favorite" alt="Mark as favorite" src="/img/star.png" onclick="favoriteClick(' + mapIDStr + ')" />';
         html += '</td></tr></table>';
 
-        html += '<span class="lastLoaded">';
-        if(map['lastLoadedTimestamp'] <= 0) {
-            html += 'Added: <wbr />';
-            html += lastPlayedFormatter.format(new Date(map['addedTimestamp']));
-        } else {
-            html += 'Last loaded: <wbr />';
-            html += lastPlayedFormatter.format(new Date(map['lastLoadedTimestamp']));
-        }
+        html += '<span class="lastLoaded">Last loaded: <wbr />';
+        html += map['lastLoadedTimestamp'] <= 0 ? 'never' : lastPlayedFormatter.format(new Date(map['lastLoadedTimestamp']));
+        html += '</span>';
+        html += '<br />';
+        html += '<span class="added">Added: <wbr />';
+        html += lastPlayedFormatter.format(new Date(map['addedTimestamp']));
         html += '</span>';
 
-        html += '<br />';
-
-        html += '<button class="refreshMapMetadataButton" type="button" onclick="refreshMapMetadata(' + mapIDStr + ')">Refresh metadata</button>';
-        html += '<br />';
-        if(map['url']) {
-            html += '<a href="' + map['url'] + '" target="_blank" rel="noreferrer">';
-            if(mapID.startsWith('S-')) {
-                html += 'Visit Steam workshop page';
-            } else if(mapID.startsWith('L-')) {
-                html += 'Visit lethamyr.com page';
-            } else {
-                html += 'Visit page';
-            }
-            html += '</a>';
-        }
+        html += '<br /><br />';
+        html += getMapLink(map);
 
         html += '<div class="mapIDAndSize" style="font-size: 14px; margin-top: 48px;">';
         html += 'Map ID: ' + mapID;
@@ -514,17 +478,7 @@ function refreshMapView_gridView() {
             html += lastPlayedFormatter.format(new Date(map['lastLoadedTimestamp']));
         }
         html += '</div>';
-        if(map['url']) {
-            html += '<a href="' + map['url'] + '" target="_blank" rel="noreferrer">';
-            if(mapID.startsWith('S-')) {
-                html += 'Visit Steam workshop page';
-            } else if(mapID.startsWith('L-')) {
-                html += 'Visit lethamyr.com page';
-            } else {
-                html += 'Visit page';
-            }
-            html += '</a>';
-        }
+        html += getMapLink(map);
         html += '</td><td>';
         html += '<button class="loadMapButton" type="button" onclick="loadMapButtonClick(' + mapIDStr + ')">';
         html += thisMapIsLoaded ? 'Unload Map' : 'Load Map';
@@ -541,4 +495,20 @@ function refreshMapView_gridView() {
     html += '</div>';
 
     $('#mapTableContainer').html(html);
+}
+
+function getMapLink(map) {
+    let html = '';
+    if(map['url']) {
+        html += '<a href="' + map['url'] + '" target="_blank" rel="noreferrer">';
+        if(map['id'].startsWith('S-')) {
+            html += 'Visit Steam workshop page';
+        } else if(map['id'].startsWith('L-')) {
+            html += 'Visit lethamyr.com page';
+        } else {
+            html += 'Visit page';
+        }
+        html += '</a>';
+    }
+    return html;
 }

@@ -242,7 +242,7 @@ table.maps.detailedList td.three button.refreshMapMetadataButton {
     margin-bottom: 8px;
 }
 
-table.maps.detailedList td.three span.lastLoaded {
+table.maps.detailedList td.three span.lastLoaded, table.maps.detailedList td.three span.added {
     white-space: nowrap;
     font-size: 14px;
 }

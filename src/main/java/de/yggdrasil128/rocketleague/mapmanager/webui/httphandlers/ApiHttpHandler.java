@@ -66,6 +66,7 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		super.registerFunction("loadMap", this::loadMap);
 		super.registerFunction("unloadMap", this::unloadMap);
 		super.registerFunction("editMap", this::editMap);
+		super.registerFunction("deleteMap", this::deleteMap);
 		super.registerFunction("refreshMapMetadata", this::refreshMapMetadata);
 		super.registerFunction("isRocketLeagueRunning", this::isRocketLeagueRunning);
 		super.registerFunction("startRocketLeague", this::startRocketLeague);
@@ -123,6 +124,7 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 			json.addProperty("mapSize", map.getSize());
 			json.addProperty("addedTimestamp", map.getAddedTimestamp());
 			json.addProperty("lastLoadedTimestamp", map.getLastLoadedTimestamp());
+			json.addProperty("canBeDeleted", map.canBeDeleted());
 			
 			array.add(json);
 		}
@@ -244,15 +246,32 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		map.setDescription(description);
 		
 		rlMapManager.getConfig().save();
+		rlMapManager.getSysTray().updateLoadFavoriteMapMenu();
+		return "";
+	}
+	
+	private String deleteMap(Map<String, String> parameters) {
+		RLMap map = getMapFromParameters(parameters, true);
+		rlMapManager.getConfig().deleteMap(map);
+		rlMapManager.getConfig().save();
+		rlMapManager.getSysTray().updateLoadFavoriteMapMenu();
 		return "";
 	}
 	
 	private String refreshMapMetadata(Map<String, String> parameters) {
 		RLMap map = getMapFromParameters(parameters, true);
-		map.refreshMetadata();
+		boolean result = map.refreshMetadata();
 		rlMapManager.getConfig().save();
+		rlMapManager.getSysTray().updateLoadFavoriteMapMenu();
 		lastUpdatedMaps.now(parameters.get("btid"));
-		return "";
+		if(!result) {
+			return "Error: Couldn't update map data.";
+		}
+		JsonObject json = new JsonObject();
+		json.addProperty("title", map.getDisplayName());
+		json.addProperty("authorName", map.getAuthorName());
+		json.addProperty("description", map.getDescription());
+		return GSON.toJson(json);
 	}
 	
 	private String isRocketLeagueRunning(Map<String, String> parameters) {

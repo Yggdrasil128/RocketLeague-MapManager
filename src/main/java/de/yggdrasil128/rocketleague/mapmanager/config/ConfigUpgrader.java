@@ -8,6 +8,7 @@ import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 public class ConfigUpgrader {
 	static boolean upgrade() {
@@ -29,7 +30,13 @@ public class ConfigUpgrader {
 			// noinspection ResultOfMethodCallIgnored
 			RLMapManager.FILE_CONFIG.renameTo(new File(RLMapManager.FILE_CONFIG.getAbsolutePath() + "." + configVersion));
 			
-			upgrade1(json);
+			// deliberately no breaks here
+			switch(configVersion) {
+				case 1:
+					upgrade1(json);
+				case 2:
+					upgrade2(json);
+			}
 			
 			json.addProperty("configVersion", Config.CURRENT_CONFIG_VERSION);
 			data = Config.GSON.toJson(json);
@@ -60,5 +67,80 @@ public class ConfigUpgrader {
 			return;
 		}
 		json.addProperty("exeFile", result.getExeFile().getAbsolutePath());
+	}
+	
+	private static void upgrade2(JsonObject json) {
+		json.addProperty("platform", "STEAM");
+		
+		final File[] mapImages = new File(RLMapManager.FILE_ROOT, "mapImages").listFiles();
+		assert mapImages != null;
+		
+		File workshopFolder = new File(json.get("workshopFolder").getAsString());
+		
+		JsonObject newMaps = new JsonObject();
+		for(Map.Entry<String, JsonElement> mapMetadata : json.getAsJsonObject("mapMetadata").entrySet()) {
+			String mapIDString = mapMetadata.getKey();
+			JsonObject map = mapMetadata.getValue().getAsJsonObject();
+			long mapID = map.get("id").getAsLong();
+			
+			map.remove("id");
+			map.addProperty("workshopID", mapID);
+			map.addProperty("isManuallyDownloaded", false);
+			map.addProperty("mapType", "STEAM_WORKSHOP");
+			
+			if(map.get("imageFileMIMEType").isJsonNull()) {
+				map.add("imageFileMimeType", null);
+				map.add("imageFile", null);
+			} else {
+				File mapImage = null;
+				for(File file : mapImages) {
+					String filename = file.getName();
+					if(filename.equals(mapIDString) || filename.startsWith(mapIDString + ".")) {
+						mapImage = file;
+						break;
+					}
+				}
+				if(mapImage != null) {
+					File mapImageRenamed = new File(mapImage.getParentFile(), "S-" + mapImage.getName());
+					//noinspection ResultOfMethodCallIgnored
+					mapImage.renameTo(mapImageRenamed);
+					
+					map.addProperty("imageFileMimeType", map.get("imageFileMIMEType").getAsString());
+					map.addProperty("imageFile", mapImageRenamed.getAbsolutePath());
+				} else {
+					map.add("imageFileMimeType", null);
+					map.add("imageFile", null);
+				}
+			}
+			map.remove("imageFileMIMEType");
+			
+			File folder = new File(workshopFolder, mapIDString);
+			if(!folder.exists()) {
+				continue;
+			}
+			map.addProperty("addedTimestamp", folder.lastModified());
+			File[] files = folder.listFiles();
+			if(files == null) {
+				continue;
+			}
+			File udkFile = null;
+			for(File file : files) {
+				if(file.getName().endsWith(".udk")) {
+					udkFile = file;
+					break;
+				}
+			}
+			if(udkFile == null) {
+				continue;
+			}
+			
+			map.addProperty("udkFile", udkFile.getAbsolutePath());
+			map.addProperty("udkFilename", udkFile.getName());
+			
+			newMaps.add("S-" + mapIDString, map);
+		}
+		
+		json.add("maps", newMaps);
+		json.remove("mapMetadata");
 	}
 }

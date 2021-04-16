@@ -200,3 +200,8 @@ table.floatLeftRight > tbody > tr > td:last-child {
 #rlStatus span.isRunning {
     color: #afffaf;
 }
+
+.redButton {
+    background-color: #ff000020;
+    color: #ffaaaa;
+}

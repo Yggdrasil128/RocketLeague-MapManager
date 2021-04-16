@@ -68,24 +68,24 @@ public class SteamWorkshopMap extends RLMap {
 	}
 	
 	@Override
-	public void refreshMetadata() {
+	public boolean canBeDeleted() {
+		return isManuallyDownloaded;
+	}
+	
+	@Override
+	public boolean refreshMetadata() {
 		try {
-			fetchDataFromWorkshop();
+			return fetchDataFromWorkshop();
 		} catch(Exception e) {
 			logger.warn("Uncaught exception during fetchDataFromWorkshop()", e);
+			return false;
 		}
 	}
 	
-	public void fetchDataFromWorkshop() throws IOException {
+	public boolean fetchDataFromWorkshop() throws IOException {
+		boolean result = true;
 		Document doc;
-		try {
-			doc = Jsoup.connect(getURL()).timeout(5000).get();
-		} catch(IOException e) {
-			title = null;
-			description = "Error: Couldn't fetch information about this map from the Steam workshop because an error occurred.";
-			authorName = "Unknown";
-			throw e;
-		}
+		doc = Jsoup.connect(getURL()).timeout(5000).get();
 		
 		Elements elements;
 		
@@ -94,7 +94,7 @@ public class SteamWorkshopMap extends RLMap {
 			title = elements.first().text();
 		} else {
 			logger.warn("Couldn't find title for workshop item " + workshopID);
-			title = null;
+			result = false;
 		}
 		
 		elements = doc.getElementsByClass("workshopItemDescription");
@@ -102,8 +102,7 @@ public class SteamWorkshopMap extends RLMap {
 			description = elements.first().text();
 		} else {
 			logger.warn("Couldn't find description for workshop item " + workshopID);
-			description = "Error: Couldn't fetch information about this map from the Steam workshop " +
-						  "because the associated workshop page no longer exists.";
+			result = false;
 		}
 		
 		elements = doc.getElementsByClass("friendBlockContent");
@@ -111,7 +110,7 @@ public class SteamWorkshopMap extends RLMap {
 			authorName = elements.first().ownText();
 		} else {
 			logger.warn("Couldn't find authorName for workshop item " + workshopID);
-			authorName = "Unknown";
+			result = false;
 		}
 		
 		elements = doc.getElementsByClass("workshopItemPreviewImageEnlargeable");
@@ -122,7 +121,16 @@ public class SteamWorkshopMap extends RLMap {
 			src = src.substring(start + 1, end);
 			
 			downloadImage(src);
+		} else {
+			result = false;
 		}
+		
+		if(!result) {
+			logger.warn("Raw page HTML: ");
+			logger.warn(doc.html());
+		}
+		
+		return result;
 	}
 	
 	public static class MapDiscovery extends Task {
@@ -207,7 +215,7 @@ public class SteamWorkshopMap extends RLMap {
 				
 				if(isCancelled()) {
 					for(SteamWorkshopMap map2 : registrableMaps) {
-						map2.delete();
+						map2.clearImageFile();
 					}
 					throw new InterruptedException();
 				}
@@ -227,7 +235,8 @@ public class SteamWorkshopMap extends RLMap {
 				String key = MapType.STEAM_WORKSHOP.getAbbreviation() + "-" + id;
 				SteamWorkshopMap map = (SteamWorkshopMap) rlMapManager.getConfig().getMaps().get(key);
 				if(map != null && !map.isManuallyDownloaded()) {
-					rlMapManager.getConfig().deleteMap(map);
+					map.clearImageFile();
+					rlMapManager.getConfig().getMaps().remove(map.getID());
 				}
 			}
 			
@@ -311,10 +320,6 @@ public class SteamWorkshopMap extends RLMap {
 		
 		public synchronized static MapDownload get() {
 			return task;
-		}
-		
-		public synchronized static MapDownload start(String url, RLMapManager rlMapManager) {
-			return start(url, rlMapManager, null);
 		}
 		
 		public synchronized static MapDownload start(String url, RLMapManager rlMapManager, Runnable onFinish) {

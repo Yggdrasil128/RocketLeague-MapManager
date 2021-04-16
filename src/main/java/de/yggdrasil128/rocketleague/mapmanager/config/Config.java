@@ -28,7 +28,7 @@ public class Config {
 			.registerTypeAdapter(RLMap.class, new RLMapSerialization())
 			.create();
 	public static final String DEFAULT_UPK_FILENAME = "Labs_Underpass_P.upk";
-	static final int CURRENT_CONFIG_VERSION = 2;
+	static final int CURRENT_CONFIG_VERSION = 3;
 	private static final transient Logger logger = LoggerFactory.getLogger(Config.class.getName());
 	
 	private final HashMap<String, RLMap> maps = new HashMap<>();
@@ -317,8 +317,8 @@ public class Config {
 	}
 	
 	public void deleteMap(RLMap map) {
-		maps.remove(map.getID());
 		map.delete();
+		maps.remove(map.getID());
 	}
 	
 	public String toJson() {

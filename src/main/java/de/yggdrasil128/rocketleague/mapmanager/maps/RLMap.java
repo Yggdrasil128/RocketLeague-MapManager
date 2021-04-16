@@ -129,12 +129,20 @@ public abstract class RLMap {
 		return getUdkFile().length();
 	}
 	
+	public abstract boolean canBeDeleted();
+	
 	public void delete() {
-		clearImageFile();
+		if(!canBeDeleted()) {
+			throw new UnsupportedOperationException("This map cannot be deleted.");
+		}
+		FileUtils.deleteQuietly(udkFile);
+		if(imageFile != null) {
+			FileUtils.deleteQuietly(imageFile);
+		}
 	}
 	
-	public void refreshMetadata() {
-		
+	public boolean refreshMetadata() {
+		return false;
 	}
 	
 	@NotNull

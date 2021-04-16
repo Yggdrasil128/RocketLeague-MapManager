@@ -36,7 +36,7 @@ public class SteamWorkshopDownloader {
 	public SteamWorkshopDownloader(long mapID, File file, Consumer<State> stateChangeConsumer) {
 		this.mapID = mapID;
 		this.stateChangeConsumer = stateChangeConsumer;
-		this.file = file == null ? new File("C:\\Users\\Yggdrasil128\\temp\\" + mapID + ".zip") : file;
+		this.file = file;
 		gson = new GsonBuilder().serializeNulls().create();
 	}
 	

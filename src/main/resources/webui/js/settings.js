@@ -37,6 +37,9 @@ function fillFromConfig() {
         $('#steamappsFolder td:nth-child(2)').html(coalesce(config['paths']['steamappsFolder'], '&mdash;'));
         $('#workshopFolder').css('display', '');
         $('#workshopFolder td:nth-child(2)').html(coalesce(config['paths']['workshopFolder'], '&mdash;'));
+
+        $('#fromSteamWorkshopDirect').css('display', '');
+        $('#fromSteamWorkshopURL').css('display', 'none');
     } else {
         // Epic Games
         $('#platform td:nth-child(2)').html('Epic Games');
@@ -45,6 +48,9 @@ function fillFromConfig() {
 
         $('#steamappsFolder').css('display', 'none');
         $('#workshopFolder').css('display', 'none');
+
+        $('#fromSteamWorkshopDirect').css('display', 'none');
+        $('#fromSteamWorkshopURL').css('display', '');
     }
 
     $('#exeFile td:nth-child(2)').html(coalesce(config['paths']['exeFile'], '&mdash;'));

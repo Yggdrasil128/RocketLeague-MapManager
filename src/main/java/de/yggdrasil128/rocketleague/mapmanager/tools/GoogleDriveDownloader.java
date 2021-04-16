@@ -23,7 +23,7 @@ public class GoogleDriveDownloader {
 	
 	public GoogleDriveDownloader(String id, File file) {
 		this.id = id;
-		this.file = file != null ? file : new File("C:\\Users\\Yggdrasil128\\temp\\" + id);
+		this.file = file;
 	}
 	
 	public void cancel() {

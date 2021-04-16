@@ -47,11 +47,17 @@ public class LethamyrMap extends RLMap {
 	}
 	
 	@Override
+	public boolean canBeDeleted() {
+		return true;
+	}
+	
+	@Override
 	protected Logger getLogger() {
 		return logger;
 	}
 	
-	private void fillMetadataFromJsoupDocument(Document doc) {
+	private boolean fillMetadataFromJsoupDocument(Document doc) {
+		boolean result = true;
 		Elements elements;
 		
 		authorName = "Lethamyr";
@@ -59,6 +65,8 @@ public class LethamyrMap extends RLMap {
 		elements = doc.getElementsByTag("h1");
 		if(!elements.isEmpty()) {
 			title = elements.first().text();
+		} else {
+			result = false;
 		}
 		
 		elements = doc.getElementsByTag("h3");
@@ -73,22 +81,34 @@ public class LethamyrMap extends RLMap {
 		}
 		if(description != null) {
 			this.description = description;
+		} else {
+			result = false;
 		}
 		
 		elements = doc.getElementsByClass("thumb-image");
 		if(!elements.isEmpty()) {
 			String src = elements.first().attr("data-src");
 			downloadImage(src);
+		} else {
+			result = false;
 		}
+		
+		if(!result) {
+			logger.warn("Raw page HTML: ");
+			logger.warn(doc.html());
+		}
+		
+		return result;
 	}
 	
 	@Override
-	public void refreshMetadata() {
+	public boolean refreshMetadata() {
 		try {
 			Document doc = Jsoup.connect(getURL()).get();
-			fillMetadataFromJsoupDocument(doc);
+			return fillMetadataFromJsoupDocument(doc);
 		} catch(Exception e) {
 			logger.warn("Uncaught exception during refreshMetadata()", e);
+			return false;
 		}
 	}
 	
@@ -110,10 +130,6 @@ public class LethamyrMap extends RLMap {
 		
 		public synchronized static MapDownload get() {
 			return task;
-		}
-		
-		public synchronized static MapDownload start(String url, RLMapManager rlMapManager) {
-			return start(url, rlMapManager, null);
 		}
 		
 		public synchronized static MapDownload start(String url, RLMapManager rlMapManager, Runnable onFinish) {
@@ -142,6 +158,9 @@ public class LethamyrMap extends RLMap {
 			statusMessage = "Checking URL...";
 			
 			String urlName = checkURL();
+			if(rlMapManager.getConfig().getMaps().containsKey(MapType.LETHAMYR.getAbbreviation() + "-" + urlName)) {
+				throw new Exception("Map is already downloaded.");
+			}
 			LethamyrMap map = new LethamyrMap();
 			map.urlName = urlName;
 			map.udkFile = new File(RLMapManager.FILE_MAPS, map.getID() + ".udk");
@@ -176,8 +195,6 @@ public class LethamyrMap extends RLMap {
 			checkIfTaskIsCancelled();
 			resetProgress();
 			statusMessage = "Unzipping...";
-			
-			FileUtils.copyFile(tempFile, new File("C:\\Users\\Yggdrasil128\\temp\\" + map.urlName + ".zip"));
 			
 			ZipFile zipFile = new ZipFile(tempFile);
 			ZipEntry zipEntry = SteamWorkshopMap.MapDownload.findUdkFile(zipFile);
@@ -225,7 +242,7 @@ public class LethamyrMap extends RLMap {
 				throw new Exception("Please provide a valid URL to a lethamyr.com map");
 			}
 			
-			Pattern pattern = Pattern.compile("https?://lethamyr\\.com/mymaps/([^/]+)");
+			Pattern pattern = Pattern.compile("https?://lethamyr\\.com/mymaps/([^/?]+)");
 			Matcher matcher = pattern.matcher(url);
 			if(!matcher.find()) {
 				throw new Exception("Please provide a valid URL to a lethamyr.com map");

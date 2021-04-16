@@ -99,10 +99,6 @@ public class UpdateChecker {
 			this.patch = patch;
 		}
 		
-		public Version(int major, int minor) {
-			this(major, minor, 0);
-		}
-		
 		public static Version parse(String s) {
 			if(s == null || s.isEmpty()) {
 				return null;

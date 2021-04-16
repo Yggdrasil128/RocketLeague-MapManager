@@ -37,4 +37,9 @@ public class CustomMap extends RLMap {
 	public String getURL() {
 		return null;
 	}
+	
+	@Override
+	public boolean canBeDeleted() {
+		return true;
+	}
 }
