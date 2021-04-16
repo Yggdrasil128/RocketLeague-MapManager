@@ -87,7 +87,7 @@ function setupPhase4_updateMapDiscoveryStatus() {
 function setupPhase4_updateMapDiscoveryStatus_callback(data) {
     const status = JSON.parse(data);
 
-    if(status['isDone']) {
+    if(status['isFinished']) {
         clearInterval(mapDiscoveryUpdateIntervalHandle);
         mapDiscoveryUpdateIntervalHandle = null;
 
@@ -99,11 +99,13 @@ function setupPhase4_updateMapDiscoveryStatus_callback(data) {
     const progress = status['progress'];
     const progressTarget = status['progressTarget'];
 
-    $('#contentSetup3 progress').attr({'value': progress, 'max': progressTarget});
-    let s = progress + ' / ' + progressTarget + ' (' +
-        (100 * progress / Math.max(progressTarget, 1)).toFixed(0) +
-        ' %)';
-    $('#contentSetup3 .progressText').html(s);
+    if(progressTarget) {
+        $('#contentSetup4 progress').attr({'value': progress, 'max': progressTarget});
+        let s = progress + ' / ' + progressTarget + ' (' +
+            (100 * progress / Math.max(progressTarget, 1)).toFixed(0) +
+            ' %)';
+        $('#contentSetup4 .progressText').html(s);
+    }
 }
 
 function setupPhase5() {

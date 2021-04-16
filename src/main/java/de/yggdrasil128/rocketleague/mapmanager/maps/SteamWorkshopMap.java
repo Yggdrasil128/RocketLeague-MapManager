@@ -376,8 +376,6 @@ public class SteamWorkshopMap extends RLMap {
 						statusMessage = "Preparing download...";
 						break;
 					case PREPARING:
-						showPercentage = true;
-						progressTarget = 100;
 						break;
 					case DOWNLOADING:
 						statusMessage = "Downloading...";
@@ -444,7 +442,12 @@ public class SteamWorkshopMap extends RLMap {
 				case PREPARING:
 					JsonObject json = steamWorkshopDownloader.getPreparingStatusJson();
 					if(json != null) {
-						progress = json.get("progress").getAsLong();
+						final long progress = json.get("progress").getAsLong();
+						if(progress > 0) {
+							showPercentage = true;
+							this.progress = progress;
+							progressTarget = 100;
+						}
 					}
 					break;
 				case DOWNLOADING:

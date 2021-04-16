@@ -5,15 +5,12 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 public class SteamWorkshopDownloader {
@@ -181,10 +178,6 @@ public class SteamWorkshopDownloader {
 			final int responseCode = downloadingHttpsURLConnection.getResponseCode();
 			if(responseCode != HttpsURLConnection.HTTP_OK) {
 				throw new IOException("Unexpected response code " + responseCode);
-			}
-			
-			for(Map.Entry<String, List<String>> stringListEntry : downloadingHttpsURLConnection.getHeaderFields().entrySet()) {
-				System.out.println(stringListEntry.getKey() + ": " + StringUtils.join(stringListEntry.getValue(), " || "));
 			}
 			
 			progressInputStream = new ProgressInputStream(downloadingHttpsURLConnection.getInputStream(), downloadSize);

@@ -6,7 +6,7 @@ import de.yggdrasil128.rocketleague.mapmanager.Main;
 import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
 import de.yggdrasil128.rocketleague.mapmanager.config.Config;
 import de.yggdrasil128.rocketleague.mapmanager.game_discovery.GameDiscovery;
-import de.yggdrasil128.rocketleague.mapmanager.maps.SteamWorkshopMap.MapDiscovery;
+import de.yggdrasil128.rocketleague.mapmanager.maps.SteamWorkshopMap;
 import de.yggdrasil128.rocketleague.mapmanager.tools.DesktopShortcutHelper;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -120,12 +120,12 @@ public class SetupApiHttpHandler extends AbstractApiHttpHandler {
 	}
 	
 	private String startMapDiscovery(Map<String, String> parameters) {
-		final MapDiscovery mapDiscovery = MapDiscovery.start(rlMapManager);
+		final SteamWorkshopMap.MapDiscovery mapDiscovery = SteamWorkshopMap.MapDiscovery.start(rlMapManager);
 		return mapDiscovery.getStatusJson();
 	}
 	
 	private String getMapDiscoveryStatus(Map<String, String> parameters) {
-		final MapDiscovery mapDiscovery = MapDiscovery.get();
+		final SteamWorkshopMap.MapDiscovery mapDiscovery = SteamWorkshopMap.MapDiscovery.get();
 		if(mapDiscovery == null) {
 			return "";
 		}

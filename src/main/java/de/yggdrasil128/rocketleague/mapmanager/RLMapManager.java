@@ -9,10 +9,12 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URI;
 
 public class RLMapManager {
 	public static final File FILE_ROOT;
@@ -26,7 +28,7 @@ public class RLMapManager {
 	
 	static {
 		String home = System.getProperty("user.home");
-		FILE_ROOT = new File(home, "RL-MapManager DEV");
+		FILE_ROOT = new File(home, "RL-MapManager");
 		FILE_CONFIG = new File(FILE_ROOT, "config.json");
 		FILE_MAPS = new File(FILE_ROOT, "maps");
 		FILE_LOG = new File(FILE_ROOT, "log.txt");
@@ -194,8 +196,15 @@ public class RLMapManager {
 		}
 		
 		try {
-			Runtime.getRuntime().exec(config.getExeFile().getAbsolutePath());
-		} catch(IOException e) {
+			if(config.getPlatform() == Config.Platform.EPIC) {
+				URI uri = new URI("com.epicgames.launcher://apps/Sugar?action=launch&silent=true");
+				if(Desktop.isDesktopSupported()) {
+					Desktop.getDesktop().browse(uri);
+				}
+			} else {
+				Runtime.getRuntime().exec(config.getExeFile().getAbsolutePath());
+			}
+		} catch(Exception e) {
 			logger.warn("startRocketLeague_noCheck", e);
 		}
 	}
