@@ -20,7 +20,7 @@ public class RLMapManager {
 	public static final File FILE_ROOT;
 	public static final File FILE_CONFIG;
 	public static final File FILE_MAPS;
-	public static final UpdateChecker.Version VERSION = new UpdateChecker.Version(2, 0, 0);
+	public static final UpdateChecker.Version VERSION = new UpdateChecker.Version(2, 0, 1);
 	public static final String REGISTRY_AUTOSTART_KEY = "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
 	public static final String REGISTRY_AUTOSTART_VALUE = "RL Map Manager";
 	static final File FILE_LOG;

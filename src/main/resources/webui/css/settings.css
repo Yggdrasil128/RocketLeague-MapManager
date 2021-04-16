@@ -46,7 +46,7 @@ div#contentSettings div.buttonContainer button:not(:first-child) {
 #gameLibrarySetupDiv td:nth-child(2) {
     padding-left: 10px;
     font-size: 16px;
-    max-width: 800px;
+    width: 950px;
     word-break: break-word;
 }
 

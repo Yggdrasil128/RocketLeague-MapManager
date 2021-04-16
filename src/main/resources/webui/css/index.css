@@ -9,6 +9,7 @@ body {
     margin: 0 auto;
     color: #dddddd;
     font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
     min-height: 100vh;
 }
 
@@ -162,7 +163,6 @@ div.modal > div {
 
 .monospace {
     font-family: monospace;
-    font-size: larger;
 }
 
 table.floatLeftRight {

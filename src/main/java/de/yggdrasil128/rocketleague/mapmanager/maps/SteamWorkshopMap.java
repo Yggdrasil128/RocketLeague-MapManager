@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -75,17 +74,16 @@ public class SteamWorkshopMap extends RLMap {
 	@Override
 	public boolean refreshMetadata() {
 		try {
-			return fetchDataFromWorkshop();
+			Document doc = Jsoup.connect(getURL()).timeout(5000).get();
+			return fillMetadataFromJsoupDocument(doc);
 		} catch(Exception e) {
 			logger.warn("Uncaught exception during fetchDataFromWorkshop()", e);
 			return false;
 		}
 	}
 	
-	public boolean fetchDataFromWorkshop() throws IOException {
+	private boolean fillMetadataFromJsoupDocument(Document doc) {
 		boolean result = true;
-		Document doc;
-		doc = Jsoup.connect(getURL()).timeout(5000).get();
 		
 		Elements elements;
 		
@@ -208,7 +206,7 @@ public class SteamWorkshopMap extends RLMap {
 				File udkFile = pair.getRight();
 				
 				SteamWorkshopMap map = SteamWorkshopMap.create(id, udkFile, udkFile.getName(), false);
-				map.fetchDataFromWorkshop();
+				map.refreshMetadata();
 				registrableMaps.add(map);
 				
 				progress++;
@@ -408,7 +406,7 @@ public class SteamWorkshopMap extends RLMap {
 			statusMessage = "Downloading map metadata from workshop...";
 			
 			SteamWorkshopMap map = create(workshopID, targetFile, udkFilename, true);
-			map.fetchDataFromWorkshop();
+			map.refreshMetadata();
 			
 			rlMapManager.getConfig().registerMap(map);
 			rlMapManager.getConfig().save();
