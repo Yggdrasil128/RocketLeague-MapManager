@@ -112,7 +112,7 @@ function refreshDataFromSourcePage() {
         button.html('Error: Couldn\'t load map data from page');
         setTimeout(updateRefreshMetadataButton, 3000);
         buttons.attr('disabled', null);
-    });
+    }, 10000);
 }
 
 function deleteMap() {
