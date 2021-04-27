@@ -58,6 +58,16 @@ div#contentSettings .buttonContainer.two {
     margin-top: 24px;
 }
 
+#settingsSubmitButton:not([disabled]) {
+    background-color: #00ff0010;
+    color: #daffda;
+}
+
+#unsavedSettings {
+    font-size: 20px;
+    margin-left: 20px;
+}
+
 #exitButton {
     margin-top: 24px;
 }

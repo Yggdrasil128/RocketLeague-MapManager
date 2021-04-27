@@ -69,6 +69,14 @@ function fillFromConfig() {
     $('.showOnlyWhenSetupIsNeeded').css('display', config['needsSetup'] ? 'block' : '');
 
     updateSetupHints();
+
+    $('#settingsDiv .buttonContainer button').attr('disabled', '');
+    $('#unsavedSettings').css('display', 'none');
+}
+
+function onSettingsChanges() {
+    $('#settingsDiv .buttonContainer button').attr('disabled', null);
+    $('#unsavedSettings').css('display', '');
 }
 
 function storeConfig() {

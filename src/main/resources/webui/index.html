@@ -331,7 +331,7 @@
                         </label>
                     </td>
                     <td>
-                        <select id="input_autostart" size="1">
+                        <select id="input_autostart" onchange="onSettingsChanges()" size="1">
                             <option selected value="0">Disabled</option>
                             <option value="1">Enabled, don't open in browser</option>
                             <option value="2">Enabled, open in browser</option>
@@ -345,7 +345,7 @@
                 <tr>
                     <td><label for="input_renameOriginalUnderpassUPK">Rename original Labs_Underpass_P.upk</label></td>
                     <td>
-                        <select id="input_renameOriginalUnderpassUPK" size="1">
+                        <select id="input_renameOriginalUnderpassUPK" onchange="onSettingsChanges()" size="1">
                             <option value="0">Disabled</option>
                             <option value="1" selected>Enabled</option>
                         </select>
@@ -360,7 +360,7 @@
                     <td><label for="input_behaviorWhenRLIsStopped">When a map is loaded and Rocket League<br/><b>is not
                         running</b>:</label></td>
                     <td>
-                        <select id="input_behaviorWhenRLIsStopped" size="1">
+                        <select id="input_behaviorWhenRLIsStopped" onchange="onSettingsChanges()" size="1">
                             <option value="0" selected>Don't start Rocket League</option>
                             <option value="1">Start Rocket League</option>
                         </select>
@@ -374,7 +374,7 @@
                     <td><label for="input_behaviorWhenRLIsRunning">When a map is loaded and Rocket League<br/><b>is
                         running</b>:</label></td>
                     <td>
-                        <select id="input_behaviorWhenRLIsRunning" size="1">
+                        <select id="input_behaviorWhenRLIsRunning" onchange="onSettingsChanges()" size="1">
                             <option value="0">Just load the map</option>
                             <option value="1">Stop Rocket League</option>
                             <option value="2" selected>Stop and restart Rocket League</option>
@@ -398,7 +398,8 @@
                 </tr>
                 <tr>
                     <td><label for="input_upkFilename">UPK Filename</label></td>
-                    <td><input id="input_upkFilename" style="width: 300px" type="text" required></td>
+                    <td><input id="input_upkFilename" oninput="onSettingsChanges()" required style="width: 300px"
+                               type="text"></td>
                     <td>
                         The filename of the target UPK file. Default: <span
                             class="monospace">Labs_Underpass_P.upk</span>
@@ -407,7 +408,7 @@
                 <tr>
                     <td><label for="input_webInterfacePort">Web interface port</label></td>
                     <td><input id="input_webInterfacePort" style="width: 80px" type="number" min="0" max="65536"
-                               required></td>
+                               oninput="onSettingsChanges()" required></td>
                     <td>
                         The port for the built-in web server. The default port is 16016.<br>
                         You must restart the app for this change to take effect.
@@ -415,7 +416,7 @@
                 </tr>
                 <tr>
                     <td><label for="input_ipWhitelist">IP Whitelist</label></td>
-                    <td><textarea id="input_ipWhitelist"
+                    <td><textarea id="input_ipWhitelist" oninput="onSettingsChanges()"
                                   style="min-height: 50px; min-width: 300px; max-width: 300px;"></textarea></td>
                     <td>
                         The list of IP addresses that are allowed to access this web interface. One per line.<br/>
@@ -426,8 +427,9 @@
             </table>
 
             <div class="buttonContainer two">
-                <button onclick="fillFromConfig(); return false;">Discard changes</button>
-                <button id="settingsSubmitButton" type="submit">Store settings</button>
+                <button disabled onclick="fillFromConfig(); return false;">Discard changes</button>
+                <button disabled id="settingsSubmitButton" type="submit">Store settings</button>
+                <span id="unsavedSettings" style="display: none">&#x26A0;&#xFE0F; You have unsaved changes.</span>
             </div>
         </form>
     </div>
