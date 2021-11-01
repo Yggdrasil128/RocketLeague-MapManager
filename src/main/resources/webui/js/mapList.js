@@ -110,7 +110,7 @@ function loadMap(mapID) {
         refreshMapView();
         filterMaps();
         scrollMapIntoView(mapID, 'ifScrolled');
-    });
+    }, null, 5000);
 }
 
 function unloadMap(callback) {
