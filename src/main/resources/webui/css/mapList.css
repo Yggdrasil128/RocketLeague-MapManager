@@ -90,12 +90,41 @@ table.maps.compactList > tbody > tr.loaded {
 
 table.maps.compactList > tbody > tr > td {
     height: 36px;
-    padding: 5px 12px;
+    padding: 5px 10px;
     vertical-align: middle;
 }
 
 table.maps.compactList td.one {
     width: 64px;
+    max-width: 64px;
+}
+
+table.maps.compactList td.two {
+    width: 412px;
+    max-width: 412px;
+}
+
+table.maps.compactList td.three {
+    width: 160px;
+    max-width: 160px;
+}
+
+table.maps.compactList td.four {
+    width: 215px;
+    max-width: 215px;
+}
+
+table.maps.compactList td.five {
+    width: 130px;
+    max-width: 130px;
+}
+
+table.maps.compactList td.six {
+    width: 69px;
+    max-width: 69px;
+}
+
+table.maps.compactList td.one {
     text-align: center;
     padding: 5px 5px 1px;
 }
@@ -114,40 +143,31 @@ table.maps.compactList td.two .title {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    width: 430px;
 }
 
 table.maps.compactList td.three .authorName {
     font-size: 18px;
-}
-
-table.maps.compactList td.four {
-    width: 240px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 table.maps.compactList td.four div.lastLoaded {
     font-size: 14px;
 }
 
-table.maps.compactList td.five {
-    width: 130px;
-}
-
 table.maps.compactList td.five button.loadMapButton {
     font-size: 20px;
 }
 
-table.maps.compactList td.six {
-    width: 75px;
-}
-
 table.maps.compactList td.six img.edit {
     height: 32px;
-    margin-right: 10px;
+    float: left;
 }
 
 table.maps.compactList td.six img.favorite {
     height: 32px;
+    float: right;
 }
 
 /*
