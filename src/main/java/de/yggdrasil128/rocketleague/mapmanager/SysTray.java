@@ -1,8 +1,6 @@
 package de.yggdrasil128.rocketleague.mapmanager;
 
 import de.yggdrasil128.rocketleague.mapmanager.maps.RLMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -17,7 +15,7 @@ import java.util.TreeMap;
 
 public class SysTray {
 	private final RLMapManager rlMapManager;
-	private final Logger logger = LoggerFactory.getLogger(SysTray.class.getName());
+	//	private final Logger logger = LoggerFactory.getLogger(SysTray.class.getName());
 	private Menu loadFavoriteMapMenu;
 	
 	public SysTray(RLMapManager rlMapManager) throws Exception {
@@ -123,13 +121,9 @@ public class SysTray {
 			} else {
 				menuItem.setState(false);
 				menuItem.addItemListener(event -> {
-					try {
-						final RLMap rlMap = rlMapManager.getConfig().getMaps().get(mapID);
-						rlMapManager.loadMap(rlMap);
-						rlMapManager.getWebInterface().getApiHttpHandler().getLastUpdatedMaps().now(null);
-					} catch(IOException e) {
-						logger.error("Couldn't load map", e);
-					}
+					final RLMap rlMap = rlMapManager.getConfig().getMaps().get(mapID);
+					rlMapManager.loadMap(rlMap);
+					rlMapManager.getWebInterface().getApiHttpHandler().getLastUpdatedMaps().now(null);
 				});
 			}
 			

@@ -107,7 +107,7 @@ public class RLMapManager {
 		return sysTray;
 	}
 	
-	public void loadMap(RLMap map) throws IOException {
+	public void loadMap(RLMap map) {
 		Integer pid = getRocketLeaguePID();
 		boolean stopRL, startRL;
 		if(pid == null) {
@@ -124,7 +124,11 @@ public class RLMapManager {
 			stopRocketLeague(pid);
 		}
 		
-		FileUtils.copyFile(map.getUdkFile(), config.getUpkFile());
+		try {
+			FileUtils.copyFile(map.getUdkFile(), config.getUpkFile());
+		} catch(IOException e) {
+			logger.error("Couldn't copy map to destination", e);
+		}
 		config.setLoadedMapID(map.getID());
 		map.setLastLoadedNow();
 		config.save();

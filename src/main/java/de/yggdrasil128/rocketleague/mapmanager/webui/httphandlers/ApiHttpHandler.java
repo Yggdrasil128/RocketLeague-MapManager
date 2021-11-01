@@ -218,7 +218,7 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		return String.valueOf(rlMapManager.getConfig().getLoadedMapID());
 	}
 	
-	private String loadMap(Map<String, String> parameters) throws IOException {
+	private String loadMap(Map<String, String> parameters) {
 		RLMap map = getMapFromParameters(parameters, true);
 		rlMapManager.loadMap(map);
 		lastUpdatedMaps.now(parameters.get("btid"));
