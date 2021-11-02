@@ -45,14 +45,15 @@ The app installs itself into the 'RL-MapManager' folder in your user directory.
 
 ## List of features
 
-- A user-friendly web interface
+- A user-friendly web interface that allows you to easily switch between Rocket League maps
 - Supports both the Steam and Epic Games version of Rocket League
 - (If you are using the Steam version) Automatically detect which workshop maps are installed on your computer and
   download all relevant information from the Steam workshop page
 - You can import maps from the Steam workshop (even if you are using the Epic Games version), from lethamyr.com and from
   a local file
 - You can edit map metadata (title, author name, description, map image) and delete maps
-- Easily switch between Rocket League workshop maps
+- The app detects if the "Workshop Textures" are installed, and offers to download and install them. Some maps may
+  require these files in order to work properly.
 - Start/Stop Rocket League, either automatically when a map is loaded or manually with the click of a button
 - The app remembers the date and time of when each map was added the Map Manager, and when it was last loaded
 - 3 different map list layouts: Compact list, Detailed list, and Grid View
