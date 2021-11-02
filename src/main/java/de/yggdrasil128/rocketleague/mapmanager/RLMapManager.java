@@ -21,7 +21,7 @@ public class RLMapManager {
 	public static final File FILE_ROOT;
 	public static final File FILE_CONFIG;
 	public static final File FILE_MAPS;
-	private static final boolean USE_DEV_ENVIRONMENT = true;
+	private static final boolean USE_DEV_ENVIRONMENT = false;
 	public static final String REGISTRY_AUTOSTART_KEY = "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
 	public static final String REGISTRY_AUTOSTART_VALUE = "RL Map Manager";
 	static final File FILE_LOG;
