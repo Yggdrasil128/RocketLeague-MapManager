@@ -11,10 +11,7 @@ import de.yggdrasil128.rocketleague.mapmanager.game_discovery.GameDiscovery;
 import de.yggdrasil128.rocketleague.mapmanager.maps.LethamyrMap;
 import de.yggdrasil128.rocketleague.mapmanager.maps.RLMap;
 import de.yggdrasil128.rocketleague.mapmanager.maps.SteamWorkshopMap;
-import de.yggdrasil128.rocketleague.mapmanager.tools.DesktopShortcutHelper;
-import de.yggdrasil128.rocketleague.mapmanager.tools.JavaXSwingTools;
-import de.yggdrasil128.rocketleague.mapmanager.tools.RegistryHelper;
-import de.yggdrasil128.rocketleague.mapmanager.tools.Task;
+import de.yggdrasil128.rocketleague.mapmanager.tools.*;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 
@@ -57,6 +54,10 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		super.registerFunction("lethamyrMapDownload_start", this::lethamyrMapDownload_start);
 		super.registerFunction("lethamyrMapDownload_status", this::lethamyrMapDownload_status);
 		super.registerFunction("lethamyrMapDownload_cancel", this::lethamyrMapDownload_cancel);
+		
+		super.registerFunction("workshopTextures_check", this::workshopTextures_check);
+		super.registerFunction("workshopTextures_start", this::workshopTextures_start);
+		super.registerFunction("workshopTextures_status", this::workshopTextures_status);
 		
 		super.registerFunction("getVersion", this::getVersion);
 		super.registerFunction("getConfig", this::getConfig);
@@ -132,9 +133,9 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 	}
 	
 	private String steamWorkshopMapDiscovery_start(Map<String, String> parameters) {
-		final String btid = parameters.get("btid");
-		Runnable onFinish = () -> lastUpdatedMaps.now(btid);
-		final Task task = SteamWorkshopMap.MapDiscovery.start(rlMapManager, onFinish);
+		final Task task = SteamWorkshopMap.MapDiscovery.create(rlMapManager);
+		task.registerOnFinishRunnable(() -> lastUpdatedMaps.now(parameters.get("btid")));
+		task.start();
 		return task.getStatusJson();
 	}
 	
@@ -155,9 +156,9 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 	}
 	
 	private String steamWorkshopMapDownload_start(Map<String, String> parameters) {
-		final String btid = parameters.get("btid");
-		Runnable onFinish = () -> lastUpdatedMaps.now(btid);
-		final Task task = SteamWorkshopMap.MapDownload.start(parameters.get("url"), rlMapManager, onFinish);
+		final Task task = SteamWorkshopMap.MapDownload.create(parameters.get("url"), rlMapManager);
+		task.registerOnFinishRunnable(() -> lastUpdatedMaps.now(parameters.get("btid")));
+		task.start();
 		return task.getStatusJson();
 	}
 	
@@ -178,9 +179,9 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 	}
 	
 	private String lethamyrMapDownload_start(Map<String, String> parameters) {
-		final String btid = parameters.get("btid");
-		Runnable onFinish = () -> lastUpdatedMaps.now(btid);
-		final Task task = LethamyrMap.MapDownload.start(parameters.get("url"), rlMapManager, onFinish);
+		final Task task = LethamyrMap.MapDownload.create(parameters.get("url"), rlMapManager);
+		task.registerOnFinishRunnable(() -> lastUpdatedMaps.now(parameters.get("btid")));
+		task.start();
 		return task.getStatusJson();
 	}
 	
@@ -198,6 +199,26 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 			task.cancel();
 		}
 		return "";
+	}
+	
+	private String workshopTextures_check(Map<String, String> parameters) {
+		boolean result = WorkshopTextures.checkIfInstalled(rlMapManager.getConfig());
+		return result ? "1" : "0";
+	}
+	
+	private String workshopTextures_start(Map<String, String> parameters) {
+		Task task = WorkshopTextures.InstallTask.create(rlMapManager.getConfig());
+		task.registerOnFinishRunnable(() -> lastUpdatedConfig.now(parameters.get("btid")));
+		task.start();
+		return task.getStatusJson();
+	}
+	
+	private String workshopTextures_status(Map<String, String> parameters) {
+		final Task task = WorkshopTextures.InstallTask.get();
+		if(task == null) {
+			return "";
+		}
+		return task.getStatusJson();
 	}
 	
 	private String setFavorite(Map<String, String> parameters) {
@@ -318,6 +339,7 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		tasksRunning.addProperty("steamWorkshopMapDiscovery", SteamWorkshopMap.MapDiscovery.isTaskRunning());
 		tasksRunning.addProperty("steamWorkshopMapDownload", SteamWorkshopMap.MapDownload.isTaskRunning());
 		tasksRunning.addProperty("lethamyrMapDownload", LethamyrMap.MapDownload.isTaskRunning());
+		tasksRunning.addProperty("workshopTextures", WorkshopTextures.InstallTask.isTaskRunning());
 		json.add("tasksRunning", tasksRunning);
 		
 		return GSON.toJson(json);

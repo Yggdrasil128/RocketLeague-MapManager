@@ -4,12 +4,15 @@ import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 
 import java.text.DecimalFormat;
+import java.util.LinkedList;
+import java.util.List;
 
 import static de.yggdrasil128.rocketleague.mapmanager.config.Config.GSON;
 
 public abstract class Task {
 	public static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#0.0 %");
 	private final Thread thread;
+	private final List<Runnable> onFinishRunnables = new LinkedList<>();
 	protected String statusMessage = null;
 	protected long progress = 0, progressTarget = 0;
 	protected boolean showProgress = false, showPercentage = false;
@@ -33,9 +36,27 @@ public abstract class Task {
 				return;
 			} finally {
 				cleanup();
+				for(Runnable runnable : onFinishRunnables) {
+					try {
+						runnable.run();
+					} catch(Exception e) {
+						if(getLogger() != null) {
+							getLogger().warn("Uncaught exception in an onFinish runnable", e);
+						}
+					}
+				}
 			}
 			state = State.DONE;
 		});
+	}
+	
+	public void registerOnFinishRunnable(Runnable runnable) {
+		if(state != State.INITIALIZING) {
+			throw new IllegalStateException();
+		}
+		if(runnable != null) {
+			onFinishRunnables.add(runnable);
+		}
 	}
 	
 	public void start() {
@@ -99,8 +120,19 @@ public abstract class Task {
 	
 	public String getStatusJson() {
 		JsonObject json = new JsonObject();
+		String message = getStatus(json);
 		
-		boolean isFinished = isFinished();
+		json.addProperty("isFinished", isFinished());
+		json.addProperty("message", message);
+		
+		return GSON.toJson(json);
+	}
+	
+	public String getStatusMessage() {
+		return getStatus(null);
+	}
+	
+	private String getStatus(JsonObject json) {
 		String message = "";
 		switch(state) {
 			case INITIALIZING:
@@ -116,9 +148,11 @@ public abstract class Task {
 						progressFloat = 1;
 					}
 					
-					json.addProperty("progress", progress);
-					json.addProperty("progressTarget", progressTarget);
-					json.addProperty("progressFloat", progressFloat);
+					if(json != null) {
+						json.addProperty("progress", progress);
+						json.addProperty("progressTarget", progressTarget);
+						json.addProperty("progressFloat", progressFloat);
+					}
 					
 					if(showProgress) {
 						message += " " + progress + " / " + progressTarget;
@@ -150,10 +184,7 @@ public abstract class Task {
 				break;
 		}
 		
-		json.addProperty("isFinished", isFinished);
-		json.addProperty("message", message);
-		
-		return GSON.toJson(json);
+		return message;
 	}
 	
 	private enum State {

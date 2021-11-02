@@ -50,7 +50,7 @@
 <div class="content current" id="contentSetup0">
     <h1>Setup</h1>
     <p>
-        Hello, and welcome to the installer of the Rocket League Map Manager.<br/>
+        Hello, and welcome to the installer for the Rocket League Map Manager.<br/>
         This installer will guide you through the process of installing the Rocket League Map Manager on your computer.
     </p>
     <p>
@@ -137,7 +137,7 @@
     </p>
     <p>
         <button onclick="setupPhase1()">Previous</button>
-        <button class="toPhase3" disabled onclick="setupPhase3()">Next</button>
+        <button class="toPhase2_1" disabled onclick="setupPhase2_1()">Next</button>
         <br/>
         <button class="cancelButton" onclick="cancelInstallation()">Cancel installation</button>
     </p>
@@ -183,7 +183,30 @@
     </p>
     <p>
         <button onclick="setupPhase1()">Previous</button>
-        <button class="toPhase3" disabled onclick="setupPhase3()">Next</button>
+        <button class="toPhase2_1" disabled onclick="setupPhase2_1()">Next</button>
+        <br/>
+        <button class="cancelButton" onclick="cancelInstallation()">Cancel installation</button>
+    </p>
+</div>
+
+<div class="content" id="contentSetup2_1">
+    <h1>Workshop Textures</h1>
+    <p>
+        Some maps may require additional files in order to work properly.
+        It is recommended to have these files installed.
+        <br/>
+        <label for="input_workshopTextures">
+            Would you like to download and install these files?
+        </label>
+        <br/>
+        <select id="input_workshopTextures" size="1" style="font-size: 16px; padding: 2px; margin-top: 5px;">
+            <option selected value="1">Yes (recommended)</option>
+            <option value="0">No</option>
+        </select>
+    </p>
+    <p>
+        <button onclick="setupPhase2()">Previous</button>
+        <button onclick="setupPhase3()">Next</button>
         <br/>
         <button class="cancelButton" onclick="cancelInstallation()">Cancel installation</button>
     </p>
@@ -242,7 +265,7 @@
                 </select>
             </td>
             <td>
-                Choose whether or not you'd like the Map Manager to automatically start Rocket League when a map
+                Choose whether you'd like the Map Manager to automatically start Rocket League when a map
                 is loaded and Rocket League is not already running.
             </td>
         </tr>
@@ -257,13 +280,13 @@
                 </select>
             </td>
             <td>
-                Choose whether or not you'd like the Map Manager to automatically stop/start Rocket League when
+                Choose whether you'd like the Map Manager to automatically stop/start Rocket League when
                 a map is loaded and Rocket League is already running.
             </td>
         </tr>
     </table>
     <p>
-        <button onclick="setupPhase2()">Previous</button>
+        <button onclick="if(hasWorkshopTextures) {setupPhase2()} else {setupPhase2_1()}">Previous</button>
         <button onclick="setupPhase4()">Install</button>
         <br/>
         <button class="cancelButton" onclick="cancelInstallation()">Cancel installation</button>
@@ -273,13 +296,11 @@
 <div class="content" id="contentSetup4">
     <h1>Installing...</h1>
     <p>
-        Please wait while RL Map Manager is being installed.
+        Please wait while RL Map Manager is being installed. Do not close this browser tab until the installation has
+        finished.
     </p>
     <div id="installationProgress">
         <div id="installationStatus">Initializing...</div>
-        <progress max="0" value="0"></progress>
-        <br/>
-        <span class="progressText">0 %</span>
     </div>
 </div>
 

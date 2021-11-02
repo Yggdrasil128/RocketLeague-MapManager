@@ -1,3 +1,11 @@
+div#contentSettings h2 {
+    margin-bottom: -5px;
+}
+
+div#contentSettings h2 + table {
+    margin-top: 15px;
+}
+
 table.configurationTable {
     border-collapse: collapse;
 }

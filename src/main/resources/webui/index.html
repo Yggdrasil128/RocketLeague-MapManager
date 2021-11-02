@@ -121,7 +121,9 @@
                         <option value="-5">Author Name (Z -> A)</option>
                     </optgroup>
                     <optgroup label="Map Size">
+                        <!--suppress GrazieInspection -->
                         <option value="3">Map Size (largest first)</option>
+                        <!--suppress GrazieInspection -->
                         <option value="-3">Map Size (smallest first)</option>
                     </optgroup>
                 </select>
@@ -166,7 +168,7 @@
             </a>
         </p>
 
-        <button class="start" onclick="importMapsTask('fromSteamWorkshopDirect')" style="margin-top: 0">
+        <button class="start" onclick="handleTask('fromSteamWorkshopDirect', true, loadMaps)" style="margin-top: 0">
             Refresh workshop maps
         </button>
 
@@ -193,7 +195,7 @@
         <label for="fromSteamWorkshopURL_input">URL: </label>
         <input id="fromSteamWorkshopURL_input" type="text"/>
         <br/>
-        <button class="start" onclick="importMapsTask('fromSteamWorkshopURL')">
+        <button class="start" onclick="handleTask('fromSteamWorkshopURL', true, loadMaps)">
             Import map
         </button>
 
@@ -220,7 +222,7 @@
         <label for="fromLethamyrURL_input">URL: </label>
         <input id="fromLethamyrURL_input" type="text"/>
         <br/>
-        <button class="start" onclick="importMapsTask('fromLethamyrURL')">
+        <button class="start" onclick="handleTask('fromLethamyrURL', true, loadMaps)">
             Import map
         </button>
 
@@ -314,6 +316,28 @@
         </p>
     </div>
 
+    <div data-api-endpoint-name="workshopTextures" id="workshopTextures">
+        <h2>Workshop Textures</h2>
+        <p class="no">
+            <span style="color: #ffafaf;">Workshop textures are not installed.</span>
+            <br/>
+            Some maps may require additional files in order to work properly. It is recommended to have these files
+            installed.
+            <br/>
+            <button class="start" onclick="handleTask('workshopTextures', true, checkWorkshopTextures)"
+                    style="margin-top: 3px; font-size: 24px">Install
+            </button>
+        </p>
+        <p class="yes" style="display: none">
+            Workshop textures are installed.
+            <button class="start" onclick="handleTask('workshopTextures', true, checkWorkshopTextures)">Reinstall
+            </button>
+        </p>
+        <p class="statusDiv" style="display: none">
+            Status: <span class="status"></span>
+        </p>
+    </div>
+
     <div id="settingsDiv">
         <form onsubmit="storeConfig(); return false;">
             <h2>App Settings</h2>
@@ -366,7 +390,7 @@
                         </select>
                     </td>
                     <td>
-                        Choose whether or not you'd like the Map Manager to automatically start Rocket League when a map
+                        Choose whether you'd like the Map Manager to automatically start Rocket League when a map
                         is loaded and Rocket League is not already running.
                     </td>
                 </tr>
@@ -381,7 +405,7 @@
                         </select>
                     </td>
                     <td>
-                        Choose whether or not you'd like the Map Manager to automatically stop/start Rocket League when
+                        Choose whether you'd like the Map Manager to automatically stop/start Rocket League when
                         a map is loaded and Rocket League is already running.
                     </td>
                 </tr>

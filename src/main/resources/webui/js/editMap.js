@@ -1,4 +1,5 @@
 let editingMapID = null;
+let mapCanBeDeleted = false;
 
 function startEditMap(mapID) {
     $('#navBar .navList div.anchor.current, div.content.current').removeClass('current');
@@ -14,14 +15,8 @@ function startEditMap(mapID) {
 
     updateRefreshMetadataButton();
 
-    let deleteMapButton = $('#deleteMapButton');
-    if(map['canBeDeleted']) {
-        deleteMapButton.attr('disabled', null);
-        deleteMapButton.attr('title', '');
-    } else {
-        deleteMapButton.attr('disabled', '');
-        deleteMapButton.attr('title', 'This map cannot be deleted.');
-    }
+    mapCanBeDeleted = map['canBeDeleted'];
+    updateDeleteMapButton();
 }
 
 function saveEditMap(skipImageUpload = false) {
@@ -76,6 +71,17 @@ function saveEditMap(skipImageUpload = false) {
     });
 }
 
+function updateDeleteMapButton() {
+    let deleteMapButton = $('#deleteMapButton');
+    if(mapCanBeDeleted) {
+        deleteMapButton.attr('disabled', null);
+        deleteMapButton.attr('title', '');
+    } else {
+        deleteMapButton.attr('disabled', '');
+        deleteMapButton.attr('title', 'This map cannot be deleted.');
+    }
+}
+
 function updateRefreshMetadataButton() {
     let button = $('#mapEditRefreshButton');
     if(editingMapID.startsWith('S-')) {
@@ -108,10 +114,12 @@ function refreshDataFromSourcePage() {
         }
         setTimeout(updateRefreshMetadataButton, 3000);
         buttons.attr('disabled', null);
+        updateDeleteMapButton();
     }, function() {
         button.html('Error: Couldn\'t load map data from page');
         setTimeout(updateRefreshMetadataButton, 3000);
         buttons.attr('disabled', null);
+        updateDeleteMapButton();
     }, 10000);
 }
 

@@ -59,24 +59,31 @@ public class LethamyrMap extends RLMap {
 	private boolean fillMetadataFromJsoupDocument(Document doc) {
 		boolean result = true;
 		Elements elements;
+		Element element;
 		
 		authorName = "Lethamyr";
 		
-		elements = doc.getElementsByTag("h1");
-		if(!elements.isEmpty()) {
-			title = elements.first().text();
+		element = doc.getElementsByTag("h1").first();
+		if(element != null) {
+			title = element.text();
 		} else {
 			result = false;
 		}
 		
 		elements = doc.getElementsByTag("h3");
 		String description = null;
-		for(Element element : elements) {
-			if(element.text().startsWith("Description") && description == null) {
-				description = element.siblingElements().first().html();
-			} else if(element.text().startsWith("Recommended Settings") && description != null) {
-				//noinspection StringConcatenationInLoop
-				description += "<br>Recommended Settings:<br>" + element.siblingElements().first().html();
+		for(Element element2 : elements) {
+			if(element2.text().startsWith("Description") && description == null) {
+				element = element2.siblingElements().first();
+				if(element != null) {
+					description = element.html();
+				}
+			} else if(element2.text().startsWith("Recommended Settings") && description != null) {
+				element = element2.siblingElements().first();
+				if(element != null) {
+					//noinspection StringConcatenationInLoop
+					description += "<br>Recommended Settings:<br>" + element.html();
+				}
 			}
 		}
 		if(description != null) {
@@ -85,9 +92,9 @@ public class LethamyrMap extends RLMap {
 			result = false;
 		}
 		
-		elements = doc.getElementsByClass("thumb-image");
-		if(!elements.isEmpty()) {
-			String src = elements.first().attr("data-src");
+		element = doc.getElementsByClass("thumb-image").first();
+		if(element != null) {
+			String src = element.attr("data-src");
 			downloadImage(src);
 		} else {
 			result = false;
@@ -116,28 +123,25 @@ public class LethamyrMap extends RLMap {
 		private static final transient Logger logger = LoggerFactory.getLogger(MapDownload.class.getName());
 		private static MapDownload task = null;
 		private final RLMapManager rlMapManager;
-		private final Runnable onFinish;
 		private final String url;
 		private File tempFile;
 		private GoogleDriveDownloader googleDriveDownloader;
 		
-		private MapDownload(String url, RLMapManager rlMapManager, Runnable onFinish) {
+		private MapDownload(String url, RLMapManager rlMapManager) {
 			super();
 			this.url = url;
 			this.rlMapManager = rlMapManager;
-			this.onFinish = onFinish;
 		}
 		
 		public synchronized static MapDownload get() {
 			return task;
 		}
 		
-		public synchronized static MapDownload start(String url, RLMapManager rlMapManager, Runnable onFinish) {
+		public synchronized static MapDownload create(String url, RLMapManager rlMapManager) {
 			if(task != null && task.isRunning()) {
 				throw new IllegalStateException("Already running");
 			}
-			task = new MapDownload(url, rlMapManager, onFinish);
-			task.start();
+			task = new MapDownload(url, rlMapManager);
 			return task;
 		}
 		
@@ -171,12 +175,12 @@ public class LethamyrMap extends RLMap {
 			Document doc = Jsoup.connect(map.getURL()).get();
 			map.fillMetadataFromJsoupDocument(doc);
 			
-			Elements elements = doc.select("a[href*=drive.google.com]");
-			if(elements.isEmpty()) {
+			Element element = doc.select("a[href*=drive.google.com]").first();
+			if(element == null) {
 				throw new Exception("Google Drive URL not found on lethamyr.com page");
 			}
 			
-			String googleDriveURL = elements.first().attr("href");
+			String googleDriveURL = element.attr("href");
 			Pattern pattern = Pattern.compile("https?://drive\\.google\\.com/file/d/([^/]+)/");
 			Matcher matcher = pattern.matcher(googleDriveURL);
 			if(!matcher.find()) {
@@ -212,10 +216,6 @@ public class LethamyrMap extends RLMap {
 			rlMapManager.getConfig().save();
 			
 			statusMessage = "Done. Successfully imported '" + map.getDisplayName() + "'.";
-			
-			if(onFinish != null) {
-				onFinish.run();
-			}
 		}
 		
 		@Override

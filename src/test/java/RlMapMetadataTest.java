@@ -12,7 +12,7 @@ public class RlMapMetadataTest {
 		Assert.assertEquals("Minigolf", map.getTitle());
 		Assert.assertTrue(map.getDescription().startsWith("Another Minigolf map. 9 holes in total. Hole scored = next course"));
 		Assert.assertEquals("FroYo", map.getAuthorName());
-		Assert.assertEquals("image/png", map.getImageFileMimeType());
+		Assert.assertEquals("image/jpeg", map.getImageFileMimeType());
 	}
 	
 	@Test

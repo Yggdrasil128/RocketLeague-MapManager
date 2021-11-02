@@ -19,11 +19,5 @@ button.cancelButton {
 }
 
 #installationProgress {
-    width: 300px;
-    text-align: center;
-}
-
-#installationProgress progress {
-    width: 100%;
-    height: 30px;
+    font-size: 20px;
 }

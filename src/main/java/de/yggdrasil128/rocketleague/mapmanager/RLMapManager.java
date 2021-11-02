@@ -17,10 +17,11 @@ import java.io.InputStreamReader;
 import java.net.URI;
 
 public class RLMapManager {
+	public static final UpdateChecker.Version VERSION = new UpdateChecker.Version(2, 1, 0);
 	public static final File FILE_ROOT;
 	public static final File FILE_CONFIG;
 	public static final File FILE_MAPS;
-	public static final UpdateChecker.Version VERSION = new UpdateChecker.Version(2, 0, 2);
+	private static final boolean USE_DEV_ENVIRONMENT = true;
 	public static final String REGISTRY_AUTOSTART_KEY = "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
 	public static final String REGISTRY_AUTOSTART_VALUE = "RL Map Manager";
 	static final File FILE_LOG;
@@ -28,7 +29,7 @@ public class RLMapManager {
 	
 	static {
 		String home = System.getProperty("user.home");
-		FILE_ROOT = new File(home, "RL-MapManager");
+		FILE_ROOT = new File(home, USE_DEV_ENVIRONMENT ? "RL-MapManager DEV" : "RL-MapManager");
 		FILE_CONFIG = new File(FILE_ROOT, "config.json");
 		FILE_MAPS = new File(FILE_ROOT, "maps");
 		FILE_LOG = new File(FILE_ROOT, "log.txt");

@@ -8,12 +8,8 @@ $(function() {
         loadMaps();
     });
 
-    makeRequest('api/hasDesktopIcon', null, null, function(data) {
-        if(data !== '1') {
-            return;
-        }
-        $('#createDesktopIconButton').css('display', 'none');
-    })
+    checkDesktopIcon();
+    checkWorkshopTextures();
 });
 
 function loadConfig(callback) {
@@ -162,6 +158,15 @@ function exitApp() {
     makeRequest('api/exitApp', null, null, callback, callback, 1000);
 }
 
+function checkDesktopIcon() {
+    makeRequest('api/hasDesktopIcon', null, null, function(data) {
+        if(data !== '1') {
+            return;
+        }
+        $('#createDesktopIconButton').css('display', 'none');
+    });
+}
+
 function createDesktopIcon() {
     makeRequest('api/createDesktopIcon', null, null, function() {
         const $button = $('#createDesktopIconButton');
@@ -169,5 +174,13 @@ function createDesktopIcon() {
         setTimeout(function() {
             $button.css('display', 'none');
         }, 3000);
+    });
+}
+
+function checkWorkshopTextures() {
+    makeRequest('api/workshopTextures_check', null, null, function(data) {
+        const result = data === "1";
+        $('#workshopTextures .yes').css('display', result ? '' : 'none');
+        $('#workshopTextures .no').css('display', result ? 'none' : '');
     });
 }

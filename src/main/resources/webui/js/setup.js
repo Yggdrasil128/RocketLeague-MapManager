@@ -1,4 +1,5 @@
 let mapDiscoveryUpdateIntervalHandle = null;
+let hasWorkshopTextures = false;
 
 $(function() {
     makeRequest('api/getAppPath', null, null, function(data) {
@@ -29,6 +30,18 @@ function setupPhase2() {
             $('#contentSetup2_steam').addClass('current');
         }
     }, true);
+}
+
+function setupPhase2_1() {
+    makeRequest('api/workshopTextures_check', null, null, function(data) {
+        hasWorkshopTextures = data === "1";
+        if(hasWorkshopTextures) {
+            setupPhase3();
+        } else {
+            $('div.content.current:not(#contentSetup2_1)').removeClass('current');
+            $('#contentSetup2_1').addClass('current');
+        }
+    });
 }
 
 function setupPhase3() {
@@ -67,16 +80,51 @@ function setupPhase4_callback1() {
 }
 
 function setupPhase4_callback2() {
+    if($('#input_workshopTextures').get(0).value === '0') {
+        setupPhase4_callback3();
+        return;
+    }
+
+    makeRequest('api/workshopTextures_check', null, null, function(data) {
+        if(data === "1") {
+            setupPhase4_callback3();
+            return;
+        }
+
+        let intervalHandle;
+
+        let updateStatus = function(data2) {
+            let status = JSON.parse(data2);
+            let message = status['message'];
+            $('#installationStatus').html('Installing workshop textures: ' + message);
+
+            if(status['isFinished']) {
+                clearInterval(intervalHandle);
+                setupPhase4_callback3();
+            }
+        };
+
+        makeRequest('api/workshopTextures_start', null, null, function(data) {
+            intervalHandle = setInterval(function() {
+                makeRequest('api/workshopTextures_status', null, null, updateStatus);
+            }, 500);
+            updateStatus(data);
+        });
+
+    });
+}
+
+function setupPhase4_callback3() {
     if(getPlatform() === 0) {
         $('#installationStatus').html('Discovering workshop maps...');
 
-        makeRequest('api/startMapDiscovery', null, null, setupPhase4_callback3);
+        makeRequest('api/startMapDiscovery', null, null, setupPhase4_callback4);
     } else {
         setupPhase5();
     }
 }
 
-function setupPhase4_callback3() {
+function setupPhase4_callback4() {
     mapDiscoveryUpdateIntervalHandle = setInterval(setupPhase4_updateMapDiscoveryStatus, 1000);
 }
 
@@ -100,11 +148,10 @@ function setupPhase4_updateMapDiscoveryStatus_callback(data) {
     const progressTarget = status['progressTarget'];
 
     if(progressTarget) {
-        $('#contentSetup4 progress').attr({'value': progress, 'max': progressTarget});
         let s = progress + ' / ' + progressTarget + ' (' +
             (100 * progress / Math.max(progressTarget, 1)).toFixed(0) +
             ' %)';
-        $('#contentSetup4 .progressText').html(s);
+        $('#installationStatus').html('Discovering workshop maps... ' + s);
     }
 }
 
@@ -153,11 +200,11 @@ function gameDiscovery(disableAlert, useDefaultDirectory, callback) {
             if(result['success']) {
                 $('.gameDiscoveryError').css('display', 'none');
                 $('.gameDiscoverySuccess').css('display', '');
-                $('.toPhase3').attr('disabled', null);
+                $('.toPhase2_1').attr('disabled', null);
             } else {
                 $('.gameDiscoveryError').css('display', '');
                 $('.gameDiscoverySuccess').css('display', 'none');
-                $('.toPhase3').attr('disabled', '');
+                $('.toPhase2_1').attr('disabled', '');
             }
 
             if(callback) {

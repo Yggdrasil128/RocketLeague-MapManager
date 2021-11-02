@@ -8,6 +8,8 @@ import de.yggdrasil128.rocketleague.mapmanager.config.Config;
 import de.yggdrasil128.rocketleague.mapmanager.game_discovery.GameDiscovery;
 import de.yggdrasil128.rocketleague.mapmanager.maps.SteamWorkshopMap;
 import de.yggdrasil128.rocketleague.mapmanager.tools.DesktopShortcutHelper;
+import de.yggdrasil128.rocketleague.mapmanager.tools.Task;
+import de.yggdrasil128.rocketleague.mapmanager.tools.WorkshopTextures;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 
@@ -29,6 +31,10 @@ public class SetupApiHttpHandler extends AbstractApiHttpHandler {
 		this.rlMapManager = rlMapManager;
 		
 		super.registerHandler("gameDiscovery", this::handleGameDiscoveryRequest);
+		
+		super.registerFunction("workshopTextures_check", this::workshopTextures_check);
+		super.registerFunction("workshopTextures_start", this::workshopTextures_start);
+		super.registerFunction("workshopTextures_status", this::workshopTextures_status);
 		
 		super.registerFunction("getVersion", this::getVersion);
 		super.registerFunction("getAppPath", this::getAppPath);
@@ -87,6 +93,25 @@ public class SetupApiHttpHandler extends AbstractApiHttpHandler {
 		}).start();
 	}
 	
+	private String workshopTextures_check(Map<String, String> parameters) {
+		boolean result = WorkshopTextures.checkIfInstalled(rlMapManager.getConfig());
+		return result ? "1" : "0";
+	}
+	
+	private String workshopTextures_start(Map<String, String> parameters) {
+		Task task = WorkshopTextures.InstallTask.create(rlMapManager.getConfig());
+		task.start();
+		return task.getStatusJson();
+	}
+	
+	private String workshopTextures_status(Map<String, String> parameters) {
+		final Task task = WorkshopTextures.InstallTask.get();
+		if(task == null) {
+			return "";
+		}
+		return task.getStatusJson();
+	}
+	
 	private String getVersion(Map<String, String> parameters) {
 		return RLMapManager.VERSION.toString();
 	}
@@ -120,7 +145,8 @@ public class SetupApiHttpHandler extends AbstractApiHttpHandler {
 	}
 	
 	private String startMapDiscovery(Map<String, String> parameters) {
-		final SteamWorkshopMap.MapDiscovery mapDiscovery = SteamWorkshopMap.MapDiscovery.start(rlMapManager);
+		final SteamWorkshopMap.MapDiscovery mapDiscovery = SteamWorkshopMap.MapDiscovery.create(rlMapManager);
+		mapDiscovery.start();
 		return mapDiscovery.getStatusJson();
 	}
 	

@@ -9,7 +9,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.select.Elements;
+import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,35 +85,35 @@ public class SteamWorkshopMap extends RLMap {
 	private boolean fillMetadataFromJsoupDocument(Document doc) {
 		boolean result = true;
 		
-		Elements elements;
+		Element element;
 		
-		elements = doc.getElementsByClass("workshopItemTitle");
-		if(!elements.isEmpty()) {
-			title = elements.first().text();
+		element = doc.getElementsByClass("workshopItemTitle").first();
+		if(element != null) {
+			title = element.text();
 		} else {
 			logger.warn("Couldn't find title for workshop item " + workshopID);
 			result = false;
 		}
 		
-		elements = doc.getElementsByClass("workshopItemDescription");
-		if(!elements.isEmpty()) {
-			description = elements.first().text();
+		element = doc.getElementsByClass("workshopItemDescription").first();
+		if(element != null) {
+			description = element.text();
 		} else {
 			logger.warn("Couldn't find description for workshop item " + workshopID);
 			result = false;
 		}
 		
-		elements = doc.getElementsByClass("friendBlockContent");
-		if(!elements.isEmpty()) {
-			authorName = elements.first().ownText();
+		element = doc.getElementsByClass("friendBlockContent").first();
+		if(element != null) {
+			authorName = element.ownText();
 		} else {
 			logger.warn("Couldn't find authorName for workshop item " + workshopID);
 			result = false;
 		}
 		
-		elements = doc.getElementsByClass("workshopItemPreviewImageEnlargeable");
-		if(!elements.isEmpty()) {
-			String src = elements.first().parent().attr("onclick");
+		element = doc.getElementsByClass("workshopItemPreviewImageEnlargeable").first();
+		if(element != null && (element = element.parent()) != null) {
+			String src = element.attr("onclick");
 			int start = src.indexOf('\'');
 			int end = src.lastIndexOf('\'');
 			src = src.substring(start + 1, end);
@@ -135,31 +135,24 @@ public class SteamWorkshopMap extends RLMap {
 		private static final transient Logger logger = LoggerFactory.getLogger(MapDiscovery.class.getName());
 		private static MapDiscovery task = null;
 		private final RLMapManager rlMapManager;
-		private final Runnable onFinish;
 		
-		private MapDiscovery(RLMapManager rlMapManager, Runnable onFinish) {
+		private MapDiscovery(RLMapManager rlMapManager) {
 			super();
 			this.rlMapManager = rlMapManager;
-			this.onFinish = onFinish;
 		}
 		
 		public synchronized static MapDiscovery get() {
 			return task;
 		}
 		
-		public synchronized static MapDiscovery start(RLMapManager rlMapManager) {
-			return start(rlMapManager, null);
-		}
-		
-		public synchronized static MapDiscovery start(RLMapManager rlMapManager, Runnable onFinish) {
+		public synchronized static MapDiscovery create(RLMapManager rlMapManager) {
 			if(task != null && task.isRunning()) {
 				throw new IllegalStateException("Already running");
 			}
 			if(rlMapManager.getConfig().getPlatform() != Config.Platform.STEAM || rlMapManager.getConfig().getWorkshopFolder() == null) {
 				throw new IllegalStateException("Steam workshop map discovery is only available for Steam installations");
 			}
-			task = new MapDiscovery(rlMapManager, onFinish);
-			task.start();
+			task = new MapDiscovery(rlMapManager);
 			return task;
 		}
 		
@@ -240,10 +233,6 @@ public class SteamWorkshopMap extends RLMap {
 			
 			rlMapManager.getConfig().save();
 			
-			if(onFinish != null) {
-				onFinish.run();
-			}
-			
 			String s = "Done. Added " + registrableMaps.size() + " map";
 			if(registrableMaps.size() != 1) {
 				s += "s";
@@ -304,31 +293,28 @@ public class SteamWorkshopMap extends RLMap {
 		private static final transient Logger logger = LoggerFactory.getLogger(MapDownload.class.getName());
 		private static MapDownload task = null;
 		private final RLMapManager rlMapManager;
-		private final Runnable onFinish;
 		private final String url;
 		private File tempFile;
 		private SteamWorkshopDownloader steamWorkshopDownloader;
 		
-		private MapDownload(String url, RLMapManager rlMapManager, Runnable onFinish) {
+		private MapDownload(String url, RLMapManager rlMapManager) {
 			super();
 			this.url = url;
 			this.rlMapManager = rlMapManager;
-			this.onFinish = onFinish;
 		}
 		
 		public synchronized static MapDownload get() {
 			return task;
 		}
 		
-		public synchronized static MapDownload start(String url, RLMapManager rlMapManager, Runnable onFinish) {
+		public synchronized static MapDownload create(String url, RLMapManager rlMapManager) {
 			if(task != null && task.isRunning()) {
 				throw new IllegalStateException("Already running");
 			}
 			if(rlMapManager.getConfig().getPlatform() == Config.Platform.STEAM) {
 				throw new IllegalStateException("Direct Steam workshop map download is not supported for Steam installations");
 			}
-			task = new MapDownload(url, rlMapManager, onFinish);
-			task.start();
+			task = new MapDownload(url, rlMapManager);
 			return task;
 		}
 		
@@ -405,17 +391,13 @@ public class SteamWorkshopMap extends RLMap {
 			checkIfTaskIsCancelled();
 			statusMessage = "Downloading map metadata from workshop...";
 			
-			SteamWorkshopMap map = create(workshopID, targetFile, udkFilename, true);
+			SteamWorkshopMap map = SteamWorkshopMap.create(workshopID, targetFile, udkFilename, true);
 			map.refreshMetadata();
 			
 			rlMapManager.getConfig().registerMap(map);
 			rlMapManager.getConfig().save();
 			
 			statusMessage = "Done. Successfully imported '" + map.getDisplayName() + "'.";
-			
-			if(onFinish != null) {
-				onFinish.run();
-			}
 		}
 		
 		@Override

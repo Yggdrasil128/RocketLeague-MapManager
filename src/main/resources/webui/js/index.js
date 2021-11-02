@@ -90,13 +90,16 @@ function updateStatusCallback(data) {
     }
 
     if(status['tasksRunning']['steamWorkshopMapDiscovery'] && !tasksRunning['steamWorkshopMapDiscovery']) {
-        importMapsTask('fromSteamWorkshopDirect', false);
+        handleTask('fromSteamWorkshopDirect', false, loadMaps);
     }
     if(status['tasksRunning']['steamWorkshopMapDownload'] && !tasksRunning['steamWorkshopMapDownload']) {
-        importMapsTask('fromSteamWorkshopURL', false);
+        handleTask('fromSteamWorkshopURL', false, loadMaps);
     }
     if(status['tasksRunning']['lethamyrMapDownload'] && !tasksRunning['lethamyrMapDownload']) {
-        importMapsTask('fromLethamyrURL', false);
+        handleTask('fromLethamyrURL', false, loadMaps);
+    }
+    if(status['tasksRunning']['workshopTextures'] && !tasksRunning['workshopTextures']) {
+        handleTask('workshopTextures', false, checkWorkshopTextures);
     }
 }
 

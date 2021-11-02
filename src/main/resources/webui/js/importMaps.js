@@ -1,9 +1,9 @@
 // noinspection JSCheckFunctionSignatures
 
-function importMapsTask(importOptionDivID, doStartTask = true) {
-    let importOptionDiv = $('#' + importOptionDivID);
-    let startButton = importOptionDiv.find('button.start');
-    let statusDiv = importOptionDiv.find('.statusDiv');
+function handleTask(taskDivID, doStartTask = true, onFinishCallback = null) {
+    let taskDiv = $('#' + taskDivID);
+    let startButton = taskDiv.find('button.start');
+    let statusDiv = taskDiv.find('.statusDiv');
     let statusSpan = statusDiv.find('.status');
     let cancelButton = statusDiv.find('button');
 
@@ -12,7 +12,7 @@ function importMapsTask(importOptionDivID, doStartTask = true) {
     statusSpan.html('').css('color', '#c2ffbb');
     statusDiv.css('display', '');
 
-    let apiEndpointName = importOptionDiv.data('api-endpoint-name');
+    let apiEndpointName = taskDiv.data('api-endpoint-name');
     tasksRunning[apiEndpointName] = true;
 
     let intervalHandle;
@@ -31,7 +31,9 @@ function importMapsTask(importOptionDivID, doStartTask = true) {
                 statusSpan.css('color', '#ffbbbb');
             }
 
-            loadMaps();
+            if(onFinishCallback) {
+                onFinishCallback();
+            }
         }
     };
     if(!doStartTask) {
@@ -49,7 +51,7 @@ function importMapsTask(importOptionDivID, doStartTask = true) {
     };
 
     let params = null;
-    let input = importOptionDiv.find('input');
+    let input = taskDiv.find('input');
     if(input.length > 0) {
         params = {url: input.val()};
     }
