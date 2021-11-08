@@ -172,12 +172,7 @@ public abstract class Task {
 				message = "Cancelled.";
 				break;
 			case ERROR:
-				message = "Error: ";
-				if(exception.getMessage() != null) {
-					message += exception.getMessage();
-				} else {
-					message += exception.toString();
-				}
+				message = "Error: " + exception.toString();
 				break;
 			case DONE:
 				message = statusMessage == null ? "Done." : statusMessage;

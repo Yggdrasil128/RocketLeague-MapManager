@@ -2,6 +2,8 @@ package de.yggdrasil128.rocketleague.mapmanager.tools;
 
 import de.yggdrasil128.rocketleague.mapmanager.config.Config;
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.File;
@@ -29,6 +31,7 @@ public abstract class WorkshopTextures {
 	}
 	
 	public static class InstallTask extends Task {
+		private static final Logger logger = LoggerFactory.getLogger(InstallTask.class.getName());
 		private static InstallTask task = null;
 		private final File cookedFolder;
 		private File tempFile;
@@ -60,6 +63,11 @@ public abstract class WorkshopTextures {
 				return false;
 			}
 			return task.isRunning();
+		}
+		
+		@Override
+		public Logger getLogger() {
+			return logger;
 		}
 		
 		@Override
