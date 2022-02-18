@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,10 +17,9 @@ public class GoogleDriveDownloader {
 	private final File file;
 	private boolean cancelled = false;
 	private HttpsURLConnection httpsURLConnection;
-	private List<String> cookies;
-	private String downloadWarningCookie;
 	private long downloadSize = 0;
 	private ProgressInputStream progressInputStream;
+	private Map<String, List<String>> headerFields;
 	
 	public GoogleDriveDownloader(String id, File file) {
 		this.id = id;
@@ -44,10 +44,12 @@ public class GoogleDriveDownloader {
 	public void download() throws Exception {
 		String googleDriveURL = "https://drive.google.com/uc?export=download&id=" + id;
 		download(googleDriveURL, null);
-		final boolean hasVirusWarning = hasVirusWarning();
-		if(!hasVirusWarning) {
+		
+		if(headerFields.get("Content-Type") == null || !headerFields.get("Content-Type").get(0).startsWith("text/html")) {
+			// download was successful
 			return;
 		}
+		
 		// parse downloaded HTML doc to get the download size
 		String html = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
 		Pattern pattern = Pattern.compile(" \\((\\d+(\\.\\d+)?)([M|G])\\)");
@@ -60,17 +62,24 @@ public class GoogleDriveDownloader {
 			}
 			this.downloadSize = Math.round(downloadSize);
 		}
-		// parse cookie
-		pattern = Pattern.compile("(download_warning_\\d+_" + id + "=(.{4}));");
-		matcher = pattern.matcher(downloadWarningCookie);
-		if(!matcher.find()) {
-			throw new Exception("Couldn't parse Google Drive download warning cookie");
-		}
-		String cookie = matcher.group(1);
-		String cookieValue = matcher.group(2);
 		
-		googleDriveURL += "&confirm=" + cookieValue;
-		download(googleDriveURL, cookie);
+		String virusWarningCookie = getVirusWarningCookie();
+		if(virusWarningCookie == null) {
+			googleDriveURL += "&confirm=t";
+			download(googleDriveURL, null);
+		} else {
+			// parse cookie
+			pattern = Pattern.compile("(download_warning_\\d+_" + id + "=(.{4}));");
+			matcher = pattern.matcher(virusWarningCookie);
+			if(!matcher.find()) {
+				throw new Exception("Couldn't parse Google Drive download warning cookie");
+			}
+			String cookie = matcher.group(1);
+			String cookieValue = matcher.group(2);
+			
+			googleDriveURL += "&confirm=" + cookieValue;
+			download(googleDriveURL, cookie);
+		}
 	}
 	
 	private void download(String url, String cookie) throws Exception {
@@ -86,7 +95,7 @@ public class GoogleDriveDownloader {
 				throw new IOException("Google drive API returned unexpected response code " + responseCode);
 			}
 			
-			cookies = httpsURLConnection.getHeaderFields().get("Set-Cookie");
+			headerFields = httpsURLConnection.getHeaderFields();
 			
 			progressInputStream = new ProgressInputStream(httpsURLConnection.getInputStream(), downloadSize);
 			FileUtils.copyInputStreamToFile(progressInputStream, file);
@@ -101,16 +110,15 @@ public class GoogleDriveDownloader {
 		}
 	}
 	
-	private boolean hasVirusWarning() {
-		if(cookies == null) {
-			return false;
+	private String getVirusWarningCookie() {
+		if(headerFields.get("Set-Cookie") == null) {
+			return null;
 		}
-		for(String cookie : cookies) {
+		for(String cookie : headerFields.get("Set-Cookie")) {
 			if(cookie.startsWith("download_warning")) {
-				downloadWarningCookie = cookie;
-				return true;
+				return cookie;
 			}
 		}
-		return false;
+		return null;
 	}
 }
