@@ -36,6 +36,7 @@ public class RLProcessWatcher {
 			Process process = Runtime.getRuntime().exec("tasklist /FI \"ImageName eq RocketLeague.exe\"");
 			try(BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
 				String line;
+				Integer pid = null;
 				while((line = input.readLine()) != null) {
 					if(!line.startsWith("RocketLeague.exe")) {
 						continue;
@@ -44,11 +45,14 @@ public class RLProcessWatcher {
 					int index = line.indexOf(' ');
 					line = line.substring(0, index);
 					pid = Integer.parseInt(line);
+					break;
 				}
+				this.pid = pid;
 			}
 		} catch(Exception e) {
 			logger.warn("Unable to fetch RocketLeague PID", e);
 		}
+		
 		if(PRINT_UPDATE_TIME_TO_SYSOUT) {
 			System.out.println("RocketLeagueProcessWatcher::update took " + (System.nanoTime() - lastUpdate) + " ns.");
 		}
