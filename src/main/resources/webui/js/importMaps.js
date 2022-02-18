@@ -68,35 +68,20 @@ function uploadMap(buttonElement) {
     let importOptionDiv = $(buttonElement.parentElement);
     let statusDiv = importOptionDiv.find('.statusDiv');
     let statusSpan = statusDiv.find('.status');
-    let cancelButton = statusDiv.find('button');
 
     startButton.attr('disabled', '');
-    cancelButton.attr('disabled', null);
-    statusSpan.html('Importing...').css('color', '#c2ffbb');
-    statusDiv.css('display', '');
+    statusDiv.css('display', 'none');
 
     let callback = function(response) {
-        statusSpan.html(response);
-        cancelButton.attr('disabled', '');
         startButton.attr('disabled', null);
-        if(response.startsWith('Error')) {
-            statusSpan.css('color', '#ffbbbb');
+        if(!response) {
+            return;
         }
+        statusSpan.html(response).css('color', response.startsWith('Error') ? '#ffbbbb' : '#c2ffbb');
+        statusDiv.css('display', '');
 
         loadMaps();
     };
 
-    let files = $('#fromFile_input').get(0).files;
-    if(files.length === 0) {
-        callback("Error: Please select a UDK/UPK file or a ZIP file containing a UDK/UPK file.");
-        return;
-    }
-    let file = files[0];
-
-    let fileReader = new FileReader();
-    fileReader.onload = function(event) {
-        let data = event.target.result;
-        makeRequest('api/upload/map', {filename: file.name}, data, callback);
-    };
-    fileReader.readAsArrayBuffer(file);
+    makeRequest('api/importCustomMap', null, null, callback, callback, 3600000);
 }

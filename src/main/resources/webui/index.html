@@ -238,13 +238,11 @@
         <h2>From file</h2>
         <p>
             You can also import a map that you have already downloaded on your computer.<br/>
-            You can either select a UDK/UPK file or a ZIP file containing a UDK/UPK file.
+            You can either select a UDK/UPK file or a ZIP file containing a UDK/UPK file.<br/>
+            After the map has been imported, you can delete the file you selected. It is no longer needed.
         </p>
 
-        <label for="fromFile_input">Select map file: </label>
-        <input id="fromFile_input" type="file"/>
-        <br/>
-        <button class="start" onclick="uploadMap(this)">Import map</button>
+        <button class="start" onclick="uploadMap(this)">Select file...</button>
 
         <div class="statusDiv" style="display: none">
             Status: <span class="status"></span>

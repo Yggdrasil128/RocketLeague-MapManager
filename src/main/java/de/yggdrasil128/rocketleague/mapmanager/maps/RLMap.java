@@ -34,6 +34,25 @@ public abstract class RLMap {
 		}
 	}
 	
+	protected static String getImageFileMimeType(String extension) {
+		if(extension.startsWith(".")) {
+			extension = extension.substring(1);
+		}
+		switch(extension.toLowerCase()) {
+			case "jpg":
+			case "jpeg":
+				return "image/jpeg";
+			case "png":
+				return "image/png";
+			case "bmp":
+				return "image/bmp";
+			case "gif":
+				return "image/gif";
+			default:
+				return "";
+		}
+	}
+	
 	protected abstract String getDiscriminator();
 	
 	public abstract MapType getType();

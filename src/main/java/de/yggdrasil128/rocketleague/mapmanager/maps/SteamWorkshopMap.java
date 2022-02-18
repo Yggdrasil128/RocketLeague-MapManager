@@ -5,6 +5,7 @@ import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
 import de.yggdrasil128.rocketleague.mapmanager.config.Config;
 import de.yggdrasil128.rocketleague.mapmanager.tools.SteamWorkshopDownloader;
 import de.yggdrasil128.rocketleague.mapmanager.tools.Task;
+import de.yggdrasil128.rocketleague.mapmanager.tools.ZipTools;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jsoup.Jsoup;
@@ -14,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.function.Consumer;
@@ -325,20 +325,6 @@ public class SteamWorkshopMap extends RLMap {
 			return task.isRunning();
 		}
 		
-		public static ZipEntry findUdkFile(ZipFile zipFile) throws Exception {
-			Enumeration<? extends ZipEntry> zipEntries = zipFile.entries();
-			
-			while(zipEntries.hasMoreElements()) {
-				ZipEntry entry = zipEntries.nextElement();
-				final String name = entry.getName();
-				if(name.endsWith(".udk") || name.endsWith(".upk")) {
-					return entry;
-				}
-			}
-			
-			throw new Exception("UDK file not found in downloaded zip.");
-		}
-		
 		@Override
 		public Logger getLogger() {
 			return logger;
@@ -378,7 +364,10 @@ public class SteamWorkshopMap extends RLMap {
 			statusMessage = "Unzipping...";
 			
 			ZipFile zipFile = new ZipFile(tempFile);
-			ZipEntry zipEntry = findUdkFile(zipFile);
+			ZipEntry zipEntry = ZipTools.findZipEntry(zipFile, ZipTools.MAP_EXTENSIONS);
+			if(zipEntry == null) {
+				throw new Exception("UDK file not found in downloaded zip.");
+			}
 			String udkFilename = zipEntry.getName();
 			File targetFile = new File(RLMapManager.FILE_MAPS, mapID + ".udk");
 			

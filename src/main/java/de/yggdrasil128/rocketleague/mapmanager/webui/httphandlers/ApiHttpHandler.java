@@ -8,6 +8,7 @@ import de.yggdrasil128.rocketleague.mapmanager.Main;
 import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
 import de.yggdrasil128.rocketleague.mapmanager.config.Config;
 import de.yggdrasil128.rocketleague.mapmanager.game_discovery.GameDiscovery;
+import de.yggdrasil128.rocketleague.mapmanager.maps.CustomMap;
 import de.yggdrasil128.rocketleague.mapmanager.maps.LethamyrMap;
 import de.yggdrasil128.rocketleague.mapmanager.maps.RLMap;
 import de.yggdrasil128.rocketleague.mapmanager.maps.SteamWorkshopMap;
@@ -68,6 +69,7 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		super.registerFunction("unloadMap", this::unloadMap);
 		super.registerFunction("editMap", this::editMap);
 		super.registerFunction("deleteMap", this::deleteMap);
+		super.registerFunction("importCustomMap", this::importCustomMap);
 		super.registerFunction("refreshMapMetadata", this::refreshMapMetadata);
 		super.registerFunction("isRocketLeagueRunning", this::isRocketLeagueRunning);
 		super.registerFunction("startRocketLeague", this::startRocketLeague);
@@ -268,6 +270,8 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		
 		rlMapManager.getConfig().save();
 		rlMapManager.getSysTray().updateLoadFavoriteMapMenu();
+		
+		lastUpdatedMaps.now(parameters.get("btid"));
 		return "";
 	}
 	
@@ -276,7 +280,19 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 		rlMapManager.getConfig().deleteMap(map);
 		rlMapManager.getConfig().save();
 		rlMapManager.getSysTray().updateLoadFavoriteMapMenu();
+		
+		lastUpdatedMaps.now(parameters.get("btid"));
 		return "";
+	}
+	
+	private String importCustomMap(Map<String, String> parameters) {
+		try {
+			String response = CustomMap.importMap(rlMapManager);
+			lastUpdatedMaps.now(parameters.get("btid"));
+			return response;
+		} catch(Exception e) {
+			return "Error: " + e;
+		}
 	}
 	
 	private String refreshMapMetadata(Map<String, String> parameters) {
@@ -296,7 +312,7 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 	}
 	
 	private String isRocketLeagueRunning(Map<String, String> parameters) {
-		return rlMapManager.isRocketLeagueRunning() ? "true" : "false";
+		return rlMapManager.getRLProcessWatcher().isRunning() ? "true" : "false";
 	}
 	
 	private String startRocketLeague(Map<String, String> parameters) {
@@ -323,7 +339,7 @@ public class ApiHttpHandler extends AbstractApiHttpHandler {
 	private String getStatus(Map<String, String> parameters) {
 		JsonObject json = new JsonObject();
 		
-		json.addProperty("isRLRunning", rlMapManager.isRocketLeagueRunning());
+		json.addProperty("isRLRunning", rlMapManager.getRLProcessWatcher().isRunning());
 		if(rlMapManager.getUpdateChecker().getJson() == null) {
 			json.add("updateAvailable", null);
 		} else if(rlMapManager.getUpdateChecker().isUpdateAvailable()) {

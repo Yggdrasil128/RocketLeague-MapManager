@@ -3,6 +3,7 @@ package de.yggdrasil128.rocketleague.mapmanager.maps;
 import de.yggdrasil128.rocketleague.mapmanager.RLMapManager;
 import de.yggdrasil128.rocketleague.mapmanager.tools.GoogleDriveDownloader;
 import de.yggdrasil128.rocketleague.mapmanager.tools.Task;
+import de.yggdrasil128.rocketleague.mapmanager.tools.ZipTools;
 import org.apache.commons.io.FileUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -201,7 +202,10 @@ public class LethamyrMap extends RLMap {
 			statusMessage = "Unzipping...";
 			
 			ZipFile zipFile = new ZipFile(tempFile);
-			ZipEntry zipEntry = SteamWorkshopMap.MapDownload.findUdkFile(zipFile);
+			ZipEntry zipEntry = ZipTools.findZipEntry(zipFile, ZipTools.MAP_EXTENSIONS);
+			if(zipEntry == null) {
+				throw new Exception("UDK file not found in downloaded zip.");
+			}
 			File targetFile = new File(RLMapManager.FILE_MAPS, map.getID() + ".udk");
 			FileUtils.copyInputStreamToFile(zipFile.getInputStream(zipEntry), targetFile);
 			

@@ -2,6 +2,7 @@ package de.yggdrasil128.rocketleague.mapmanager;
 
 import de.yggdrasil128.rocketleague.mapmanager.config.Config;
 import de.yggdrasil128.rocketleague.mapmanager.maps.RLMap;
+import de.yggdrasil128.rocketleague.mapmanager.tools.RLProcessWatcher;
 import de.yggdrasil128.rocketleague.mapmanager.tools.RegistryHelper;
 import de.yggdrasil128.rocketleague.mapmanager.tools.UpdateChecker;
 import de.yggdrasil128.rocketleague.mapmanager.webui.WebInterface;
@@ -10,10 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URI;
 
 public class RLMapManager {
@@ -21,17 +20,18 @@ public class RLMapManager {
 	public static final File FILE_ROOT;
 	public static final File FILE_CONFIG;
 	public static final File FILE_MAPS;
+	public static final File FILE_MAP_IMAGES;
 	private static final boolean USE_DEV_ENVIRONMENT = false;
 	public static final String REGISTRY_AUTOSTART_KEY = "HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
 	public static final String REGISTRY_AUTOSTART_VALUE = "RL Map Manager";
 	static final File FILE_LOG;
-	private static final long IS_RL_RUNNING_CACHE_TTL = 4800;
 	
 	static {
 		String home = System.getProperty("user.home");
 		FILE_ROOT = new File(home, USE_DEV_ENVIRONMENT ? "RL-MapManager DEV" : "RL-MapManager");
 		FILE_CONFIG = new File(FILE_ROOT, "config.json");
 		FILE_MAPS = new File(FILE_ROOT, "maps");
+		FILE_MAP_IMAGES = new File(FILE_ROOT, "mapImages");
 		FILE_LOG = new File(FILE_ROOT, "log.txt");
 		//noinspection ResultOfMethodCallIgnored
 		FILE_MAPS.mkdirs();
@@ -47,10 +47,9 @@ public class RLMapManager {
 	private final Config config;
 	private final WebInterface webInterface;
 	private final UpdateChecker updateChecker;
+	private final RLProcessWatcher rlProcessWatcher;
 	private final boolean isSetupMode;
 	private SysTray sysTray;
-	private boolean isRLRunningCache = false;
-	private long isRLRunningCacheExpiry = 0;
 	
 	RLMapManager(boolean isSetupMode) {
 		this.isSetupMode = isSetupMode;
@@ -65,6 +64,8 @@ public class RLMapManager {
 		
 		webInterface = new WebInterface(this, config.getWebInterfacePort());
 		updateChecker = new UpdateChecker();
+		rlProcessWatcher = new RLProcessWatcher();
+		
 	}
 	
 	RLMapManager() {
@@ -104,12 +105,17 @@ public class RLMapManager {
 		return updateChecker;
 	}
 	
+	public RLProcessWatcher getRLProcessWatcher() {
+		return rlProcessWatcher;
+	}
+	
 	public SysTray getSysTray() {
 		return sysTray;
 	}
 	
 	public void loadMap(RLMap map) {
-		Integer pid = getRocketLeaguePID();
+		Integer pid = rlProcessWatcher.getPID();
+		
 		boolean stopRL, startRL;
 		if(pid == null) {
 			// Rocket League is stopped
@@ -130,6 +136,7 @@ public class RLMapManager {
 		} catch(IOException e) {
 			logger.error("Couldn't copy map to destination", e);
 		}
+		
 		config.setLoadedMapID(map.getID());
 		map.setLastLoadedNow();
 		config.save();
@@ -165,22 +172,11 @@ public class RLMapManager {
 		}
 	}
 	
-	public boolean isRocketLeagueRunning() {
-		long now = System.currentTimeMillis();
-		if(now > isRLRunningCacheExpiry) {
-			isRLRunningCache = getRocketLeaguePID() != null;
-			isRLRunningCacheExpiry = now + IS_RL_RUNNING_CACHE_TTL;
-		}
-		return isRLRunningCache;
-	}
-	
 	public void stopRocketLeague() {
-		Integer pid = getRocketLeaguePID();
-		if(pid == null) {
-			return;
+		Integer pid = rlProcessWatcher.getPID(); // prevent TOC/TOU
+		if(pid != null) {
+			stopRocketLeague(pid);
 		}
-		
-		stopRocketLeague(pid);
 	}
 	
 	private void stopRocketLeague(int pid) {
@@ -196,7 +192,7 @@ public class RLMapManager {
 	}
 	
 	private void startRocketLeague(boolean checkIfRunning) {
-		if(checkIfRunning && isRocketLeagueRunning()) {
+		if(checkIfRunning && rlProcessWatcher.isRunning()) {
 			return;
 		}
 		
@@ -210,7 +206,7 @@ public class RLMapManager {
 				Runtime.getRuntime().exec(config.getExeFile().getAbsolutePath());
 			}
 		} catch(Exception e) {
-			logger.warn("startRocketLeague_noCheck", e);
+			logger.warn("startRocketLeague", e);
 		}
 	}
 	
@@ -248,26 +244,5 @@ public class RLMapManager {
 		if(source.exists()) {
 			source.renameTo(target);
 		}
-	}
-	
-	private Integer getRocketLeaguePID() {
-		try {
-			Process process = Runtime.getRuntime().exec("tasklist");
-			try(BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
-				String line;
-				while((line = input.readLine()) != null) {
-					if(!line.startsWith("RocketLeague.exe")) {
-						continue;
-					}
-					line = line.substring("RocketLeague.exe".length()).trim();
-					int index = line.indexOf(' ');
-					line = line.substring(0, index);
-					return Integer.parseInt(line);
-				}
-			}
-		} catch(Exception e) {
-			logger.warn("getRocketLeaguePID", e);
-		}
-		return null;
 	}
 }

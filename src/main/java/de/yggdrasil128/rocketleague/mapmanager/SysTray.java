@@ -17,6 +17,7 @@ public class SysTray {
 	private final RLMapManager rlMapManager;
 	//	private final Logger logger = LoggerFactory.getLogger(SysTray.class.getName());
 	private Menu loadFavoriteMapMenu;
+	private MenuItem startStopRLMenuItem;
 	
 	public SysTray(RLMapManager rlMapManager) throws Exception {
 		if(!SystemTray.isSupported()) {
@@ -41,17 +42,15 @@ public class SysTray {
 	private void createIcon() throws Exception {
 		MenuItem menuItem1 = new MenuItem("Open in browser");
 		loadFavoriteMapMenu = new Menu("Load favorite map");
-		MenuItem menuItem3 = new MenuItem("Start/Stop Rocket League");
+		startStopRLMenuItem = new MenuItem("Start/Stop Rocket League");
 		MenuItem menuItem4 = new MenuItem("Exit");
 		
 		menuItem1.addActionListener(event -> rlMapManager.getWebInterface().openInBrowser());
-		menuItem3.addActionListener(event -> {
-			if(menuItem3.getLabel().startsWith("Start")) {
+		startStopRLMenuItem.addActionListener(event -> {
+			if(startStopRLMenuItem.getLabel().startsWith("Start")) {
 				rlMapManager.startRocketLeague();
-				menuItem3.setLabel("Stop Rocket League");
 			} else {
 				rlMapManager.stopRocketLeague();
-				menuItem3.setLabel("Start Rocket League");
 			}
 		});
 		menuItem4.addActionListener(event -> System.exit(0));
@@ -59,15 +58,7 @@ public class SysTray {
 		new Timer().scheduleAtFixedRate(new TimerTask() {
 			@Override
 			public void run() {
-				if(rlMapManager.isRocketLeagueRunning()) {
-					if(!menuItem3.getLabel().equals("Stop Rocket League")) {
-						menuItem3.setLabel("Stop Rocket League");
-					}
-				} else {
-					if(!menuItem3.getLabel().equals("Start Rocket League")) {
-						menuItem3.setLabel("Start Rocket League");
-					}
-				}
+				
 			}
 		}, 0, 5000);
 		
@@ -75,7 +66,7 @@ public class SysTray {
 		popupMenu.add(menuItem1);
 		popupMenu.addSeparator();
 		popupMenu.add(loadFavoriteMapMenu);
-		popupMenu.add(menuItem3);
+		popupMenu.add(startStopRLMenuItem);
 		popupMenu.addSeparator();
 		popupMenu.add(menuItem4);
 		
@@ -131,6 +122,18 @@ public class SysTray {
 		}
 	}
 	
+	private void onPopupMenuOpened() {
+		if(rlMapManager.getRLProcessWatcher().isRunning()) {
+			if(!startStopRLMenuItem.getLabel().equals("Stop Rocket League")) {
+				startStopRLMenuItem.setLabel("Stop Rocket League");
+			}
+		} else {
+			if(!startStopRLMenuItem.getLabel().equals("Start Rocket League")) {
+				startStopRLMenuItem.setLabel("Start Rocket League");
+			}
+		}
+	}
+	
 	private class MouseListenerImpl implements MouseListener {
 		@Override
 		public void mouseClicked(MouseEvent e) {
@@ -139,6 +142,9 @@ public class SysTray {
 		
 		@Override
 		public void mousePressed(MouseEvent e) {
+			if(e.isPopupTrigger()) {
+				onPopupMenuOpened();
+			}
 			if(e.getClickCount() == 2) {
 				rlMapManager.getWebInterface().openInBrowser();
 			}
@@ -146,7 +152,9 @@ public class SysTray {
 		
 		@Override
 		public void mouseReleased(MouseEvent e) {
-			
+			if(e.isPopupTrigger()) {
+				onPopupMenuOpened();
+			}
 		}
 		
 		@Override
