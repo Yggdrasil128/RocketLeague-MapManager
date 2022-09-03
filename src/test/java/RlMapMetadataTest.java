@@ -13,6 +13,12 @@ public class RlMapMetadataTest {
 		Assert.assertTrue(map.getDescription().startsWith("Another Minigolf map. 9 holes in total. Hole scored = next course"));
 		Assert.assertEquals("FroYo", map.getAuthorName());
 		Assert.assertEquals("image/jpeg", map.getImageFileMimeType());
+		
+		
+		map = SteamWorkshopMap.create(2814587358L, null, null, false);
+		map.refreshMetadata();
+		
+		Assert.assertEquals("image/jpeg", map.getImageFileMimeType());
 	}
 	
 	@Test

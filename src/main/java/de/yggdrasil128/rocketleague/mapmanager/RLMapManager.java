@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.net.URI;
 
 public class RLMapManager {
-	public static final UpdateChecker.Version VERSION = new UpdateChecker.Version(2, 1, 1);
+	public static final UpdateChecker.Version VERSION = new UpdateChecker.Version(2, 1, 2);
 	public static final File FILE_ROOT;
 	public static final File FILE_CONFIG;
 	public static final File FILE_MAPS;

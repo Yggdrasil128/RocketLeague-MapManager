@@ -24,7 +24,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class SteamWorkshopMap extends RLMap {
-	private static final transient Logger logger = LoggerFactory.getLogger(SteamWorkshopMap.class.getName());
+	private static final Logger logger = LoggerFactory.getLogger(SteamWorkshopMap.class.getName());
 	
 	private long workshopID;
 	private boolean isManuallyDownloaded;
@@ -113,7 +113,7 @@ public class SteamWorkshopMap extends RLMap {
 		
 		element = doc.getElementsByClass("workshopItemPreviewImageEnlargeable").first();
 		if(element != null && (element = element.parent()) != null) {
-			String src = element.attr("onclick");
+			String src = element.attr("href");
 			int start = src.indexOf('\'');
 			int end = src.lastIndexOf('\'');
 			src = src.substring(start + 1, end);
@@ -132,7 +132,7 @@ public class SteamWorkshopMap extends RLMap {
 	}
 	
 	public static class MapDiscovery extends Task {
-		private static final transient Logger logger = LoggerFactory.getLogger(MapDiscovery.class.getName());
+		private static final Logger logger = LoggerFactory.getLogger(MapDiscovery.class.getName());
 		private static MapDiscovery task = null;
 		private final RLMapManager rlMapManager;
 		
@@ -290,7 +290,7 @@ public class SteamWorkshopMap extends RLMap {
 	}
 	
 	public static class MapDownload extends Task {
-		private static final transient Logger logger = LoggerFactory.getLogger(MapDownload.class.getName());
+		private static final Logger logger = LoggerFactory.getLogger(MapDownload.class.getName());
 		private static MapDownload task = null;
 		private final RLMapManager rlMapManager;
 		private final String url;
