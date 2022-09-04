@@ -19,7 +19,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class LethamyrMap extends RLMap {
-	private static final transient Logger logger = LoggerFactory.getLogger(LethamyrMap.class.getName());
+	private static final Logger logger = LoggerFactory.getLogger(LethamyrMap.class.getName());
 	private String urlName;
 	
 	public static LethamyrMap create(String urlName) {
@@ -121,7 +121,7 @@ public class LethamyrMap extends RLMap {
 	}
 	
 	public static class MapDownload extends Task {
-		private static final transient Logger logger = LoggerFactory.getLogger(MapDownload.class.getName());
+		private static final Logger logger = LoggerFactory.getLogger(MapDownload.class.getName());
 		private static MapDownload task = null;
 		private final RLMapManager rlMapManager;
 		private final String url;

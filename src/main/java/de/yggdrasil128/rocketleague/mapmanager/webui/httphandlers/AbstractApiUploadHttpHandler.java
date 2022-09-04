@@ -19,7 +19,7 @@ public abstract class AbstractApiUploadHttpHandler implements HttpHandler {
 		this.context = context;
 	}
 	
-	protected void registerHandler(String name, UploadHandler handler) {
+	protected void registerHandler(@SuppressWarnings("SameParameterValue") String name, UploadHandler handler) {
 		handlers.put(name, handler);
 	}
 	

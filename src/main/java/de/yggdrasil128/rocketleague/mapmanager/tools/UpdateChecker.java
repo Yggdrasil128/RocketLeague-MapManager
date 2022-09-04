@@ -116,7 +116,7 @@ public class UpdateChecker {
 				if(parts.length >= 2) {
 					minor = Integer.parseInt(parts[1]);
 				}
-				if(parts.length >= 3) {
+				if(parts.length == 3) {
 					patch = Integer.parseInt(parts[2]);
 				}
 			} catch(NumberFormatException e) {

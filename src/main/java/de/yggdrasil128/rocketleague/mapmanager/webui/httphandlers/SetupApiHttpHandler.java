@@ -20,7 +20,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-@SuppressWarnings("SameReturnValue")
+@SuppressWarnings({"SameReturnValue", "unused"})
 public class SetupApiHttpHandler extends AbstractApiHttpHandler {
 	private static final Gson GSON = Config.GSON;
 	

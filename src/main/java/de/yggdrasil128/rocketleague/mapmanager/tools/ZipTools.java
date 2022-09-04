@@ -5,8 +5,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public abstract class ZipTools {
-	public static String[] MAP_EXTENSIONS = new String[]{".udk", ".upk"};
-	public static String[] IMAGE_EXTENSIONS = new String[]{".jpg", ".jpeg", ".png", ".gif", ".bmp"};
+	public static final String[] MAP_EXTENSIONS = new String[]{".udk", ".upk"};
+	public static final String[] IMAGE_EXTENSIONS = new String[]{".jpg", ".jpeg", ".png", ".gif", ".bmp"};
 	
 	public static ZipEntry findZipEntry(ZipFile zipFile, String[] fileExtensions) {
 		Enumeration<? extends ZipEntry> zipEntries = zipFile.entries();

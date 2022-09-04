@@ -389,9 +389,9 @@ function refreshMapView_detailedList() {
         html += '<td class="two">';
         html += '<div class="title">' + map['title'] + '</div>';
         html += '<table class="udkAndAuthor floatLeftRight"><tr><td><div class="udkFilename">';
-        html += map['udkName'].substr(0, map['udkName'].length - 4);
+        html += map['udkName'].substring(0, map['udkName'].length - 4);
         html += '<span>';
-        html += map['udkName'].substr(map['udkName'].length - 4, 4);
+        html += map['udkName'].substring(map['udkName'].length - 4);
         html += '</span>';
         html += '</div></td><td><div class="authorName">';
         html += '<span>Created by </span>';

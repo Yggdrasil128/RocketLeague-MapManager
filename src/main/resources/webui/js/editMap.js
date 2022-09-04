@@ -38,7 +38,7 @@ function saveEditMap(skipImageUpload = false) {
                 makeRequest('api/upload/mapImage', params, data, function() {
                     saveEditMap(true);
                 }, function() {
-                    button.html('Error: Couldn\'t store map image');
+                    button.html("Error: Couldn't store map image");
                     setTimeout(function() {
                         button.html('Save changes');
                     }, 3000);

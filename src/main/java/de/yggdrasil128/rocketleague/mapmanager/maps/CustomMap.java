@@ -13,7 +13,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class CustomMap extends RLMap {
-	private static final transient Logger logger = LoggerFactory.getLogger(CustomMap.class.getName());
+	private static final Logger logger = LoggerFactory.getLogger(CustomMap.class.getName());
 	
 	private int id;
 	

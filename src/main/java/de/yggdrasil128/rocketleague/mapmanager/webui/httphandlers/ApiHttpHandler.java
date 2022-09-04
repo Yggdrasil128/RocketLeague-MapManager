@@ -28,7 +28,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-@SuppressWarnings("SameReturnValue")
+@SuppressWarnings({"SameReturnValue", "unused"})
 public class ApiHttpHandler extends AbstractApiHttpHandler {
 	private static final Gson GSON = Config.GSON;
 	
