@@ -15,9 +15,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -111,16 +113,22 @@ public class SteamWorkshopMap extends RLMap {
 			result = false;
 		}
 		
-		element = doc.getElementsByClass("workshopItemPreviewImageEnlargeable").first();
-		if(element != null && (element = element.parent()) != null) {
-			String src = element.attr("href");
-			int start = src.indexOf('\'');
-			int end = src.lastIndexOf('\'');
-			src = src.substring(start + 1, end);
-			
-			downloadImage(src);
-		} else {
+		LinkedList<URL> imgUrlCandidates = getImgURLCandidates(doc);
+		if(imgUrlCandidates.isEmpty()) {
+			logger.warn("Couldn't find image for workshop item " + workshopID);
 			result = false;
+		} else {
+			boolean success = false;
+			for(URL url : imgUrlCandidates) {
+				if(downloadImage(url)) {
+					success = true;
+					break;
+				}
+			}
+			if(!success) {
+				logger.warn("Couldn't download image for workshop item " + workshopID);
+				result = false;
+			}
 		}
 		
 		if(!result) {
@@ -129,6 +137,40 @@ public class SteamWorkshopMap extends RLMap {
 		}
 		
 		return result;
+	}
+	
+	@SuppressWarnings("ConstantConditions")
+	private LinkedList<URL> getImgURLCandidates(Document doc) {
+		LinkedList<URL> list = new LinkedList<>();
+		Element element = doc.getElementsByClass("workshopItemPreviewImageEnlargeable").first();
+		if(element == null) {
+			return list;
+		}
+		Element parent = element.parent();
+		
+		Consumer<Supplier<String>> tryAdding = stringSupplier -> {
+			try {
+				String s = stringSupplier.get();
+				if(s.endsWith("trans.gif")) {
+					return;
+				}
+				URL url = new URL(s);
+				list.add(url);
+			} catch(Exception ignored) {
+			}
+		};
+		
+		tryAdding.accept(() -> element.attr("src"));
+		tryAdding.accept(() -> {
+			String s = parent.attr("href");
+			return s.substring(s.indexOf('\'') + 1, s.lastIndexOf('\''));
+		});
+		tryAdding.accept(() -> {
+			String s = parent.attr("onclick");
+			return s.substring(s.indexOf('\'') + 1, s.lastIndexOf('\''));
+		});
+		
+		return list;
 	}
 	
 	public static class MapDiscovery extends Task {

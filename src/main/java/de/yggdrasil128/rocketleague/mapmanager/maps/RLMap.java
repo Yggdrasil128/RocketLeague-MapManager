@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.File;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Objects;
 
@@ -183,23 +184,37 @@ public abstract class RLMap {
 		}
 	}
 	
-	protected void downloadImage(String src) {
+	@SuppressWarnings("UnusedReturnValue")
+	protected boolean downloadImage(String src) {
+		URL url;
 		try {
-			URL url = new URL(src);
+			url = new URL(src);
+		} catch(MalformedURLException e) {
+			getLogger().warn("Couldn't load image url '" + src + "' for map " + getID());
+			return false;
+		}
+		return downloadImage(url);
+	}
+	
+	protected boolean downloadImage(URL url) {
+		try {
 			HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
 			if(con.getResponseCode() != 200) {
-				return;
+				return false;
 			}
 			
-			clearImageFile();
-			
 			String mimeType = con.getHeaderField("Content-Type");
-			imageFile = new File(IMAGES_FOLDER, getID() + getImageFileExtension(mimeType));
+			File file = new File(IMAGES_FOLDER, getID() + getImageFileExtension(mimeType));
+			FileUtils.copyInputStreamToFile(con.getInputStream(), file);
+			
+			clearImageFile();
+			imageFile = file;
 			imageFileMimeType = mimeType;
 			
-			FileUtils.copyInputStreamToFile(con.getInputStream(), imageFile);
+			return true;
 		} catch(Exception e) {
-			getLogger().warn("Couldn't load image url '" + src + "' for map " + getID());
+			getLogger().warn("Couldn't load image url '" + url.toString() + "' for map " + getID());
+			return false;
 		}
 	}
 	
